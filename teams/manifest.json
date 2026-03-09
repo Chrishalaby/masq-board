@@ -1,0 +1,45 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "00000000-0000-0000-0000-000000000000",
+  "developer": {
+    "name": "Your Company",
+    "websiteUrl": "https://masq-board.netlify.app",
+    "privacyUrl": "https://masq-board.netlify.app/privacy",
+    "termsOfUseUrl": "https://masq-board.netlify.app/terms"
+  },
+  "name": {
+    "short": "Task Board",
+    "full": "Internal Task Board"
+  },
+  "description": {
+    "short": "Internal task tracking board",
+    "full": "A custom internal task management tool that replaces Microsoft Planner. Supports Kanban board view, table view, drag-and-drop status changes, milestones, risk tracking, and more."
+  },
+  "icons": {
+    "outline": "outline-32x32.png",
+    "color": "color-192x192.png"
+  },
+  "accentColor": "#4F46E5",
+  "staticTabs": [
+    {
+      "entityId": "taskboard",
+      "name": "Task Board",
+      "contentUrl": "https://masq-board.netlify.app",
+      "websiteUrl": "https://masq-board.netlify.app",
+      "scopes": ["personal"]
+    }
+  ],
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://masq-board.netlify.app",
+      "canUpdateConfiguration": false,
+      "scopes": ["team", "groupChat"]
+    }
+  ],
+  "permissions": ["identity"],
+  "validDomains": [
+    "masq-board.netlify.app"
+  ]
+}
