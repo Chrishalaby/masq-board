@@ -1,22 +1,14 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  OnInit,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, OnInit, output } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Dialog } from 'primeng/dialog';
-import { InputText } from 'primeng/inputtext';
-import { Textarea } from 'primeng/textarea';
-import { Select } from 'primeng/select';
-import { DatePicker } from 'primeng/datepicker';
 import { Button } from 'primeng/button';
 import { Checkbox } from 'primeng/checkbox';
 import { Chip } from 'primeng/chip';
-import { Task, TASK_PRIORITIES, TASK_STATUSES, ChecklistItem } from '../../../models/task.model';
+import { DatePicker } from 'primeng/datepicker';
+import { Dialog } from 'primeng/dialog';
+import { InputText } from 'primeng/inputtext';
+import { Select } from 'primeng/select';
+import { Textarea } from 'primeng/textarea';
+import { Task, TASK_PRIORITIES, TASK_STATUSES } from '../../../models/task.model';
 import { TaskService } from '../../../services/task.service';
 
 @Component({
@@ -84,11 +76,21 @@ import { TaskService } from '../../../services/task.service';
         <div class="grid grid-cols-2 gap-3">
           <div class="flex flex-col gap-1">
             <label for="startDate" class="text-sm font-medium">Start Date</label>
-            <p-datepicker id="startDate" formControlName="startDate" dateFormat="yy-mm-dd" [showIcon]="true" />
+            <p-datepicker
+              id="startDate"
+              formControlName="startDate"
+              dateFormat="yy-mm-dd"
+              [showIcon]="true"
+            />
           </div>
           <div class="flex flex-col gap-1">
             <label for="dueDate" class="text-sm font-medium">Due Date</label>
-            <p-datepicker id="dueDate" formControlName="dueDate" dateFormat="yy-mm-dd" [showIcon]="true" />
+            <p-datepicker
+              id="dueDate"
+              formControlName="dueDate"
+              dateFormat="yy-mm-dd"
+              [showIcon]="true"
+            />
           </div>
         </div>
 
@@ -131,7 +133,13 @@ import { TaskService } from '../../../services/task.service';
                 [formControl]="newLabelControl"
                 (keydown.enter)="addLabel(); $event.preventDefault()"
               />
-              <p-button icon="pi pi-plus" [rounded]="true" [text]="true" size="small" (onClick)="addLabel()" />
+              <p-button
+                icon="pi pi-plus"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                (onClick)="addLabel()"
+              />
             </div>
           </div>
         </div>
@@ -143,11 +151,7 @@ import { TaskService } from '../../../services/task.service';
             @for (item of checklistArray.controls; track $index) {
               <div class="flex items-center gap-2">
                 <p-checkbox [formControl]="getChecklistCompleted($index)" [binary]="true" />
-                <input
-                  pInputText
-                  class="flex-1"
-                  [formControl]="getChecklistTitle($index)"
-                />
+                <input pInputText class="flex-1" [formControl]="getChecklistTitle($index)" />
                 <p-button
                   icon="pi pi-trash"
                   severity="danger"
@@ -166,7 +170,13 @@ import { TaskService } from '../../../services/task.service';
                 [formControl]="newChecklistControl"
                 (keydown.enter)="addChecklist(); $event.preventDefault()"
               />
-              <p-button icon="pi pi-plus" [rounded]="true" [text]="true" size="small" (onClick)="addChecklist()" />
+              <p-button
+                icon="pi pi-plus"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                (onClick)="addChecklist()"
+              />
             </div>
           </div>
         </div>
@@ -174,19 +184,15 @@ import { TaskService } from '../../../services/task.service';
         <!-- Actions -->
         <div class="flex justify-end gap-2 border-t pt-3">
           @if (task()) {
-            <p-button
-              label="Delete"
-              severity="danger"
-              [outlined]="true"
-              (onClick)="onDelete()"
-            />
+            <p-button label="Delete" severity="danger" [outlined]="true" (onClick)="onDelete()" />
           }
-          <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="onVisibleChange(false)" />
           <p-button
-            label="Save"
-            type="submit"
-            [disabled]="form.invalid"
+            label="Cancel"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="onVisibleChange(false)"
           />
+          <p-button label="Save" type="submit" [disabled]="form.invalid" />
         </div>
       </form>
     </p-dialog>
@@ -209,10 +215,15 @@ export class TaskEditorComponent implements OnInit {
   readonly form = new FormGroup({
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     owner: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    priority: new FormControl<'low' | 'medium' | 'high' | 'urgent'>('medium', { nonNullable: true }),
-    status: new FormControl<'not-started' | 'in-progress' | 'blocked' | 'completed'>('not-started', {
+    priority: new FormControl<'low' | 'medium' | 'high' | 'urgent'>('medium', {
       nonNullable: true,
     }),
+    status: new FormControl<'not-started' | 'in-progress' | 'blocked' | 'completed'>(
+      'not-started',
+      {
+        nonNullable: true,
+      },
+    ),
     startDate: new FormControl<Date | null>(null),
     dueDate: new FormControl<Date | null>(null),
     description: new FormControl('', { nonNullable: true }),
@@ -220,14 +231,18 @@ export class TaskEditorComponent implements OnInit {
     nextMilestone: new FormControl('', { nonNullable: true }),
     delayRisk: new FormControl('', { nonNullable: true }),
     labels: new FormArray<FormControl<string>>([]),
-    checklist: new FormArray<FormGroup<{ title: FormControl<string>; completed: FormControl<boolean> }>>([]),
+    checklist: new FormArray<
+      FormGroup<{ title: FormControl<string>; completed: FormControl<boolean> }>
+    >([]),
   });
 
   get labelsArray(): FormArray<FormControl<string>> {
     return this.form.controls.labels;
   }
 
-  get checklistArray(): FormArray<FormGroup<{ title: FormControl<string>; completed: FormControl<boolean> }>> {
+  get checklistArray(): FormArray<
+    FormGroup<{ title: FormControl<string>; completed: FormControl<boolean> }>
+  > {
     return this.form.controls.checklist;
   }
 

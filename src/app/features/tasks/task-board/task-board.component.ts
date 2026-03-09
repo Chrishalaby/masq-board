@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
+import { Task, TASK_STATUSES, TaskStatus } from '../../../models/task.model';
 import { TaskService } from '../../../services/task.service';
-import { Task, TaskStatus, TASK_STATUSES } from '../../../models/task.model';
 import { TaskCardComponent } from '../task-card/task-card.component';
 
 @Component({

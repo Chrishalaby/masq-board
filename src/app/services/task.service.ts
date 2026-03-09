@@ -176,7 +176,9 @@ export class TaskService {
   }
 
   updateTask(updated: Task): void {
-    this.tasksSignal.update((tasks) => tasks.map((t) => (t.id === updated.id ? { ...updated } : t)));
+    this.tasksSignal.update((tasks) =>
+      tasks.map((t) => (t.id === updated.id ? { ...updated } : t)),
+    );
   }
 
   deleteTask(id: string): void {

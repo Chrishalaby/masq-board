@@ -39,7 +39,5 @@
     }
   ],
   "permissions": ["identity"],
-  "validDomains": [
-    "masq-board.netlify.app"
-  ]
+  "validDomains": ["masq-board.netlify.app"]
 }

@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Tag } from 'primeng/tag';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { ProgressBar } from 'primeng/progressbar';
+import { Tag } from 'primeng/tag';
 import { Task, TaskPriority } from '../../../models/task.model';
 
 @Component({
