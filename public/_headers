@@ -1,3 +1,3 @@
 /*
-  Content-Security-Policy: frame-ancestors teams.microsoft.com *.teams.microsoft.com *.skype.com
-  X-Frame-Options: ALLOW-FROM https://teams.microsoft.com
+  X-Frame-Options: ALLOWALL
+  Content-Security-Policy: frame-ancestors 'self' teams.microsoft.com *.teams.microsoft.com *.microsoft.com *.skype.com *.office.com *.office365.com
