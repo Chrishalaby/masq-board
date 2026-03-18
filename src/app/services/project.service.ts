@@ -44,15 +44,12 @@ export class ProjectService {
   }
 
   createProject(data: Partial<Project>): Observable<Project> {
-    console.info('[ProjectService] POST', this.baseUrl, data);
     return this.http.post<Project>(this.baseUrl, data).pipe(
       tap({
         next: (created) => {
-          console.info('[ProjectService] POST success', { url: this.baseUrl, created });
           this.projectsSignal.update((projects) => [created, ...projects]);
         },
         error: (err) => {
-          console.error('[ProjectService] POST failed', { url: this.baseUrl, error: err });
           this.errorSignal.set(err.message);
         },
       }),
@@ -61,17 +58,14 @@ export class ProjectService {
 
   updateProject(id: string, data: Partial<Project>): Observable<Project> {
     const url = `${this.baseUrl}/${id}`;
-    console.info('[ProjectService] PATCH', url, data);
     return this.http.patch<Project>(url, data).pipe(
       tap({
         next: (updated) => {
-          console.info('[ProjectService] PATCH success', { url, updated });
           this.projectsSignal.update((projects) =>
             projects.map((p) => (p.id === updated.id ? updated : p)),
           );
         },
         error: (err) => {
-          console.error('[ProjectService] PATCH failed', { url, error: err });
           this.errorSignal.set(err.message);
         },
       }),
@@ -80,15 +74,12 @@ export class ProjectService {
 
   deleteProject(id: string): Observable<void> {
     const url = `${this.baseUrl}/${id}`;
-    console.info('[ProjectService] DELETE', url);
     return this.http.delete<void>(url).pipe(
       tap({
         next: () => {
-          console.info('[ProjectService] DELETE success', { url, id });
           this.projectsSignal.update((projects) => projects.filter((p) => p.id !== id));
         },
         error: (err) => {
-          console.error('[ProjectService] DELETE failed', { url, error: err });
           this.errorSignal.set(err.message);
         },
       }),

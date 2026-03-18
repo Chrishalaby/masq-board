@@ -13,6 +13,7 @@ export class AuthService {
   private readonly teamsAuthenticatedSignal = signal(false);
   private readonly teamsDisplayNameSignal = signal('');
   private readonly teamsEmailSignal = signal('');
+  private readonly teamsOidSignal = signal('');
   private readonly isTeamsContextSignal = signal(false);
 
   readonly isAuthenticated = computed(
@@ -25,14 +26,12 @@ export class AuthService {
   readonly userEmail = computed(
     () => this.activeAccountSignal()?.username ?? this.teamsEmailSignal(),
   );
+  readonly teamsOid = this.teamsOidSignal.asReadonly();
   readonly inTeamsContext = this.isTeamsContextSignal.asReadonly();
 
   async initialize(): Promise<void> {
     await this.msal.instance.initialize();
     await this.msal.instance.handleRedirectPromise();
-    console.info('[Auth] initialize:start', {
-      existingAccounts: this.msal.instance.getAllAccounts().length,
-    });
 
     // Check if we're running inside Microsoft Teams
     try {
@@ -41,20 +40,14 @@ export class AuthService {
 
       const context = await microsoftTeams.app.getContext();
       this.teamsDisplayNameSignal.set(context.user?.displayName ?? '');
-      console.info('[Auth] Teams context detected', {
-        displayName: context.user?.displayName ?? '',
-        loginHint: context.user?.loginHint ?? '',
-      });
       await this.acquireTeamsToken();
     } catch {
       // Not in Teams context — standard MSAL flow
       this.isTeamsContextSignal.set(false);
       const accounts = this.msal.instance.getAllAccounts();
-      console.info('[Auth] Browser context detected', { accounts: accounts.length });
       if (accounts.length) {
         this.msal.instance.setActiveAccount(accounts[0]);
         this.activeAccountSignal.set(accounts[0]);
-        console.info('[Auth] Active account restored', { username: accounts[0].username });
       }
     }
   }
@@ -99,7 +92,6 @@ export class AuthService {
 
     const account = this.activeAccountSignal() || this.msal.instance.getActiveAccount();
     if (!account) {
-      console.warn('[Auth] No active account available for API token');
       return null;
     }
 
@@ -108,12 +100,8 @@ export class AuthService {
         scopes: environment.msalConfig.apiScopes,
         account,
       });
-      console.info('[Auth] Browser acquireTokenSilent succeeded', {
-        username: result.account?.username ?? null,
-      });
       return result.accessToken;
-    } catch (error) {
-      console.error('[Auth] Browser acquireTokenSilent failed', error);
+    } catch {
       return null;
     }
   }
@@ -124,21 +112,20 @@ export class AuthService {
       const tokenPayload = this.decodeJwtPayload(ssoToken);
       const loginHint =
         tokenPayload['preferred_username'] || tokenPayload['upn'] || tokenPayload['email'];
-      console.info('[Auth] Teams getAuthToken succeeded', {
-        hasSsoToken: !!ssoToken,
-        loginHint,
-      });
 
       this.apiAccessTokenSignal.set(ssoToken);
       this.teamsAuthenticatedSignal.set(true);
+      if (tokenPayload['oid']) {
+        this.teamsOidSignal.set(tokenPayload['oid']);
+      }
       if (loginHint) {
         this.teamsEmailSignal.set(loginHint);
       }
       if (!this.teamsDisplayNameSignal()) {
         this.teamsDisplayNameSignal.set(tokenPayload['name'] || '');
       }
-    } catch (error) {
-      console.error('[Auth] Teams getAuthToken failed', error);
+    } catch {
+      // Teams SSO token acquisition failed
     }
   }
 

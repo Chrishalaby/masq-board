@@ -263,15 +263,23 @@ export class NotesBoardComponent implements OnInit {
   readonly viewMode = new FormControl<'all' | 'tagged'>('all', { nonNullable: true });
 
   readonly currentUserId = computed(() => {
+    // Primary match: teamsId from SSO token oid claim
+    const teamsOid = this.authService.teamsOid();
+    if (teamsOid) {
+      const users = this.users();
+      const match = users.find((u) => u.teamsId === teamsOid);
+      if (match) return match.id;
+      // Fallback: check note authors
+      const notes = this.noteService.notes();
+      const authorMatch = notes.find((n) => n.author?.teamsId === teamsOid);
+      if (authorMatch) return authorMatch.authorId;
+    }
+    // Browser fallback: match by email
     const email = this.authService.userEmail()?.toLowerCase();
     if (!email) return '';
     const users = this.users();
-    const match = users.find((u) => u.email.toLowerCase() === email);
-    if (match) return match.id;
-    // Fallback: check note authors already loaded
-    const notes = this.noteService.notes();
-    const authorMatch = notes.find((n) => n.author?.email?.toLowerCase() === email);
-    return authorMatch?.authorId ?? '';
+    const match = users.find((u) => u.email?.toLowerCase() === email);
+    return match?.id ?? '';
   });
 
   private readonly allNotes = this.noteService.notes;
@@ -279,7 +287,7 @@ export class NotesBoardComponent implements OnInit {
   readonly publicNotes = computed(() => {
     const filterId = this.filterUser.value;
     const uid = this.currentUserId();
-    const email = this.authService.userEmail()?.toLowerCase();
+    const teamsOid = this.authService.teamsOid();
     return this.allNotes()
       .filter((n) => {
         if (!n.isPublic) return false;
@@ -290,16 +298,17 @@ export class NotesBoardComponent implements OnInit {
       })
       .map((n) => ({
         ...n,
-        isOwn: n.authorId === uid || n.author?.email?.toLowerCase() === email,
+        isOwn: n.authorId === uid || (!!teamsOid && n.author?.teamsId === teamsOid),
       }));
   });
 
   readonly privateNotes = computed(() => {
     const uid = this.currentUserId();
-    const email = this.authService.userEmail()?.toLowerCase();
+    const teamsOid = this.authService.teamsOid();
     return this.allNotes()
       .filter(
-        (n) => !n.isPublic && (n.authorId === uid || n.author?.email?.toLowerCase() === email),
+        (n) =>
+          !n.isPublic && (n.authorId === uid || (!!teamsOid && n.author?.teamsId === teamsOid)),
       )
       .map((n) => ({ ...n, isOwn: true as const }));
   });

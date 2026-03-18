@@ -14,12 +14,6 @@ export const appApiAuthInterceptor: HttpInterceptorFn = (req, next) => {
 
   return from(auth.getApiAccessToken()).pipe(
     switchMap((token) => {
-      console.info('[AppApiAuth] token resolution', {
-        url: req.url,
-        inTeams: auth.inTeamsContext(),
-        hasToken: !!token,
-      });
-
       const authReq = token
         ? req.clone({
             setHeaders: {
