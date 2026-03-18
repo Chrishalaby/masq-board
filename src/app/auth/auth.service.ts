@@ -53,7 +53,7 @@ export class AuthService {
 
     try {
       const result = await this.msal.instance.loginPopup({
-        scopes: environment.msalConfig.scopes,
+        scopes: environment.msalConfig.apiScopes,
       });
       this.msal.instance.setActiveAccount(result.account);
       this.activeAccountSignal.set(result.account);
@@ -85,7 +85,7 @@ export class AuthService {
 
       // Use ssoSilent to acquire an MSAL token using the Teams SSO context
       const result = await this.msal.instance.ssoSilent({
-        scopes: environment.msalConfig.scopes,
+        scopes: environment.msalConfig.apiScopes,
         loginHint,
       });
 

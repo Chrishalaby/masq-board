@@ -27,7 +27,7 @@ export function msalInstanceFactory(): PublicClientApplication {
 
 export function msalInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, string[]>();
-  protectedResourceMap.set(`${environment.apiUrl}/*`, environment.msalConfig.scopes);
+  protectedResourceMap.set(`${environment.apiUrl}/*`, environment.msalConfig.apiScopes);
   protectedResourceMap.set('https://graph.microsoft.com/v1.0/*', [
     'https://graph.microsoft.com/.default',
   ]);
@@ -42,7 +42,7 @@ export function msalGuardConfigFactory(): MsalGuardConfiguration {
   return {
     interactionType: InteractionType.Popup,
     authRequest: {
-      scopes: environment.msalConfig.scopes,
+      scopes: environment.msalConfig.apiScopes,
     },
   };
 }
