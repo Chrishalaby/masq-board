@@ -117,7 +117,19 @@ export class ProjectEditorComponent {
   }
 
   onSave(): void {
-    if (this.form.invalid) return;
+    console.info('[ProjectEditor] Save clicked', {
+      visible: this.visible(),
+      editingProjectId: this.project()?.id ?? null,
+      formValid: this.form.valid,
+      formValue: this.form.getRawValue(),
+    });
+
+    if (this.form.invalid) {
+      console.warn('[ProjectEditor] Save blocked because form is invalid', {
+        errors: this.collectFormErrors(),
+      });
+      return;
+    }
     const raw = this.form.getRawValue();
 
     const data: Record<string, unknown> = {
@@ -130,20 +142,37 @@ export class ProjectEditorComponent {
 
     const existing = this.project();
     if (existing) {
+      console.info('[ProjectEditor] Updating project', { projectId: existing.id, data });
       this.projectService
         .updateProject(existing.id, data as Partial<Project>)
         .pipe(take(1))
-        .subscribe(() => {
-          this.saved.emit();
-          this.visibleChange.emit(false);
+        .subscribe({
+          next: () => {
+            console.info('[ProjectEditor] Update project succeeded', { projectId: existing.id });
+            this.saved.emit();
+            this.visibleChange.emit(false);
+          },
+          error: (error) => {
+            console.error('[ProjectEditor] Update project failed', error);
+          },
         });
     } else {
+      console.info('[ProjectEditor] Creating project', { data });
       this.projectService
         .createProject(data as Partial<Project>)
         .pipe(take(1))
-        .subscribe(() => {
-          this.saved.emit();
-          this.visibleChange.emit(false);
+        .subscribe({
+          next: (created) => {
+            console.info('[ProjectEditor] Create project succeeded', {
+              projectId: created.id,
+              created,
+            });
+            this.saved.emit();
+            this.visibleChange.emit(false);
+          },
+          error: (error) => {
+            console.error('[ProjectEditor] Create project failed', error);
+          },
         });
     }
   }
@@ -174,5 +203,13 @@ export class ProjectEditorComponent {
     } else {
       this.form.reset({ status: 'draft' });
     }
+  }
+
+  private collectFormErrors(): Record<string, unknown> {
+    return Object.fromEntries(
+      Object.entries(this.form.controls)
+        .filter(([, control]) => control.invalid)
+        .map(([key, control]) => [key, control.errors]),
+    );
   }
 }

@@ -385,7 +385,19 @@ export class TaskEditorComponent implements OnInit {
   }
 
   onSave(): void {
-    if (this.form.invalid) return;
+    console.info('[TaskEditor] Save clicked', {
+      visible: this.visible(),
+      editingTaskId: this.task()?.id ?? null,
+      formValid: this.form.valid,
+      formValue: this.form.getRawValue(),
+    });
+
+    if (this.form.invalid) {
+      console.warn('[TaskEditor] Save blocked because form is invalid', {
+        errors: this.collectFormErrors(),
+      });
+      return;
+    }
     const raw = this.form.getRawValue();
 
     const taskData: Partial<Task> = {
@@ -406,20 +418,34 @@ export class TaskEditorComponent implements OnInit {
 
     const existingTask = this.task();
     if (existingTask) {
+      console.info('[TaskEditor] Updating task', { taskId: existingTask.id, taskData });
       this.taskService
         .updateTask({ ...taskData, id: existingTask.id } as Task)
         .pipe(take(1))
-        .subscribe(() => {
-          this.saved.emit();
-          this.visibleChange.emit(false);
+        .subscribe({
+          next: () => {
+            console.info('[TaskEditor] Update task succeeded', { taskId: existingTask.id });
+            this.saved.emit();
+            this.visibleChange.emit(false);
+          },
+          error: (error) => {
+            console.error('[TaskEditor] Update task failed', error);
+          },
         });
     } else {
+      console.info('[TaskEditor] Creating task', { taskData });
       this.taskService
         .addTask(taskData)
         .pipe(take(1))
-        .subscribe(() => {
-          this.saved.emit();
-          this.visibleChange.emit(false);
+        .subscribe({
+          next: (created) => {
+            console.info('[TaskEditor] Create task succeeded', { taskId: created.id, created });
+            this.saved.emit();
+            this.visibleChange.emit(false);
+          },
+          error: (error) => {
+            console.error('[TaskEditor] Create task failed', error);
+          },
         });
     }
   }
@@ -482,5 +508,13 @@ export class TaskEditorComponent implements OnInit {
 
   private formatDate(d: Date): string {
     return d.toISOString().split('T')[0];
+  }
+
+  private collectFormErrors(): Record<string, unknown> {
+    return Object.fromEntries(
+      Object.entries(this.form.controls)
+        .filter(([, control]) => control.invalid)
+        .map(([key, control]) => [key, control.errors]),
+    );
   }
 }

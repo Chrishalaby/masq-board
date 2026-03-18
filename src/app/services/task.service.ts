@@ -68,35 +68,52 @@ export class TaskService {
 
   addTask(task: Partial<Task>): Observable<Task> {
     const payload = this.toApiPayload(task);
+    console.info('[TaskService] POST', this.baseUrl, payload);
     return this.http.post<Task>(this.baseUrl, payload).pipe(
       tap({
         next: (created) => {
+          console.info('[TaskService] POST success', { url: this.baseUrl, created });
           this.tasksSignal.update((tasks) => [created, ...tasks]);
         },
-        error: (err) => this.errorSignal.set(err.message),
+        error: (err) => {
+          console.error('[TaskService] POST failed', { url: this.baseUrl, error: err });
+          this.errorSignal.set(err.message);
+        },
       }),
     );
   }
 
   updateTask(task: Task): Observable<Task> {
     const payload = this.toApiPayload(task);
-    return this.http.patch<Task>(`${this.baseUrl}/${task.id}`, payload).pipe(
+    const url = `${this.baseUrl}/${task.id}`;
+    console.info('[TaskService] PATCH', url, payload);
+    return this.http.patch<Task>(url, payload).pipe(
       tap({
         next: (updated) => {
+          console.info('[TaskService] PATCH success', { url, updated });
           this.tasksSignal.update((tasks) => tasks.map((t) => (t.id === updated.id ? updated : t)));
         },
-        error: (err) => this.errorSignal.set(err.message),
+        error: (err) => {
+          console.error('[TaskService] PATCH failed', { url, error: err });
+          this.errorSignal.set(err.message);
+        },
       }),
     );
   }
 
   deleteTask(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
+    const url = `${this.baseUrl}/${id}`;
+    console.info('[TaskService] DELETE', url);
+    return this.http.delete<void>(url).pipe(
       tap({
         next: () => {
+          console.info('[TaskService] DELETE success', { url, id });
           this.tasksSignal.update((tasks) => tasks.filter((t) => t.id !== id));
         },
-        error: (err) => this.errorSignal.set(err.message),
+        error: (err) => {
+          console.error('[TaskService] DELETE failed', { url, error: err });
+          this.errorSignal.set(err.message);
+        },
       }),
     );
   }
