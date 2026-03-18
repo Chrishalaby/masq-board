@@ -23,6 +23,7 @@ export class App implements OnInit {
   private readonly auth = inject(AuthService);
 
   ngOnInit(): void {
+    document.documentElement.classList.add('dark');
     this.auth.initialize();
   }
 }

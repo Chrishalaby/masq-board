@@ -50,6 +50,9 @@ import { ProjectService } from '../../../services/project.service';
               formControlName="startDate"
               dateFormat="yy-mm-dd"
               [showIcon]="true"
+              appendTo="body"
+              [autoZIndex]="true"
+              [baseZIndex]="12000"
             />
           </div>
           <div class="flex flex-col gap-1">
@@ -59,6 +62,10 @@ import { ProjectService } from '../../../services/project.service';
               formControlName="endDate"
               dateFormat="yy-mm-dd"
               [showIcon]="true"
+              [minDate]="form.controls.startDate.value || undefined"
+              appendTo="body"
+              [autoZIndex]="true"
+              [baseZIndex]="12000"
             />
           </div>
         </div>

@@ -26,3 +26,35 @@
 .p-datatable .p-datatable-tbody > tr.cursor-pointer:hover {
   cursor: pointer;
 }
+
+/* PrimeNG dark polish for components that can remain light in overlays */
+.dark .p-dialog,
+.dark .p-dialog .p-dialog-content,
+.dark .p-dialog .p-dialog-header,
+.dark .p-overlaypanel,
+.dark .p-popover {
+  background: #111827;
+  color: #f3f4f6;
+  border-color: #374151;
+}
+
+.dark .p-datatable,
+.dark .p-datatable .p-datatable-header,
+.dark .p-datatable .p-datatable-thead > tr > th,
+.dark .p-datatable .p-datatable-tbody > tr > td {
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #374151;
+}
+
+.dark .p-selectbutton .p-togglebutton {
+  background: #1f2937;
+  color: #d1d5db;
+  border-color: #374151;
+}
+
+.dark .p-selectbutton .p-togglebutton.p-highlight {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #1d4ed8;
+}
