@@ -88,7 +88,7 @@ import { UserService } from '../../../services/user.service';
                 <h3 class="font-semibold text-gray-900" [class.dark:text-white]="!note.color">
                   {{ note.title }}
                 </h3>
-                @if (note.authorId === currentUserId()) {
+                @if (note.isOwn) {
                   <p-button
                     icon="pi pi-trash"
                     severity="danger"
@@ -204,6 +204,7 @@ import { UserService } from '../../../services/user.service';
               optionValue="value"
               placeholder="Default"
               [showClear]="true"
+              appendTo="body"
             />
           </div>
           <div class="flex items-end gap-2 pb-1">
@@ -225,6 +226,7 @@ import { UserService } from '../../../services/user.service';
               [filter]="true"
               filterBy="displayName"
               display="chip"
+              appendTo="body"
             />
           </div>
         }
@@ -261,27 +263,46 @@ export class NotesBoardComponent implements OnInit {
   readonly viewMode = new FormControl<'all' | 'tagged'>('all', { nonNullable: true });
 
   readonly currentUserId = computed(() => {
+    const email = this.authService.userEmail()?.toLowerCase();
+    if (!email) return '';
     const users = this.users();
-    const email = this.authService.userEmail();
-    return users.find((u) => u.email === email)?.id ?? '';
+    const match = users.find((u) => u.email.toLowerCase() === email);
+    if (match) return match.id;
+    // Fallback: check note authors already loaded
+    const notes = this.noteService.notes();
+    const authorMatch = notes.find((n) => n.author?.email?.toLowerCase() === email);
+    return authorMatch?.authorId ?? '';
   });
 
   private readonly allNotes = this.noteService.notes;
 
   readonly publicNotes = computed(() => {
     const filterId = this.filterUser.value;
-    return this.allNotes().filter((n) => {
-      if (!n.isPublic) return false;
-      if (filterId) {
-        return n.authorId === filterId || n.taggedUsers?.some((u) => u.id === filterId);
-      }
-      return true;
-    });
+    const uid = this.currentUserId();
+    const email = this.authService.userEmail()?.toLowerCase();
+    return this.allNotes()
+      .filter((n) => {
+        if (!n.isPublic) return false;
+        if (filterId) {
+          return n.authorId === filterId || n.taggedUsers?.some((u) => u.id === filterId);
+        }
+        return true;
+      })
+      .map((n) => ({
+        ...n,
+        isOwn: n.authorId === uid || n.author?.email?.toLowerCase() === email,
+      }));
   });
 
-  readonly privateNotes = computed(() =>
-    this.allNotes().filter((n) => !n.isPublic && n.authorId === this.currentUserId()),
-  );
+  readonly privateNotes = computed(() => {
+    const uid = this.currentUserId();
+    const email = this.authService.userEmail()?.toLowerCase();
+    return this.allNotes()
+      .filter(
+        (n) => !n.isPublic && (n.authorId === uid || n.author?.email?.toLowerCase() === email),
+      )
+      .map((n) => ({ ...n, isOwn: true as const }));
+  });
 
   readonly form = new FormGroup({
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -311,8 +332,8 @@ export class NotesBoardComponent implements OnInit {
     this.dialogVisible.set(true);
   }
 
-  openEdit(note: Note): void {
-    if (note.authorId !== this.currentUserId()) return;
+  openEdit(note: Note & { isOwn?: boolean }): void {
+    if (!note.isOwn) return;
     this.editingNote.set(note);
     this.form.patchValue({
       title: note.title,
