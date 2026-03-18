@@ -1,5 +1,4 @@
 /*
-  X-Frame-Options: ALLOWALL
-  Content-Security-Policy: frame-ancestors 'self' teams.microsoft.com *.teams.microsoft.com *.skype.com
+  Content-Security-Policy: frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://teams.cloud.microsoft https://*.cloud.microsoft https://*.skype.com https://*.teams.microsoft.us https://local.teams.office.com https://*.mcas.ms
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
