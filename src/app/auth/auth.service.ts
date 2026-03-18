@@ -53,21 +53,51 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
+    if (this.isTeamsContext) {
+      // Can't sign out from within Teams — the Teams shell manages auth
+      return;
+    }
     await this.msal.instance.logoutPopup();
     this.activeAccountSignal.set(null);
   }
 
   private async acquireTeamsToken(): Promise<void> {
     try {
-      const token = await microsoftTeams.authentication.getAuthToken();
-      // Use the Teams SSO token to set the active account
+      const ssoToken = await microsoftTeams.authentication.getAuthToken();
+
+      // Decode the SSO token to extract loginHint for MSAL ssoSilent
+      const tokenPayload = JSON.parse(atob(ssoToken.split('.')[1]));
+      const loginHint = tokenPayload.preferred_username || tokenPayload.upn;
+
+      // Use ssoSilent to acquire an MSAL token using the Teams SSO context
+      const result = await this.msal.instance.ssoSilent({
+        scopes: environment.msalConfig.scopes,
+        loginHint,
+      });
+
+      if (result?.account) {
+        this.msal.instance.setActiveAccount(result.account);
+        this.activeAccountSignal.set(result.account);
+        return;
+      }
+    } catch {
+      // ssoSilent failed — likely needs consent
+    }
+
+    // Fallback: use Teams auth popup for consent
+    try {
+      await microsoftTeams.authentication.authenticate({
+        url: `${window.location.origin}/auth-start`,
+        width: 600,
+        height: 535,
+      });
       const accounts = this.msal.instance.getAllAccounts();
       if (accounts.length) {
         this.msal.instance.setActiveAccount(accounts[0]);
         this.activeAccountSignal.set(accounts[0]);
       }
     } catch (error) {
-      console.error('Teams SSO token acquisition failed:', error);
+      console.error('Teams authentication failed:', error);
     }
   }
 }
