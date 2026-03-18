@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { SelectButton } from 'primeng/selectbutton';
 import { Task } from '../../../models/task.model';
+import { TaskService } from '../../../services/task.service';
 import { TaskBoardComponent } from '../task-board/task-board.component';
 import { TaskEditorComponent } from '../task-editor/task-editor.component';
 import { TaskGridComponent } from '../task-grid/task-grid.component';
@@ -22,7 +23,7 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
     <header
       class="flex items-center justify-between border-b border-gray-200 px-6 py-3 dark:border-gray-700"
     >
-      <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">Task Board</h1>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">All Tasks</h1>
       <div class="flex items-center gap-3">
         <p-selectbutton
           [options]="viewOptions"
@@ -52,7 +53,9 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
     />
   `,
 })
-export class TaskShellComponent {
+export class TaskShellComponent implements OnInit {
+  private readonly taskService = inject(TaskService);
+
   readonly viewOptions = [
     { label: 'Board', value: 'board' },
     { label: 'Table', value: 'grid' },
@@ -61,6 +64,10 @@ export class TaskShellComponent {
   readonly activeView = signal<'board' | 'grid'>('board');
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
+
+  ngOnInit(): void {
+    this.taskService.loadTasks();
+  }
 
   openNewTask(): void {
     this.selectedTask.set(null);
@@ -74,5 +81,6 @@ export class TaskShellComponent {
 
   onSaved(): void {
     this.selectedTask.set(null);
+    this.taskService.loadTasks();
   }
 }

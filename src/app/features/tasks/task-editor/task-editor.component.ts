@@ -8,8 +8,13 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
-import { Task, TASK_PRIORITIES, TASK_STATUSES } from '../../../models/task.model';
+import { Task, TASK_PRIORITIES, TASK_STATUSES, Label } from '../../../models/task.model';
+import { User } from '../../../models/user.model';
+import { Project } from '../../../models/project.model';
 import { TaskService } from '../../../services/task.service';
+import { UserService } from '../../../services/user.service';
+import { ProjectService } from '../../../services/project.service';
+import { LabelService } from '../../../services/label.service';
 
 @Component({
   selector: 'app-task-editor',
@@ -42,12 +47,38 @@ import { TaskService } from '../../../services/task.service';
           <input pInputText id="title" formControlName="title" placeholder="Task title" />
         </div>
 
-        <!-- Owner + Priority + Status row -->
-        <div class="grid grid-cols-3 gap-3">
+        <!-- Assignee + Project row -->
+        <div class="grid grid-cols-2 gap-3">
           <div class="flex flex-col gap-1">
-            <label for="owner" class="text-sm font-medium">Owner *</label>
-            <input pInputText id="owner" formControlName="owner" placeholder="Owner name" />
+            <label for="assigneeId" class="text-sm font-medium">Assignee</label>
+            <p-select
+              id="assigneeId"
+              formControlName="assigneeId"
+              [options]="users()"
+              optionLabel="displayName"
+              optionValue="id"
+              placeholder="Select assignee"
+              [filter]="true"
+              filterBy="displayName"
+              [showClear]="true"
+            />
           </div>
+          <div class="flex flex-col gap-1">
+            <label for="projectId" class="text-sm font-medium">Project</label>
+            <p-select
+              id="projectId"
+              formControlName="projectId"
+              [options]="projects()"
+              optionLabel="name"
+              optionValue="id"
+              placeholder="Standalone (no project)"
+              [showClear]="true"
+            />
+          </div>
+        </div>
+
+        <!-- Priority + Status row -->
+        <div class="grid grid-cols-2 gap-3">
           <div class="flex flex-col gap-1">
             <label for="priority" class="text-sm font-medium">Priority</label>
             <p-select
@@ -123,26 +154,51 @@ import { TaskService } from '../../../services/task.service';
           <label class="text-sm font-medium">Labels</label>
           <div class="flex flex-wrap items-center gap-1">
             @for (label of labelsArray.controls; track $index) {
-              <p-chip [label]="label.value" [removable]="true" (onRemove)="removeLabel($index)" />
+              <p-chip
+                [label]="getLabelDisplay($index)"
+                [removable]="true"
+                (onRemove)="removeLabel($index)"
+              />
             }
             <div class="flex items-center gap-1">
-              <input
-                pInputText
-                class="w-28"
+              <p-select
+                [options]="availableLabels()"
+                optionLabel="name"
+                optionValue="id"
                 placeholder="Add label"
-                [formControl]="newLabelControl"
-                (keydown.enter)="addLabel(); $event.preventDefault()"
-              />
-              <p-button
-                icon="pi pi-plus"
-                [rounded]="true"
-                [text]="true"
-                size="small"
-                (onClick)="addLabel()"
+                [showClear]="true"
+                [formControl]="newLabelSelect"
+                (onChange)="addLabelFromSelect()"
               />
             </div>
           </div>
         </div>
+
+        <!-- Dependencies -->
+        @if (task()) {
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Dependencies</label>
+            @if (task()!.dependencies?.length) {
+              <div class="flex flex-col gap-1">
+                @for (dep of task()!.dependencies; track dep.id) {
+                  <div
+                    class="flex items-center justify-between rounded bg-gray-50 px-2 py-1 text-sm dark:bg-gray-800"
+                  >
+                    <span>🔗 {{ dep.dependsOn?.title || dep.dependsOnTaskId }}</span>
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      [text]="true"
+                      size="small"
+                      (onClick)="onRemoveDependency(dep.id)"
+                      ariaLabel="Remove dependency"
+                    />
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
 
         <!-- Checklist -->
         <div class="flex flex-col gap-1">
@@ -200,29 +256,37 @@ import { TaskService } from '../../../services/task.service';
 })
 export class TaskEditorComponent implements OnInit {
   private readonly taskService = inject(TaskService);
+  private readonly userService = inject(UserService);
+  private readonly projectService = inject(ProjectService);
+  private readonly labelService = inject(LabelService);
 
   readonly task = input<Task | null>(null);
   readonly visible = input(false);
   readonly visibleChange = output<boolean>();
   readonly saved = output<void>();
+  readonly projectId = input<string | undefined>(undefined);
 
   readonly priorities = TASK_PRIORITIES;
   readonly statuses = TASK_STATUSES;
+  readonly users = this.userService.users;
+  readonly projects = this.projectService.projects;
+  readonly availableLabels = this.labelService.labels;
 
-  readonly newLabelControl = new FormControl('');
+  readonly newLabelSelect = new FormControl<string | null>(null);
   readonly newChecklistControl = new FormControl('');
+
+  private selectedLabels: Label[] = [];
 
   readonly form = new FormGroup({
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    owner: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    assigneeId: new FormControl<string | null>(null),
+    projectId: new FormControl<string | null>(null),
     priority: new FormControl<'low' | 'medium' | 'high' | 'urgent'>('medium', {
       nonNullable: true,
     }),
     status: new FormControl<'not-started' | 'in-progress' | 'blocked' | 'completed'>(
       'not-started',
-      {
-        nonNullable: true,
-      },
+      { nonNullable: true },
     ),
     startDate: new FormControl<Date | null>(null),
     dueDate: new FormControl<Date | null>(null),
@@ -247,6 +311,9 @@ export class TaskEditorComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.userService.loadUsers();
+    this.projectService.loadProjects();
+    this.labelService.loadLabels();
     this.patchForm();
   }
 
@@ -255,15 +322,27 @@ export class TaskEditorComponent implements OnInit {
     if (val) this.patchForm();
   }
 
-  addLabel(): void {
-    const value = this.newLabelControl.value?.trim();
-    if (value) {
-      this.labelsArray.push(new FormControl(value, { nonNullable: true }));
-      this.newLabelControl.reset();
+  getLabelDisplay(index: number): string {
+    const labelId = this.labelsArray.at(index).value;
+    const label = this.selectedLabels.find((l) => l.id === labelId);
+    return label?.name ?? labelId;
+  }
+
+  addLabelFromSelect(): void {
+    const id = this.newLabelSelect.value;
+    if (id && !this.labelsArray.value.includes(id)) {
+      const label = this.availableLabels().find((l) => l.id === id);
+      if (label) {
+        this.selectedLabels.push(label);
+        this.labelsArray.push(new FormControl(id, { nonNullable: true }));
+      }
     }
+    this.newLabelSelect.reset();
   }
 
   removeLabel(i: number): void {
+    const labelId = this.labelsArray.at(i).value;
+    this.selectedLabels = this.selectedLabels.filter((l) => l.id !== labelId);
     this.labelsArray.removeAt(i);
   }
 
@@ -292,14 +371,20 @@ export class TaskEditorComponent implements OnInit {
     return this.checklistArray.at(i).controls.completed;
   }
 
+  onRemoveDependency(depId: string): void {
+    const t = this.task();
+    if (t) {
+      this.taskService.removeDependency(t.id, depId);
+    }
+  }
+
   onSave(): void {
     if (this.form.invalid) return;
     const raw = this.form.getRawValue();
 
-    const taskData = {
+    const taskData: Partial<Task> = {
       title: raw.title,
       description: raw.description,
-      owner: raw.owner,
       priority: raw.priority,
       status: raw.status,
       startDate: raw.startDate ? this.formatDate(raw.startDate) : undefined,
@@ -307,7 +392,9 @@ export class TaskEditorComponent implements OnInit {
       currentMilestone: raw.currentMilestone || undefined,
       nextMilestone: raw.nextMilestone || undefined,
       delayRisk: raw.delayRisk || undefined,
-      labels: raw.labels.length ? raw.labels : undefined,
+      assigneeId: raw.assigneeId || undefined,
+      projectId: raw.projectId || this.projectId() || undefined,
+      labels: this.selectedLabels,
       checklist: raw.checklist.length ? raw.checklist : undefined,
     };
 
@@ -315,7 +402,7 @@ export class TaskEditorComponent implements OnInit {
     if (existingTask) {
       this.taskService.updateTask({ ...taskData, id: existingTask.id } as Task);
     } else {
-      this.taskService.addTask(taskData as Omit<Task, 'id'>);
+      this.taskService.addTask(taskData);
     }
     this.saved.emit();
     this.visibleChange.emit(false);
@@ -334,11 +421,13 @@ export class TaskEditorComponent implements OnInit {
     const t = this.task();
     this.labelsArray.clear();
     this.checklistArray.clear();
+    this.selectedLabels = [];
 
     if (t) {
       this.form.patchValue({
         title: t.title,
-        owner: t.owner,
+        assigneeId: t.assigneeId ?? null,
+        projectId: t.projectId ?? null,
         priority: t.priority,
         status: t.status,
         startDate: t.startDate ? new Date(t.startDate) : null,
@@ -348,7 +437,12 @@ export class TaskEditorComponent implements OnInit {
         nextMilestone: t.nextMilestone ?? '',
         delayRisk: t.delayRisk ?? '',
       });
-      t.labels?.forEach((l) => this.labelsArray.push(new FormControl(l, { nonNullable: true })));
+      if (t.labels) {
+        this.selectedLabels = [...t.labels];
+        t.labels.forEach((l) =>
+          this.labelsArray.push(new FormControl(l.id, { nonNullable: true })),
+        );
+      }
       t.checklist?.forEach((c) =>
         this.checklistArray.push(
           new FormGroup({
@@ -358,7 +452,11 @@ export class TaskEditorComponent implements OnInit {
         ),
       );
     } else {
-      this.form.reset({ priority: 'medium', status: 'not-started' });
+      this.form.reset({
+        priority: 'medium',
+        status: 'not-started',
+        projectId: this.projectId() ?? null,
+      });
     }
   }
 

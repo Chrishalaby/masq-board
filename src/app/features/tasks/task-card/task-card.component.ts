@@ -26,7 +26,15 @@ import { Task, TaskPriority } from '../../../models/task.model';
         <p-tag [value]="task().priority" [severity]="prioritySeverity()" [rounded]="true" />
       </div>
 
-      <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">{{ task().owner }}</p>
+      <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+        {{ task().assignee?.displayName || task().owner || 'Unassigned' }}
+      </p>
+
+      @if (task().project) {
+        <p class="mb-1 text-xs text-indigo-600 dark:text-indigo-400">
+          📁 {{ task().project!.name }}
+        </p>
+      }
 
       @if (task().dueDate) {
         <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
@@ -36,29 +44,41 @@ import { Task, TaskPriority } from '../../../models/task.model';
 
       @if (task().labels?.length) {
         <div class="mb-2 flex flex-wrap gap-1">
-          @for (label of task().labels; track label) {
+          @for (label of task().labels; track label.id || label.name) {
             <span
-              class="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+              class="rounded-full px-2 py-0.5 text-xs"
+              [style.background-color]="(label.color || '#3B82F6') + '20'"
+              [style.color]="label.color || '#3B82F6'"
             >
-              {{ label }}
+              {{ label.name }}
             </span>
           }
         </div>
       }
 
-      @if (checklistProgress(); as progress) {
-        <div class="mt-2">
-          <div class="mb-1 flex justify-between text-xs text-gray-500">
-            <span>Checklist</span>
-            <span>{{ progress.done }}/{{ progress.total }}</span>
+      <div class="flex items-center gap-2">
+        @if (task().dependencyCount) {
+          <span
+            class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+            title="Dependencies"
+          >
+            🔗 {{ task().dependencyCount }}
+          </span>
+        }
+        @if (checklistProgress(); as progress) {
+          <div class="flex-1">
+            <div class="mb-1 flex justify-between text-xs text-gray-500">
+              <span>Checklist</span>
+              <span>{{ progress.done }}/{{ progress.total }}</span>
+            </div>
+            <p-progressBar
+              [value]="progress.percent"
+              [showValue]="false"
+              [style]="{ height: '6px' }"
+            />
           </div>
-          <p-progressBar
-            [value]="progress.percent"
-            [showValue]="false"
-            [style]="{ height: '6px' }"
-          />
-        </div>
-      }
+        }
+      </div>
     </div>
   `,
 })

@@ -18,18 +18,20 @@ import { TaskService } from '../../../services/task.service';
       [sortField]="'dueDate'"
       [sortOrder]="1"
       styleClass="p-datatable-sm p-datatable-striped"
-      [tableStyle]="{ 'min-width': '70rem' }"
+      [tableStyle]="{ 'min-width': '80rem' }"
     >
       <ng-template #header>
         <tr>
           <th pSortableColumn="title">Task Name <p-sortIcon field="title" /></th>
-          <th pSortableColumn="owner">Owner <p-sortIcon field="owner" /></th>
+          <th>Assignee</th>
+          <th>Project</th>
           <th pSortableColumn="priority">Priority <p-sortIcon field="priority" /></th>
           <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
           <th pSortableColumn="startDate">Start Date <p-sortIcon field="startDate" /></th>
           <th pSortableColumn="dueDate">Due Date <p-sortIcon field="dueDate" /></th>
           <th>Current Milestone</th>
           <th>Next Milestone</th>
+          <th>Deps</th>
           <th>Delay Risk</th>
         </tr>
       </ng-template>
@@ -42,7 +44,14 @@ import { TaskService } from '../../../services/task.service';
           [attr.aria-label]="'Open task: ' + task.title"
         >
           <td class="font-medium">{{ task.title }}</td>
-          <td>{{ task.owner }}</td>
+          <td>{{ task.assignee?.displayName || task.owner || '—' }}</td>
+          <td>
+            @if (task.project) {
+              <span class="text-indigo-600 dark:text-indigo-400">{{ task.project.name }}</span>
+            } @else {
+              <span class="text-gray-400">Standalone</span>
+            }
+          </td>
           <td>
             <p-tag
               [value]="task.priority"
@@ -57,6 +66,11 @@ import { TaskService } from '../../../services/task.service';
           <td>{{ task.dueDate | date: 'mediumDate' }}</td>
           <td>{{ task.currentMilestone }}</td>
           <td>{{ task.nextMilestone }}</td>
+          <td>
+            @if (task.dependencyCount) {
+              <span class="text-sm">🔗 {{ task.dependencyCount }}</span>
+            }
+          </td>
           <td>
             @if (task.delayRisk) {
               <span class="text-sm text-red-600 dark:text-red-400">⚠ {{ task.delayRisk }}</span>
