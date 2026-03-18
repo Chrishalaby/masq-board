@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://masq-board-api.azurewebsites.net/api',
+  apiUrl: 'https://masq-board-be-production.up.railway.app/api',
   msalConfig: {
     auth: {
       clientId: '7028812e-7502-40a0-9aac-4e860bf07bcf',
