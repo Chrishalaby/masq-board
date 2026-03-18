@@ -50,6 +50,6 @@
   "validDomains": ["masq-board.netlify.app", "login.microsoftonline.com"],
   "webApplicationInfo": {
     "id": "7028812e-7502-40a0-9aac-4e860bf07bcf",
-    "resource": "api://7028812e-7502-40a0-9aac-4e860bf07bcf"
+    "resource": "api://masq-board.netlify.app/7028812e-7502-40a0-9aac-4e860bf07bcf"
   }
 }
