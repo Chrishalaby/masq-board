@@ -498,10 +498,24 @@ export class TaskEditorComponent implements OnInit {
         ),
       );
     } else {
+      const pid = this.projectId() ?? null;
+      let defaultStart: Date | null = null;
+      let defaultDue: Date | null = null;
+
+      if (pid) {
+        const proj = this.projects().find((p) => p.id === pid);
+        if (proj) {
+          defaultStart = proj.startDate ? new Date(proj.startDate) : null;
+          defaultDue = proj.endDate ? new Date(proj.endDate) : null;
+        }
+      }
+
       this.form.reset({
         priority: 'medium',
         status: 'not-started',
-        projectId: this.projectId() ?? null,
+        projectId: pid,
+        startDate: defaultStart,
+        dueDate: defaultDue,
       });
     }
   }

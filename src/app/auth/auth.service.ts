@@ -12,6 +12,7 @@ export class AuthService {
   private readonly apiAccessTokenSignal = signal<string | null>(null);
   private readonly teamsAuthenticatedSignal = signal(false);
   private readonly teamsDisplayNameSignal = signal('');
+  private readonly teamsEmailSignal = signal('');
   private readonly isTeamsContextSignal = signal(false);
 
   readonly isAuthenticated = computed(
@@ -20,6 +21,9 @@ export class AuthService {
   readonly activeAccount = this.activeAccountSignal.asReadonly();
   readonly displayName = computed(
     () => this.activeAccountSignal()?.name ?? this.teamsDisplayNameSignal(),
+  );
+  readonly userEmail = computed(
+    () => this.activeAccountSignal()?.username ?? this.teamsEmailSignal(),
   );
   readonly inTeamsContext = this.isTeamsContextSignal.asReadonly();
 
@@ -127,6 +131,9 @@ export class AuthService {
 
       this.apiAccessTokenSignal.set(ssoToken);
       this.teamsAuthenticatedSignal.set(true);
+      if (loginHint) {
+        this.teamsEmailSignal.set(loginHint);
+      }
       if (!this.teamsDisplayNameSignal()) {
         this.teamsDisplayNameSignal.set(tokenPayload['name'] || '');
       }

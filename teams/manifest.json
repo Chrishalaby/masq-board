@@ -36,6 +36,13 @@
       "contentUrl": "https://masq-board.netlify.app/tasks",
       "websiteUrl": "https://masq-board.netlify.app/tasks",
       "scopes": ["personal"]
+    },
+    {
+      "entityId": "notes",
+      "name": "Notes",
+      "contentUrl": "https://masq-board.netlify.app/notes",
+      "websiteUrl": "https://masq-board.netlify.app/notes",
+      "scopes": ["personal"]
     }
   ],
   "configurableTabs": [
