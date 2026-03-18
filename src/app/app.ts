@@ -1,9 +1,9 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Toast } from 'primeng/toast';
-import { NavBarComponent } from './shared/nav-bar/nav-bar.component';
-import { CallOverlayComponent } from './shared/call-overlay/call-overlay.component';
 import { AuthService } from './auth/auth.service';
+import { CallOverlayComponent } from './shared/call-overlay/call-overlay.component';
+import { NavBarComponent } from './shared/nav-bar/nav-bar.component';
 
 @Component({
   selector: 'app-root',

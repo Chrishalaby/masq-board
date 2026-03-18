@@ -1,7 +1,7 @@
-import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Label } from '../models/task.model';
+import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { Label } from '../models/task.model';
 
 @Injectable({ providedIn: 'root' })
 export class LabelService {

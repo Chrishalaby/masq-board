@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Button } from 'primeng/button';
-import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { Project, PROJECT_STATUSES, ProjectStatus } from '../../../models/project.model';
 import { ProjectService } from '../../../services/project.service';

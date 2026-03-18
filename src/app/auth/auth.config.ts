@@ -1,7 +1,4 @@
-import {
-  MsalGuardConfiguration,
-  MsalInterceptorConfiguration,
-} from '@azure/msal-angular';
+import { MsalGuardConfiguration, MsalInterceptorConfiguration } from '@azure/msal-angular';
 import {
   BrowserCacheLocation,
   InteractionType,
@@ -30,14 +27,10 @@ export function msalInstanceFactory(): PublicClientApplication {
 
 export function msalInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, string[]>();
-  protectedResourceMap.set(
-    `${environment.apiUrl}/*`,
-    environment.msalConfig.scopes,
-  );
-  protectedResourceMap.set(
-    'https://graph.microsoft.com/v1.0/*',
-    ['https://graph.microsoft.com/.default'],
-  );
+  protectedResourceMap.set(`${environment.apiUrl}/*`, environment.msalConfig.scopes);
+  protectedResourceMap.set('https://graph.microsoft.com/v1.0/*', [
+    'https://graph.microsoft.com/.default',
+  ]);
 
   return {
     interactionType: InteractionType.Popup,

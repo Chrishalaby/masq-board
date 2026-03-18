@@ -1,7 +1,7 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Task, TaskStatus } from '../models/task.model';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { Task, TaskStatus } from '../models/task.model';
 
 interface QueryTaskParams {
   status?: TaskStatus;
@@ -79,9 +79,7 @@ export class TaskService {
     const payload = this.toApiPayload(task);
     this.http.patch<Task>(`${this.baseUrl}/${task.id}`, payload).subscribe({
       next: (updated) => {
-        this.tasksSignal.update((tasks) =>
-          tasks.map((t) => (t.id === updated.id ? updated : t)),
-        );
+        this.tasksSignal.update((tasks) => tasks.map((t) => (t.id === updated.id ? updated : t)));
       },
       error: (err) => this.errorSignal.set(err.message),
     });
@@ -102,37 +100,29 @@ export class TaskService {
       tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
     );
 
-    this.http
-      .patch<Task>(`${this.baseUrl}/${taskId}/status`, { status: newStatus })
-      .subscribe({
-        next: (updated) => {
-          this.tasksSignal.update((tasks) =>
-            tasks.map((t) => (t.id === updated.id ? updated : t)),
-          );
-        },
-        error: (err) => {
-          this.errorSignal.set(err.message);
-          this.loadTasks(); // Reload on error to reset optimistic update
-        },
-      });
+    this.http.patch<Task>(`${this.baseUrl}/${taskId}/status`, { status: newStatus }).subscribe({
+      next: (updated) => {
+        this.tasksSignal.update((tasks) => tasks.map((t) => (t.id === updated.id ? updated : t)));
+      },
+      error: (err) => {
+        this.errorSignal.set(err.message);
+        this.loadTasks(); // Reload on error to reset optimistic update
+      },
+    });
   }
 
   addDependency(taskId: string, dependsOnTaskId: string): void {
-    this.http
-      .post(`${this.baseUrl}/${taskId}/dependencies`, { dependsOnTaskId })
-      .subscribe({
-        next: () => this.loadTasks(),
-        error: (err) => this.errorSignal.set(err.message),
-      });
+    this.http.post(`${this.baseUrl}/${taskId}/dependencies`, { dependsOnTaskId }).subscribe({
+      next: () => this.loadTasks(),
+      error: (err) => this.errorSignal.set(err.message),
+    });
   }
 
   removeDependency(taskId: string, depId: string): void {
-    this.http
-      .delete(`${this.baseUrl}/${taskId}/dependencies/${depId}`)
-      .subscribe({
-        next: () => this.loadTasks(),
-        error: (err) => this.errorSignal.set(err.message),
-      });
+    this.http.delete(`${this.baseUrl}/${taskId}/dependencies/${depId}`).subscribe({
+      next: () => this.loadTasks(),
+      error: (err) => this.errorSignal.set(err.message),
+    });
   }
 
   private toApiPayload(task: Partial<Task>): Record<string, unknown> {

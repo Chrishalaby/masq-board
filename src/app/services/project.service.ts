@@ -1,7 +1,7 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Project, ProjectStatus } from '../models/project.model';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { Project, ProjectStatus } from '../models/project.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -83,20 +83,16 @@ export class ProjectService {
   }
 
   addMember(projectId: string, userId: string, role: string): void {
-    this.http
-      .post(`${this.baseUrl}/${projectId}/members`, { userId, role })
-      .subscribe({
-        next: () => this.loadProjects(),
-        error: (err) => this.errorSignal.set(err.message),
-      });
+    this.http.post(`${this.baseUrl}/${projectId}/members`, { userId, role }).subscribe({
+      next: () => this.loadProjects(),
+      error: (err) => this.errorSignal.set(err.message),
+    });
   }
 
   removeMember(projectId: string, memberId: string): void {
-    this.http
-      .delete(`${this.baseUrl}/${projectId}/members/${memberId}`)
-      .subscribe({
-        next: () => this.loadProjects(),
-        error: (err) => this.errorSignal.set(err.message),
-      });
+    this.http.delete(`${this.baseUrl}/${projectId}/members/${memberId}`).subscribe({
+      next: () => this.loadProjects(),
+      error: (err) => this.errorSignal.set(err.message),
+    });
   }
 }

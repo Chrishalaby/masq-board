@@ -1,17 +1,17 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
+import { SelectButton } from 'primeng/selectbutton';
 import { Tag } from 'primeng/tag';
 import { Project, ProjectStatus } from '../../../models/project.model';
+import { Task } from '../../../models/task.model';
 import { ProjectService } from '../../../services/project.service';
 import { TaskService } from '../../../services/task.service';
 import { TaskBoardComponent } from '../../tasks/task-board/task-board.component';
-import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
 import { TaskEditorComponent } from '../../tasks/task-editor/task-editor.component';
-import { Task } from '../../../models/task.model';
-import { FormsModule } from '@angular/forms';
-import { SelectButton } from 'primeng/selectbutton';
-import { DatePipe } from '@angular/common';
+import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
 
 @Component({
   selector: 'app-project-detail',

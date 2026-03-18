@@ -1,34 +1,18 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { DatePicker } from 'primeng/datepicker';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
-import {
-  Project,
-  PROJECT_STATUSES,
-} from '../../../models/project.model';
+import { Project, PROJECT_STATUSES } from '../../../models/project.model';
 import { ProjectService } from '../../../services/project.service';
 
 @Component({
   selector: 'app-project-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    ReactiveFormsModule,
-    Dialog,
-    InputText,
-    Textarea,
-    Select,
-    DatePicker,
-    Button,
-  ],
+  imports: [ReactiveFormsModule, Dialog, InputText, Textarea, Select, DatePicker, Button],
   template: `
     <p-dialog
       [header]="project() ? 'Edit Project' : 'New Project'"
@@ -85,12 +69,7 @@ import { ProjectService } from '../../../services/project.service';
 
         <div class="flex justify-end gap-2 border-t pt-3">
           @if (project()) {
-            <p-button
-              label="Delete"
-              severity="danger"
-              [outlined]="true"
-              (onClick)="onDelete()"
-            />
+            <p-button label="Delete" severity="danger" [outlined]="true" (onClick)="onDelete()" />
           }
           <p-button
             label="Cancel"

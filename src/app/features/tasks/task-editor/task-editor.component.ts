@@ -8,13 +8,11 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
-import { Task, TASK_PRIORITIES, TASK_STATUSES, Label } from '../../../models/task.model';
-import { User } from '../../../models/user.model';
-import { Project } from '../../../models/project.model';
+import { Label, Task, TASK_PRIORITIES, TASK_STATUSES } from '../../../models/task.model';
+import { LabelService } from '../../../services/label.service';
+import { ProjectService } from '../../../services/project.service';
 import { TaskService } from '../../../services/task.service';
 import { UserService } from '../../../services/user.service';
-import { ProjectService } from '../../../services/project.service';
-import { LabelService } from '../../../services/label.service';
 
 @Component({
   selector: 'app-task-editor',

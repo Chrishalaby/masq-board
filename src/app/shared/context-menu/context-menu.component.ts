@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
-import { ContextMenu } from 'primeng/contextmenu';
 import { MenuItem } from 'primeng/api';
+import { ContextMenu } from 'primeng/contextmenu';
 import { Task } from '../../models/task.model';
 import { TeamsCallService } from '../../services/teams-call.service';
 
@@ -14,9 +14,7 @@ export interface ContextMenuTarget {
   selector: 'app-context-menu',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ContextMenu],
-  template: `
-    <p-contextmenu [model]="menuItems()" [target]="targetEl()" />
-  `,
+  template: ` <p-contextmenu [model]="menuItems()" [target]="targetEl()" /> `,
 })
 export class ContextMenuComponent {
   private readonly teamsCallService = inject(TeamsCallService);
