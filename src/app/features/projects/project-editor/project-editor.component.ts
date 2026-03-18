@@ -6,6 +6,7 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
+import { take } from 'rxjs/operators';
 import { Project, PROJECT_STATUSES } from '../../../models/project.model';
 import { ProjectService } from '../../../services/project.service';
 
@@ -122,20 +123,34 @@ export class ProjectEditorComponent {
 
     const existing = this.project();
     if (existing) {
-      this.projectService.updateProject(existing.id, data as Partial<Project>);
+      this.projectService
+        .updateProject(existing.id, data as Partial<Project>)
+        .pipe(take(1))
+        .subscribe(() => {
+          this.saved.emit();
+          this.visibleChange.emit(false);
+        });
     } else {
-      this.projectService.createProject(data as Partial<Project>);
+      this.projectService
+        .createProject(data as Partial<Project>)
+        .pipe(take(1))
+        .subscribe(() => {
+          this.saved.emit();
+          this.visibleChange.emit(false);
+        });
     }
-    this.saved.emit();
-    this.visibleChange.emit(false);
   }
 
   onDelete(): void {
     const existing = this.project();
     if (existing) {
-      this.projectService.deleteProject(existing.id);
-      this.saved.emit();
-      this.visibleChange.emit(false);
+      this.projectService
+        .deleteProject(existing.id)
+        .pipe(take(1))
+        .subscribe(() => {
+          this.saved.emit();
+          this.visibleChange.emit(false);
+        });
     }
   }
 

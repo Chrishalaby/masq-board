@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Task, TaskStatus } from '../models/task.model';
 
@@ -65,33 +66,39 @@ export class TaskService {
     return this.tasksSignal().find((t) => t.id === id);
   }
 
-  addTask(task: Partial<Task>): void {
+  addTask(task: Partial<Task>): Observable<Task> {
     const payload = this.toApiPayload(task);
-    this.http.post<Task>(this.baseUrl, payload).subscribe({
-      next: (created) => {
-        this.tasksSignal.update((tasks) => [created, ...tasks]);
-      },
-      error: (err) => this.errorSignal.set(err.message),
-    });
+    return this.http.post<Task>(this.baseUrl, payload).pipe(
+      tap({
+        next: (created) => {
+          this.tasksSignal.update((tasks) => [created, ...tasks]);
+        },
+        error: (err) => this.errorSignal.set(err.message),
+      }),
+    );
   }
 
-  updateTask(task: Task): void {
+  updateTask(task: Task): Observable<Task> {
     const payload = this.toApiPayload(task);
-    this.http.patch<Task>(`${this.baseUrl}/${task.id}`, payload).subscribe({
-      next: (updated) => {
-        this.tasksSignal.update((tasks) => tasks.map((t) => (t.id === updated.id ? updated : t)));
-      },
-      error: (err) => this.errorSignal.set(err.message),
-    });
+    return this.http.patch<Task>(`${this.baseUrl}/${task.id}`, payload).pipe(
+      tap({
+        next: (updated) => {
+          this.tasksSignal.update((tasks) => tasks.map((t) => (t.id === updated.id ? updated : t)));
+        },
+        error: (err) => this.errorSignal.set(err.message),
+      }),
+    );
   }
 
-  deleteTask(id: string): void {
-    this.http.delete(`${this.baseUrl}/${id}`).subscribe({
-      next: () => {
-        this.tasksSignal.update((tasks) => tasks.filter((t) => t.id !== id));
-      },
-      error: (err) => this.errorSignal.set(err.message),
-    });
+  deleteTask(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
+      tap({
+        next: () => {
+          this.tasksSignal.update((tasks) => tasks.filter((t) => t.id !== id));
+        },
+        error: (err) => this.errorSignal.set(err.message),
+      }),
+    );
   }
 
   moveTask(taskId: string, newStatus: TaskStatus): void {

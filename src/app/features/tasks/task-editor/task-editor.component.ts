@@ -8,6 +8,7 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
+import { take } from 'rxjs/operators';
 import { Label, Task, TASK_PRIORITIES, TASK_STATUSES } from '../../../models/task.model';
 import { LabelService } from '../../../services/label.service';
 import { ProjectService } from '../../../services/project.service';
@@ -398,20 +399,34 @@ export class TaskEditorComponent implements OnInit {
 
     const existingTask = this.task();
     if (existingTask) {
-      this.taskService.updateTask({ ...taskData, id: existingTask.id } as Task);
+      this.taskService
+        .updateTask({ ...taskData, id: existingTask.id } as Task)
+        .pipe(take(1))
+        .subscribe(() => {
+          this.saved.emit();
+          this.visibleChange.emit(false);
+        });
     } else {
-      this.taskService.addTask(taskData);
+      this.taskService
+        .addTask(taskData)
+        .pipe(take(1))
+        .subscribe(() => {
+          this.saved.emit();
+          this.visibleChange.emit(false);
+        });
     }
-    this.saved.emit();
-    this.visibleChange.emit(false);
   }
 
   onDelete(): void {
     const existingTask = this.task();
     if (existingTask) {
-      this.taskService.deleteTask(existingTask.id);
-      this.saved.emit();
-      this.visibleChange.emit(false);
+      this.taskService
+        .deleteTask(existingTask.id)
+        .pipe(take(1))
+        .subscribe(() => {
+          this.saved.emit();
+          this.visibleChange.emit(false);
+        });
     }
   }
 
