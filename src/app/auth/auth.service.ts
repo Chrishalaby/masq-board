@@ -9,11 +9,18 @@ export class AuthService {
   private readonly msal = inject(MsalService);
 
   private readonly activeAccountSignal = signal<AccountInfo | null>(null);
-  readonly isAuthenticated = computed(() => !!this.activeAccountSignal());
-  readonly activeAccount = this.activeAccountSignal.asReadonly();
-  readonly displayName = computed(() => this.activeAccountSignal()?.name ?? '');
+  private readonly teamsAuthenticatedSignal = signal(false);
+  private readonly teamsDisplayNameSignal = signal('');
+  private readonly isTeamsContextSignal = signal(false);
 
-  private isTeamsContext = false;
+  readonly isAuthenticated = computed(
+    () => !!this.activeAccountSignal() || this.teamsAuthenticatedSignal(),
+  );
+  readonly activeAccount = this.activeAccountSignal.asReadonly();
+  readonly displayName = computed(
+    () => this.activeAccountSignal()?.name ?? this.teamsDisplayNameSignal(),
+  );
+  readonly inTeamsContext = this.isTeamsContextSignal.asReadonly();
 
   async initialize(): Promise<void> {
     await this.msal.instance.initialize();
@@ -22,11 +29,14 @@ export class AuthService {
     // Check if we're running inside Microsoft Teams
     try {
       await microsoftTeams.app.initialize();
-      this.isTeamsContext = true;
+      this.isTeamsContextSignal.set(true);
+
+      const context = await microsoftTeams.app.getContext();
+      this.teamsDisplayNameSignal.set(context.user?.displayName ?? '');
       await this.acquireTeamsToken();
     } catch {
       // Not in Teams context — standard MSAL flow
-      this.isTeamsContext = false;
+      this.isTeamsContextSignal.set(false);
       const accounts = this.msal.instance.getAllAccounts();
       if (accounts.length) {
         this.msal.instance.setActiveAccount(accounts[0]);
@@ -36,7 +46,7 @@ export class AuthService {
   }
 
   async login(): Promise<void> {
-    if (this.isTeamsContext) {
+    if (this.isTeamsContextSignal()) {
       await this.acquireTeamsToken();
       return;
     }
@@ -53,7 +63,7 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
-    if (this.isTeamsContext) {
+    if (this.isTeamsContextSignal()) {
       // Can't sign out from within Teams — the Teams shell manages auth
       return;
     }
@@ -64,10 +74,14 @@ export class AuthService {
   private async acquireTeamsToken(): Promise<void> {
     try {
       const ssoToken = await microsoftTeams.authentication.getAuthToken();
+      const tokenPayload = this.decodeJwtPayload(ssoToken);
+      const loginHint =
+        tokenPayload['preferred_username'] || tokenPayload['upn'] || tokenPayload['email'];
 
-      // Decode the SSO token to extract loginHint for MSAL ssoSilent
-      const tokenPayload = JSON.parse(atob(ssoToken.split('.')[1]));
-      const loginHint = tokenPayload.preferred_username || tokenPayload.upn;
+      this.teamsAuthenticatedSignal.set(true);
+      if (!this.teamsDisplayNameSignal()) {
+        this.teamsDisplayNameSignal.set(tokenPayload['name'] || '');
+      }
 
       // Use ssoSilent to acquire an MSAL token using the Teams SSO context
       const result = await this.msal.instance.ssoSilent({
@@ -81,23 +95,15 @@ export class AuthService {
         return;
       }
     } catch {
-      // ssoSilent failed — likely needs consent
+      // Keep Teams session active even if MSAL silent token acquisition fails.
+      // This avoids opening auth popups/tabs inside Teams.
     }
+  }
 
-    // Fallback: use Teams auth popup for consent
-    try {
-      await microsoftTeams.authentication.authenticate({
-        url: `${window.location.origin}/auth-start`,
-        width: 600,
-        height: 535,
-      });
-      const accounts = this.msal.instance.getAllAccounts();
-      if (accounts.length) {
-        this.msal.instance.setActiveAccount(accounts[0]);
-        this.activeAccountSignal.set(accounts[0]);
-      }
-    } catch (error) {
-      console.error('Teams authentication failed:', error);
-    }
+  private decodeJwtPayload(token: string): Record<string, string> {
+    const payload = token.split('.')[1] || '';
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+    return JSON.parse(atob(padded));
   }
 }

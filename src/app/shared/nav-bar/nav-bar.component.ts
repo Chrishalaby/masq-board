@@ -37,8 +37,10 @@ import { AuthService } from '../../auth/auth.service';
             (onClick)="auth.logout()"
             ariaLabel="Sign out"
           />
-        } @else {
+        } @else if (!auth.inTeamsContext()) {
           <p-button label="Sign In" size="small" (onClick)="auth.login()" />
+        } @else {
+          <span class="text-sm text-gray-500 dark:text-gray-400">Using Teams SSO</span>
         }
       </div>
     </nav>
