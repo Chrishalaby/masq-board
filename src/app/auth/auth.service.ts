@@ -25,6 +25,9 @@ export class AuthService {
   async initialize(): Promise<void> {
     await this.msal.instance.initialize();
     await this.msal.instance.handleRedirectPromise();
+    console.info('[Auth] initialize:start', {
+      existingAccounts: this.msal.instance.getAllAccounts().length,
+    });
 
     // Check if we're running inside Microsoft Teams
     try {
@@ -33,14 +36,20 @@ export class AuthService {
 
       const context = await microsoftTeams.app.getContext();
       this.teamsDisplayNameSignal.set(context.user?.displayName ?? '');
+      console.info('[Auth] Teams context detected', {
+        displayName: context.user?.displayName ?? '',
+        loginHint: context.user?.loginHint ?? '',
+      });
       await this.acquireTeamsToken();
     } catch {
       // Not in Teams context — standard MSAL flow
       this.isTeamsContextSignal.set(false);
       const accounts = this.msal.instance.getAllAccounts();
+      console.info('[Auth] Browser context detected', { accounts: accounts.length });
       if (accounts.length) {
         this.msal.instance.setActiveAccount(accounts[0]);
         this.activeAccountSignal.set(accounts[0]);
+        console.info('[Auth] Active account restored', { username: accounts[0].username });
       }
     }
   }
@@ -77,6 +86,10 @@ export class AuthService {
       const tokenPayload = this.decodeJwtPayload(ssoToken);
       const loginHint =
         tokenPayload['preferred_username'] || tokenPayload['upn'] || tokenPayload['email'];
+      console.info('[Auth] Teams getAuthToken succeeded', {
+        hasSsoToken: !!ssoToken,
+        loginHint,
+      });
 
       this.teamsAuthenticatedSignal.set(true);
       if (!this.teamsDisplayNameSignal()) {
@@ -88,15 +101,20 @@ export class AuthService {
         scopes: environment.msalConfig.apiScopes,
         loginHint,
       });
+      console.info('[Auth] ssoSilent resolved', {
+        hasAccount: !!result?.account,
+        username: result?.account?.username ?? null,
+      });
 
       if (result?.account) {
         this.msal.instance.setActiveAccount(result.account);
         this.activeAccountSignal.set(result.account);
         return;
       }
-    } catch {
+    } catch (error) {
       // Keep Teams session active even if MSAL silent token acquisition fails.
       // This avoids opening auth popups/tabs inside Teams.
+      console.error('[Auth] Teams silent auth failed', error);
     }
   }
 

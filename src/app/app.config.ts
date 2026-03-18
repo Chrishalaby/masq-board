@@ -26,6 +26,7 @@ import {
   msalInstanceFactory,
   msalInterceptorConfigFactory,
 } from './auth/auth.config';
+import { debugInterceptor } from './interceptors/debug.interceptor';
 import { errorInterceptor } from './interceptors/error.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -33,7 +34,10 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideAnimationsAsync(),
-    provideHttpClient(withInterceptorsFromDi(), withInterceptors([errorInterceptor])),
+    provideHttpClient(
+      withInterceptorsFromDi(),
+      withInterceptors([debugInterceptor, errorInterceptor]),
+    ),
     {
       provide: MSAL_INSTANCE,
       useFactory: msalInstanceFactory,
