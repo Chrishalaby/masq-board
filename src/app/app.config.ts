@@ -26,6 +26,7 @@ import {
   msalInstanceFactory,
   msalInterceptorConfigFactory,
 } from './auth/auth.config';
+import { appApiAuthInterceptor } from './interceptors/app-api-auth.interceptor';
 import { debugInterceptor } from './interceptors/debug.interceptor';
 import { errorInterceptor } from './interceptors/error.interceptor';
 
@@ -36,7 +37,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideHttpClient(
       withInterceptorsFromDi(),
-      withInterceptors([debugInterceptor, errorInterceptor]),
+      withInterceptors([appApiAuthInterceptor, debugInterceptor, errorInterceptor]),
     ),
     {
       provide: MSAL_INSTANCE,

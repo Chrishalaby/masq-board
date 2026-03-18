@@ -9,6 +9,7 @@ export class AuthService {
   private readonly msal = inject(MsalService);
 
   private readonly activeAccountSignal = signal<AccountInfo | null>(null);
+  private readonly apiAccessTokenSignal = signal<string | null>(null);
   private readonly teamsAuthenticatedSignal = signal(false);
   private readonly teamsDisplayNameSignal = signal('');
   private readonly isTeamsContextSignal = signal(false);
@@ -78,6 +79,39 @@ export class AuthService {
     }
     await this.msal.instance.logoutPopup();
     this.activeAccountSignal.set(null);
+    this.apiAccessTokenSignal.set(null);
+  }
+
+  async getApiAccessToken(): Promise<string | null> {
+    if (this.isTeamsContextSignal()) {
+      const existingToken = this.apiAccessTokenSignal();
+      if (existingToken) {
+        return existingToken;
+      }
+
+      await this.acquireTeamsToken();
+      return this.apiAccessTokenSignal();
+    }
+
+    const account = this.activeAccountSignal() || this.msal.instance.getActiveAccount();
+    if (!account) {
+      console.warn('[Auth] No active account available for API token');
+      return null;
+    }
+
+    try {
+      const result = await this.msal.instance.acquireTokenSilent({
+        scopes: environment.msalConfig.apiScopes,
+        account,
+      });
+      console.info('[Auth] Browser acquireTokenSilent succeeded', {
+        username: result.account?.username ?? null,
+      });
+      return result.accessToken;
+    } catch (error) {
+      console.error('[Auth] Browser acquireTokenSilent failed', error);
+      return null;
+    }
   }
 
   private async acquireTeamsToken(): Promise<void> {
@@ -91,30 +125,13 @@ export class AuthService {
         loginHint,
       });
 
+      this.apiAccessTokenSignal.set(ssoToken);
       this.teamsAuthenticatedSignal.set(true);
       if (!this.teamsDisplayNameSignal()) {
         this.teamsDisplayNameSignal.set(tokenPayload['name'] || '');
       }
-
-      // Use ssoSilent to acquire an MSAL token using the Teams SSO context
-      const result = await this.msal.instance.ssoSilent({
-        scopes: environment.msalConfig.apiScopes,
-        loginHint,
-      });
-      console.info('[Auth] ssoSilent resolved', {
-        hasAccount: !!result?.account,
-        username: result?.account?.username ?? null,
-      });
-
-      if (result?.account) {
-        this.msal.instance.setActiveAccount(result.account);
-        this.activeAccountSignal.set(result.account);
-        return;
-      }
     } catch (error) {
-      // Keep Teams session active even if MSAL silent token acquisition fails.
-      // This avoids opening auth popups/tabs inside Teams.
-      console.error('[Auth] Teams silent auth failed', error);
+      console.error('[Auth] Teams getAuthToken failed', error);
     }
   }
 
