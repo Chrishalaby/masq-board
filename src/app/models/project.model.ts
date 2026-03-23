@@ -11,26 +11,37 @@ export type ProjectRole =
   | 'development';
 
 export interface ProjectMember {
-  id: string;
-  projectId: string;
-  userId: string;
-  role: ProjectRole;
-  user?: User;
-  createdAt: string;
+  readonly id: string;
+  readonly projectId: string;
+  readonly userId: string;
+  readonly role: ProjectRole;
+  readonly user?: User;
+  readonly createdAt: string;
 }
 
 export interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  status: ProjectStatus;
-  startDate?: string;
-  endDate?: string;
-  isHot: boolean;
-  members?: ProjectMember[];
-  taskCount?: number;
-  createdAt: string;
-  updatedAt: string;
+  readonly id: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly status: ProjectStatus;
+  readonly startDate?: string;
+  readonly endDate?: string;
+  readonly isHot: boolean;
+  readonly apolloProjectId?: string;
+  readonly dynamicsNo?: string;
+  readonly clientId?: string;
+  readonly clientName?: string;
+  readonly contactId?: string;
+  readonly contactName?: string;
+  readonly totalTypesNumber?: number;
+  readonly budgetAmount?: number;
+  readonly currency?: string;
+  readonly kickoffMeetingId?: string;
+  readonly kickoffMeetingUrl?: string;
+  readonly members?: ProjectMember[];
+  readonly taskCount?: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
 }
 
 export const PROJECT_STATUSES: { value: ProjectStatus; label: string }[] = [

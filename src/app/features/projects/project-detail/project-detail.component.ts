@@ -1,14 +1,24 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { SelectButton } from 'primeng/selectbutton';
 import { Tag } from 'primeng/tag';
-import { Project, ProjectStatus } from '../../../models/project.model';
+import { Tooltip } from 'primeng/tooltip';
+import { Project, ProjectMember, ProjectStatus } from '../../../models/project.model';
 import { Task } from '../../../models/task.model';
+import { User } from '../../../models/user.model';
 import { ProjectService } from '../../../services/project.service';
 import { TaskService } from '../../../services/task.service';
+import { ContextMenuComponent } from '../../../shared/context-menu/context-menu.component';
 import { TaskBoardComponent } from '../../tasks/task-board/task-board.component';
 import { TaskEditorComponent } from '../../tasks/task-editor/task-editor.component';
 import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
@@ -26,6 +36,8 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
     TaskBoardComponent,
     TaskGridComponent,
     TaskEditorComponent,
+    ContextMenuComponent,
+    Tooltip,
   ],
   template: `
     @if (project(); as p) {
@@ -74,13 +86,31 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
           @if (p.members?.length) {
             <span>{{ p.members!.length }} members</span>
           }
+          @if (p.dynamicsNo) {
+            <span class="text-purple-600 dark:text-purple-400">BC: {{ p.dynamicsNo }}</span>
+          }
+          @if (p.clientName) {
+            <span>Client: {{ p.clientName }}</span>
+          }
+          @if (p.kickoffMeetingUrl) {
+            <a
+              [href]="p.kickoffMeetingUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              <i class="pi pi-video mr-1"></i>Join Kickoff
+            </a>
+          }
         </div>
         @if (p.members?.length) {
           <div class="mt-2 flex flex-wrap gap-2">
             @for (m of p.members; track m.id) {
               <span
-                class="rounded-full bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700"
-                [title]="m.role"
+                class="cursor-pointer rounded-full bg-gray-100 px-2 py-1 text-xs hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                [pTooltip]="'Right-click to call ' + (m.user?.displayName ?? m.userId)"
+                tooltipPosition="top"
+                (contextmenu)="onMemberRightClick($event, m)"
               >
                 {{ m.user?.displayName ?? m.userId }} — {{ m.role }}
               </span>
@@ -105,6 +135,8 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         (visibleChange)="editorVisible.set($event)"
         (saved)="onTaskSaved()"
       />
+
+      <app-context-menu (viewDetails)="openEditTask($event)" />
     }
   `,
 })
@@ -117,6 +149,7 @@ export class ProjectDetailComponent implements OnInit {
   readonly activeView = signal<'board' | 'grid'>('board');
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
+  readonly contextMenu = viewChild(ContextMenuComponent);
 
   readonly viewOptions = [
     { label: 'Board', value: 'board' },
@@ -164,5 +197,12 @@ export class ProjectDetailComponent implements OnInit {
       archived: 'danger',
     };
     return map[s];
+  }
+
+  onMemberRightClick(event: MouseEvent, member: ProjectMember): void {
+    if (!member.user) return;
+    event.preventDefault();
+    const user = member.user as User;
+    this.contextMenu()?.openForUser(user, event.target as HTMLElement, event);
   }
 }

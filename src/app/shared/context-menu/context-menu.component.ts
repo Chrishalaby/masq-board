@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, output, signal } from '@ang
 import { MenuItem } from 'primeng/api';
 import { ContextMenu } from 'primeng/contextmenu';
 import { Task } from '../../models/task.model';
+import { User } from '../../models/user.model';
 import { TeamsCallService } from '../../services/teams-call.service';
 
 export interface ContextMenuTarget {
   task?: Task;
+  user?: User;
   element: HTMLElement;
   event: MouseEvent;
 }
@@ -23,17 +25,18 @@ export class ContextMenuComponent {
   readonly targetEl = signal<HTMLElement | null>(null);
 
   private currentTask = signal<Task | null>(null);
+  private currentUser = signal<User | null>(null);
 
   readonly menuItems = signal<MenuItem[]>([
     {
-      label: 'Call Assignee',
+      label: 'Call',
       icon: 'pi pi-phone',
-      command: () => this.callAssignee(),
+      command: () => this.callTarget(),
     },
     {
-      label: 'Share Screen',
-      icon: 'pi pi-desktop',
-      command: () => this.shareScreen(),
+      label: 'Video Call',
+      icon: 'pi pi-video',
+      command: () => this.videoCallTarget(),
     },
     { separator: true },
     {
@@ -53,20 +56,34 @@ export class ContextMenuComponent {
 
   open(target: ContextMenuTarget): void {
     this.currentTask.set(target.task ?? null);
+    this.currentUser.set(target.user ?? null);
     this.targetEl.set(target.element);
   }
 
-  private callAssignee(): void {
+  openForUser(user: User, element: HTMLElement, event: MouseEvent): void {
+    this.currentUser.set(user);
+    this.currentTask.set(null);
+    this.targetEl.set(element);
+  }
+
+  private getTeamsId(): string | null {
+    const user = this.currentUser();
+    if (user?.teamsId) return user.teamsId;
     const task = this.currentTask();
-    if (task?.assignee?.teamsId) {
-      this.teamsCallService.startCall(task.assignee.teamsId);
+    return task?.assignee?.teamsId ?? null;
+  }
+
+  private callTarget(): void {
+    const teamsId = this.getTeamsId();
+    if (teamsId) {
+      this.teamsCallService.startCall(teamsId);
     }
   }
 
-  private shareScreen(): void {
-    const task = this.currentTask();
-    if (task?.assignee?.teamsId) {
-      this.teamsCallService.startVideoCall(task.assignee.teamsId);
+  private videoCallTarget(): void {
+    const teamsId = this.getTeamsId();
+    if (teamsId) {
+      this.teamsCallService.startVideoCall(teamsId);
     }
   }
 

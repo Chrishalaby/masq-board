@@ -1,17 +1,32 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Button } from 'primeng/button';
 import { Select } from 'primeng/select';
 import { Project, PROJECT_STATUSES, ProjectStatus } from '../../../models/project.model';
 import { ProjectService } from '../../../services/project.service';
+import { DynamicsSyncDialogComponent } from '../dynamics-sync-dialog/dynamics-sync-dialog.component';
 import { ProjectCardComponent } from '../project-card/project-card.component';
 import { ProjectEditorComponent } from '../project-editor/project-editor.component';
 
 @Component({
   selector: 'app-project-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, Button, Select, ProjectCardComponent, ProjectEditorComponent],
+  imports: [
+    FormsModule,
+    Button,
+    Select,
+    ProjectCardComponent,
+    ProjectEditorComponent,
+    DynamicsSyncDialogComponent,
+  ],
   template: `
     <header
       class="flex items-center justify-between border-b border-gray-200 px-6 py-3 dark:border-gray-700"
@@ -28,6 +43,13 @@ import { ProjectEditorComponent } from '../project-editor/project-editor.compone
           (onChange)="onFilterChange()"
         />
         <p-button label="New Project" icon="pi pi-plus" (onClick)="openNewProject()" />
+        <p-button
+          label="Sync from Dynamics"
+          icon="pi pi-sync"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="openDynamicsSync()"
+        />
       </div>
     </header>
 
@@ -47,6 +69,8 @@ import { ProjectEditorComponent } from '../project-editor/project-editor.compone
       (visibleChange)="editorVisible.set($event)"
       (saved)="onSaved()"
     />
+
+    <app-dynamics-sync-dialog (closed)="onSaved()" />
   `,
 })
 export class ProjectShellComponent implements OnInit {
@@ -57,6 +81,7 @@ export class ProjectShellComponent implements OnInit {
   readonly editorVisible = signal(false);
   readonly selectedProject = signal<Project | null>(null);
   readonly statusFilter = signal<ProjectStatus | null>(null);
+  readonly dynamicsSyncDialog = viewChild(DynamicsSyncDialogComponent);
 
   readonly statusOptions = PROJECT_STATUSES;
 
@@ -81,5 +106,9 @@ export class ProjectShellComponent implements OnInit {
   onFilterChange(): void {
     const status = this.statusFilter() ?? undefined;
     this.projectService.loadProjects({ status });
+  }
+
+  openDynamicsSync(): void {
+    this.dynamicsSyncDialog()?.open();
   }
 }

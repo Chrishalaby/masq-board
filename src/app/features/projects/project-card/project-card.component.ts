@@ -25,6 +25,14 @@ import { Project, ProjectStatus } from '../../../models/project.model';
           @if (project().isHot) {
             <span class="text-sm" title="Hot project">🔥</span>
           }
+          @if (project().dynamicsNo) {
+            <span
+              class="rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+              title="Dynamics 365 Job"
+            >
+              BC
+            </span>
+          }
           <p-tag [value]="project().status" [severity]="statusSeverity()" [rounded]="true" />
         </div>
       </div>
