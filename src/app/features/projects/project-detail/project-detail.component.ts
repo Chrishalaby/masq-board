@@ -427,9 +427,7 @@ export class ProjectDetailComponent implements OnInit {
   searchAttendees(event: AutoCompleteCompleteEvent): void {
     const query = event.query.toLowerCase();
     const members = this.project()?.members ?? [];
-    const memberEmails = members
-      .map((m) => m.user?.email)
-      .filter((e): e is string => !!e);
+    const memberEmails = members.map((m) => m.user?.email).filter((e): e is string => !!e);
     this.attendeeSuggestions = memberEmails.filter(
       (email) => email.toLowerCase().includes(query) && !this.extraAttendees.includes(email),
     );
