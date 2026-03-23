@@ -122,9 +122,7 @@ export class ProjectService {
     });
   }
 
-  getKickoffAttendance(
-    projectId: string,
-  ): Observable<{
+  getKickoffAttendance(projectId: string): Observable<{
     meetingId: string | null;
     meetingUrl?: string;
     attendance: {

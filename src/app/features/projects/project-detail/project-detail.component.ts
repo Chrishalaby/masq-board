@@ -110,7 +110,9 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         @if (p.description) {
           <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ p.description }}</p>
         }
-        <div class="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <div
+          class="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400"
+        >
           @if (p.startDate) {
             <span>Start: {{ p.startDate | date: 'mediumDate' }}</span>
           }
@@ -160,7 +162,9 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
 
         <!-- Attendance Panel -->
         @if (attendanceVisible() && attendanceData().length) {
-          <div class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+          <div
+            class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
+          >
             <h3 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
               <i class="pi pi-users mr-1"></i>Kickoff Attendance
             </h3>
@@ -168,9 +172,11 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
               @for (a of attendanceData(); track a.email) {
                 <span
                   class="rounded-full px-2 py-1 text-xs"
-                  [class]="a.attended
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
+                  [class]="
+                    a.attended
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                  "
                 >
                   {{ a.attended ? '✓' : '✗' }} {{ a.displayName || a.email }}
                 </span>
@@ -208,7 +214,9 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
       >
         <div class="flex flex-col gap-4">
           <div>
-            <label class="mb-1 block text-sm font-medium" for="kickoffTime">Meeting Date & Time</label>
+            <label class="mb-1 block text-sm font-medium" for="kickoffTime"
+              >Meeting Date & Time</label
+            >
             <p-datepicker
               [(ngModel)]="kickoffDate"
               [showTime]="true"
@@ -219,7 +227,9 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
             />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium" for="kickoffDuration">Duration (minutes)</label>
+            <label class="mb-1 block text-sm font-medium" for="kickoffDuration"
+              >Duration (minutes)</label
+            >
             <p-inputnumber
               [(ngModel)]="kickoffDuration"
               [min]="15"
