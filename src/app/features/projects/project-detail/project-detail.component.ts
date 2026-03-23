@@ -10,6 +10,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { AutoComplete, AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { Button } from 'primeng/button';
 import { DatePicker } from 'primeng/datepicker';
 import { Dialog } from 'primeng/dialog';
@@ -51,6 +52,7 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
     InputNumber,
     Select,
     Toast,
+    AutoComplete,
   ],
   template: `
     <p-toast />
@@ -221,8 +223,10 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
               [(ngModel)]="kickoffDate"
               [showTime]="true"
               [hourFormat]="'24'"
+              [minDate]="today"
               dateFormat="yy-mm-dd"
               inputId="kickoffTime"
+              appendTo="body"
               class="w-full"
             />
           </div>
@@ -242,6 +246,23 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
           <p class="text-xs text-gray-500 dark:text-gray-400">
             All project members will be invited. Core team is added automatically.
           </p>
+          <div>
+            <label class="mb-1 block text-sm font-medium" for="extraAttendees"
+              >Additional Attendees</label
+            >
+            <p-autoComplete
+              [(ngModel)]="extraAttendees"
+              [suggestions]="attendeeSuggestions"
+              [multiple]="true"
+              [completeOnFocus]="true"
+              [unique]="true"
+              placeholder="Search members or type an email"
+              inputId="extraAttendees"
+              appendTo="body"
+              class="w-full"
+              (completeMethod)="searchAttendees($event)"
+            />
+          </div>
         </div>
         <ng-template #footer>
           <p-button
@@ -330,6 +351,9 @@ export class ProjectDetailComponent implements OnInit {
   readonly kickoffLoading = signal(false);
   kickoffDate = new Date();
   kickoffDuration = 60;
+  extraAttendees: string[] = [];
+  attendeeSuggestions: string[] = [];
+  readonly today = new Date();
 
   // Attendance
   readonly attendanceVisible = signal(false);
@@ -400,13 +424,29 @@ export class ProjectDetailComponent implements OnInit {
 
   // --- Kickoff ---
 
+  searchAttendees(event: AutoCompleteCompleteEvent): void {
+    const query = event.query.toLowerCase();
+    const members = this.project()?.members ?? [];
+    const memberEmails = members
+      .map((m) => m.user?.email)
+      .filter((e): e is string => !!e);
+    this.attendeeSuggestions = memberEmails.filter(
+      (email) => email.toLowerCase().includes(query) && !this.extraAttendees.includes(email),
+    );
+  }
+
   onBookKickoff(): void {
     const p = this.project();
     if (!p || !this.kickoffDate) return;
 
     this.kickoffLoading.set(true);
     this.projectService
-      .bookKickoff(p.id, this.kickoffDate.toISOString(), this.kickoffDuration)
+      .bookKickoff(
+        p.id,
+        this.kickoffDate.toISOString(),
+        this.kickoffDuration,
+        this.extraAttendees.length ? this.extraAttendees : undefined,
+      )
       .subscribe({
         next: (updated) => {
           this.project.set({ ...p, ...updated });

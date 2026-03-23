@@ -115,10 +115,12 @@ export class ProjectService {
     projectId: string,
     kickoffTime: string,
     durationMinutes?: number,
+    extraAttendees?: string[],
   ): Observable<Project> {
     return this.http.post<Project>(`${this.baseUrl}/${projectId}/book-kickoff`, {
       kickoffTime,
       durationMinutes,
+      extraAttendees,
     });
   }
 
