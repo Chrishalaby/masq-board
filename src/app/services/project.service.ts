@@ -110,4 +110,45 @@ export class ProjectService {
       error: (err) => this.errorSignal.set(err.message),
     });
   }
+
+  bookKickoff(
+    projectId: string,
+    kickoffTime: string,
+    durationMinutes?: number,
+  ): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/${projectId}/book-kickoff`, {
+      kickoffTime,
+      durationMinutes,
+    });
+  }
+
+  getKickoffAttendance(
+    projectId: string,
+  ): Observable<{
+    meetingId: string | null;
+    meetingUrl?: string;
+    attendance: {
+      email: string;
+      displayName: string;
+      attended: boolean;
+      duration: number;
+    }[];
+  }> {
+    return this.http.get<{
+      meetingId: string | null;
+      meetingUrl?: string;
+      attendance: {
+        email: string;
+        displayName: string;
+        attended: boolean;
+        duration: number;
+      }[];
+    }>(`${this.baseUrl}/${projectId}/kickoff-attendance`);
+  }
+
+  linkToDynamics(projectId: string, dynamicsNo: string): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/${projectId}/link-dynamics`, {
+      dynamicsNo,
+    });
+  }
 }
