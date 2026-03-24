@@ -38,6 +38,11 @@ export class ContextMenuComponent {
       icon: 'pi pi-video',
       command: () => this.videoCallTarget(),
     },
+    {
+      label: 'Share Screen',
+      icon: 'pi pi-desktop',
+      command: () => this.shareScreenTarget(),
+    },
     { separator: true },
     {
       label: 'View Details',
@@ -84,6 +89,13 @@ export class ContextMenuComponent {
     const teamsId = this.getTeamsId();
     if (teamsId) {
       this.teamsCallService.startVideoCall(teamsId);
+    }
+  }
+
+  private shareScreenTarget(): void {
+    const teamsId = this.getTeamsId();
+    if (teamsId) {
+      this.teamsCallService.startScreenShare(teamsId);
     }
   }
 

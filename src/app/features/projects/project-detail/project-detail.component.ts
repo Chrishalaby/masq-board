@@ -205,10 +205,16 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
 
       @switch (activeView()) {
         @case ('board') {
-          <app-task-board (taskClick)="openEditTask($event)" />
+          <app-task-board
+            (taskClick)="openEditTask($event)"
+            (assigneeRightClick)="onAssigneeRightClick($event)"
+          />
         }
         @case ('grid') {
-          <app-task-grid (taskClick)="openEditTask($event)" />
+          <app-task-grid
+            (taskClick)="openEditTask($event)"
+            (assigneeRightClick)="onAssigneeRightClick($event)"
+          />
         }
       }
 
@@ -445,6 +451,10 @@ export class ProjectDetailComponent implements OnInit {
     event.preventDefault();
     const user = member.user as User;
     this.contextMenu()?.openForUser(user, event.target as HTMLElement, event);
+  }
+
+  onAssigneeRightClick(data: { user: User; event: MouseEvent }): void {
+    this.contextMenu()?.openForUser(data.user, data.event.target as HTMLElement, data.event);
   }
 
   // --- Kickoff ---

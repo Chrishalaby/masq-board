@@ -49,4 +49,23 @@ export class TeamsCallService {
       console.error('Failed to start video call:', error);
     }
   }
+
+  async startScreenShare(teamsUserId: string): Promise<void> {
+    if (!this.initialized) {
+      await this.initialize();
+    }
+    if (!this.initialized) return;
+
+    try {
+      microsoftTeams.call.startCall({
+        targets: [teamsUserId],
+        requestedModalities: [
+          microsoftTeams.call.CallModalities.Audio,
+          microsoftTeams.call.CallModalities.Video,
+        ],
+      });
+    } catch (error) {
+      console.error('Failed to start screen share call:', error);
+    }
+  }
 }

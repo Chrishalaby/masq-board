@@ -1,9 +1,18 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { SelectButton } from 'primeng/selectbutton';
 import { Task } from '../../../models/task.model';
+import { User } from '../../../models/user.model';
 import { TaskService } from '../../../services/task.service';
+import { ContextMenuComponent } from '../../../shared/context-menu/context-menu.component';
 import { TaskBoardComponent } from '../task-board/task-board.component';
 import { TaskEditorComponent } from '../task-editor/task-editor.component';
 import { TaskGridComponent } from '../task-grid/task-grid.component';
@@ -18,6 +27,7 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
     TaskBoardComponent,
     TaskGridComponent,
     TaskEditorComponent,
+    ContextMenuComponent,
   ],
   template: `
     <header
@@ -38,10 +48,16 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
 
     @switch (activeView()) {
       @case ('board') {
-        <app-task-board (taskClick)="openEditTask($event)" />
+        <app-task-board
+          (taskClick)="openEditTask($event)"
+          (assigneeRightClick)="onAssigneeRightClick($event)"
+        />
       }
       @case ('grid') {
-        <app-task-grid (taskClick)="openEditTask($event)" />
+        <app-task-grid
+          (taskClick)="openEditTask($event)"
+          (assigneeRightClick)="onAssigneeRightClick($event)"
+        />
       }
     }
 
@@ -51,6 +67,8 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
       (visibleChange)="editorVisible.set($event)"
       (saved)="onSaved()"
     />
+
+    <app-context-menu (viewDetails)="openEditTask($event)" />
   `,
 })
 export class TaskShellComponent implements OnInit {
@@ -64,6 +82,7 @@ export class TaskShellComponent implements OnInit {
   readonly activeView = signal<'board' | 'grid'>('board');
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
+  readonly contextMenu = viewChild(ContextMenuComponent);
 
   ngOnInit(): void {
     this.taskService.loadTasks();
@@ -82,5 +101,9 @@ export class TaskShellComponent implements OnInit {
   onSaved(): void {
     this.selectedTask.set(null);
     this.taskService.loadTasks();
+  }
+
+  onAssigneeRightClick(data: { user: User; event: MouseEvent }): void {
+    this.contextMenu()?.openForUser(data.user, data.event.target as HTMLElement, data.event);
   }
 }

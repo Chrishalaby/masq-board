@@ -1,6 +1,7 @@
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { Task, TASK_STATUSES, TaskStatus } from '../../../models/task.model';
+import { User } from '../../../models/user.model';
 import { TaskService } from '../../../services/task.service';
 import { TaskCardComponent } from '../task-card/task-card.component';
 
@@ -34,7 +35,11 @@ import { TaskCardComponent } from '../task-card/task-card.component';
           >
             @for (task of tasksByStatus()[col.value]; track task.id) {
               <div cdkDrag [cdkDragData]="task">
-                <app-task-card [task]="task" (cardClick)="taskClick.emit($event)" />
+                <app-task-card
+                  [task]="task"
+                  (cardClick)="taskClick.emit($event)"
+                  (assigneeRightClick)="assigneeRightClick.emit($event)"
+                />
               </div>
             }
           </div>
@@ -47,6 +52,7 @@ export class TaskBoardComponent {
   private readonly taskService = inject(TaskService);
 
   readonly taskClick = output<Task>();
+  readonly assigneeRightClick = output<{ user: User; event: MouseEvent }>();
   readonly tasksByStatus = this.taskService.tasksByStatus;
   readonly columns = TASK_STATUSES;
   readonly connectedLists = TASK_STATUSES.map((s) => s.value);
