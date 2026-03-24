@@ -19,6 +19,7 @@ import { Select } from 'primeng/select';
 import { SelectButton } from 'primeng/selectbutton';
 import { Tag } from 'primeng/tag';
 import { Toast } from 'primeng/toast';
+import { ToggleSwitch } from 'primeng/toggleswitch';
 import { Tooltip } from 'primeng/tooltip';
 import { Project, ProjectMember, ProjectStatus } from '../../../models/project.model';
 import { Task } from '../../../models/task.model';
@@ -26,6 +27,7 @@ import { User } from '../../../models/user.model';
 import { DynamicsJob, DynamicsService } from '../../../services/dynamics.service';
 import { ProjectService } from '../../../services/project.service';
 import { TaskService } from '../../../services/task.service';
+import { UserService } from '../../../services/user.service';
 import { ContextMenuComponent } from '../../../shared/context-menu/context-menu.component';
 import { TaskBoardComponent } from '../../tasks/task-board/task-board.component';
 import { TaskEditorComponent } from '../../tasks/task-editor/task-editor.component';
@@ -53,6 +55,7 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
     Select,
     Toast,
     AutoComplete,
+    ToggleSwitch,
   ],
   template: `
     <p-toast />
@@ -139,6 +142,11 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
             >
               <i class="pi pi-video mr-1"></i>Join Kickoff
             </a>
+            @if (p.kickoffStartTime) {
+              <span class="text-xs text-gray-400 dark:text-gray-500">
+                {{ p.kickoffStartTime | date: 'MMM d, y h:mm a' }}
+              </span>
+            }
             <button
               class="text-blue-600 hover:underline dark:text-blue-400"
               (click)="loadAttendance()"
@@ -163,27 +171,34 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         }
 
         <!-- Attendance Panel -->
-        @if (attendanceVisible() && attendanceData().length) {
+        @if (attendanceVisible()) {
           <div
             class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
           >
             <h3 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
               <i class="pi pi-users mr-1"></i>Kickoff Attendance
             </h3>
-            <div class="flex flex-wrap gap-2">
-              @for (a of attendanceData(); track a.email) {
-                <span
-                  class="rounded-full px-2 py-1 text-xs"
-                  [class]="
-                    a.attended
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                  "
-                >
-                  {{ a.attended ? '✓' : '✗' }} {{ a.displayName || a.email }}
-                </span>
-              }
-            </div>
+            @if (attendanceData().length) {
+              <div class="flex flex-wrap gap-2">
+                @for (a of attendanceData(); track a.email) {
+                  <span
+                    class="rounded-full px-2 py-1 text-xs"
+                    [class]="
+                      a.attended
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                    "
+                  >
+                    {{ a.attended ? '✓' : '✗' }} {{ a.displayName || a.email }}
+                  </span>
+                }
+              </div>
+            } @else {
+              <p class="text-xs text-gray-400 dark:text-gray-500">
+                No responses yet. Attendees will appear here once they accept or decline the
+                invitation.
+              </p>
+            }
           </div>
         }
       </header>
@@ -246,6 +261,10 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
           <p class="text-xs text-gray-500 dark:text-gray-400">
             All project members will be invited. Core team is added automatically.
           </p>
+          <div class="flex items-center gap-2">
+            <p-toggleSwitch [(ngModel)]="includeMyself" inputId="includeMyself" />
+            <label for="includeMyself" class="text-sm">Include myself</label>
+          </div>
           <div>
             <label class="mb-1 block text-sm font-medium" for="extraAttendees"
               >Additional Attendees</label
@@ -342,6 +361,7 @@ export class ProjectDetailComponent implements OnInit {
   private readonly projectService = inject(ProjectService);
   private readonly taskService = inject(TaskService);
   private readonly messageService = inject(MessageService);
+  private readonly userService = inject(UserService);
   readonly dynamicsService = inject(DynamicsService);
 
   readonly project = signal<Project | null>(null);
@@ -357,6 +377,7 @@ export class ProjectDetailComponent implements OnInit {
   kickoffDuration = 60;
   extraAttendees: string[] = [];
   attendeeSuggestions: string[] = [];
+  includeMyself = true;
   readonly today = new Date();
 
   // Attendance
@@ -441,6 +462,8 @@ export class ProjectDetailComponent implements OnInit {
     const p = this.project();
     if (!p || !this.kickoffDate) return;
 
+    const bookerEmail = this.includeMyself ? this.userService.currentUser()?.email : undefined;
+
     this.kickoffLoading.set(true);
     this.projectService
       .bookKickoff(
@@ -448,6 +471,7 @@ export class ProjectDetailComponent implements OnInit {
         this.kickoffDate.toISOString(),
         this.kickoffDuration,
         this.extraAttendees.length ? this.extraAttendees : undefined,
+        bookerEmail ?? undefined,
       )
       .subscribe({
         next: (updated) => {

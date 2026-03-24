@@ -38,6 +38,7 @@ export interface Project {
   readonly currency?: string;
   readonly kickoffMeetingId?: string;
   readonly kickoffMeetingUrl?: string;
+  readonly kickoffStartTime?: string;
   readonly members?: ProjectMember[];
   readonly taskCount?: number;
   readonly createdAt: string;
