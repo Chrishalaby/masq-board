@@ -76,13 +76,13 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
             <p-tag [value]="p.status" [severity]="statusSeverity(p.status)" [rounded]="true" />
           </div>
           <div class="flex items-center gap-2">
-            <p-button
+            <!-- <p-button
               [label]="p.isHot ? 'Unmark Hot' : 'Mark Hot'"
               [severity]="p.isHot ? 'danger' : 'secondary'"
               [outlined]="true"
               size="small"
               (onClick)="onToggleHot()"
-            />
+            /> -->
             @if (!p.kickoffMeetingUrl) {
               <p-button
                 label="Book Kickoff"

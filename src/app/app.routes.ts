@@ -33,6 +33,11 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'labels',
+    loadComponent: () =>
+      import('./features/tasks/labels/labels.component').then((m) => m.LabelsComponent),
+  },
+  {
     path: 'notes',
     loadComponent: () =>
       import('./features/notes/notes-board/notes-board.component').then(

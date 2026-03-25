@@ -2,10 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   OnInit,
   output,
+  untracked,
 } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Button } from 'primeng/button';
@@ -310,6 +312,17 @@ export class TaskEditorComponent implements OnInit {
 
   private selectedLabels: Label[] = [];
 
+  constructor() {
+    effect(() => {
+      const isVisible = this.visible();
+      // Track task so effect re-runs when task changes
+      this.task();
+      if (isVisible) {
+        untracked(() => this.patchForm());
+      }
+    });
+  }
+
   readonly availableTasks = computed(() => {
     const allTasks = this.taskService.tasks();
     const currentId = this.task()?.id;
@@ -354,12 +367,10 @@ export class TaskEditorComponent implements OnInit {
     this.userService.loadUsers();
     this.projectService.loadProjects();
     this.labelService.loadLabels();
-    this.patchForm();
   }
 
   onVisibleChange(val: boolean): void {
     this.visibleChange.emit(val);
-    if (val) this.patchForm();
   }
 
   getLabelDisplay(index: number): string {

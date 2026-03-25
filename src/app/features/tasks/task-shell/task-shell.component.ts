@@ -53,6 +53,9 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
             severity="secondary"
           />
         </a>
+        <a routerLink="/labels">
+          <p-button label="Labels" icon="pi pi-tag" [outlined]="true" severity="secondary" />
+        </a>
       </div>
     </header>
 
