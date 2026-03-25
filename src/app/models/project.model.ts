@@ -36,6 +36,15 @@ export interface Project {
   readonly totalTypesNumber?: number;
   readonly budgetAmount?: number;
   readonly currency?: string;
+  readonly projectManager?: string;
+  readonly projectManagerProfessionalEmail?: string;
+  readonly salesman?: string;
+  readonly salesmanProfessionalEmail?: string;
+  readonly developer?: string;
+  readonly developerProfessionalEmail?: string;
+  readonly procurementTeam?: string;
+  readonly projectAccountant?: string;
+  readonly sharepointFolderLink?: string;
   readonly kickoffMeetingId?: string;
   readonly kickoffMeetingUrl?: string;
   readonly kickoffStartTime?: string;

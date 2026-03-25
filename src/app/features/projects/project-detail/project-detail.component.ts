@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -42,6 +42,7 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
     Button,
     Tag,
     DatePipe,
+    DecimalPipe,
     FormsModule,
     SelectButton,
     TaskBoardComponent,
@@ -198,6 +199,122 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
                 No responses yet. Attendees will appear here once they accept or decline the
                 invitation.
               </p>
+            }
+          </div>
+        }
+
+        <!-- Project Info Panel -->
+        @if (hasProjectInfo(p)) {
+          <div
+            class="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-800 sm:grid-cols-3"
+          >
+            @if (p.apolloProjectId) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Apollo ID</span>
+                <p class="text-gray-900 dark:text-gray-100">{{ p.apolloProjectId }}</p>
+              </div>
+            }
+            @if (p.dynamicsNo) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Dynamics No</span>
+                <p class="text-purple-600 dark:text-purple-400">{{ p.dynamicsNo }}</p>
+              </div>
+            }
+            @if (p.clientName) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Client</span>
+                <p class="text-gray-900 dark:text-gray-100">
+                  {{ p.clientName }}
+                  @if (p.clientId) {
+                    <span class="text-xs text-gray-400"> ({{ p.clientId }})</span>
+                  }
+                </p>
+              </div>
+            }
+            @if (p.contactName) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Contact</span>
+                <p class="text-gray-900 dark:text-gray-100">
+                  {{ p.contactName }}
+                  @if (p.contactId) {
+                    <span class="text-xs text-gray-400"> ({{ p.contactId }})</span>
+                  }
+                </p>
+              </div>
+            }
+            @if (p.projectManager) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Project Manager</span>
+                <p class="text-gray-900 dark:text-gray-100">{{ p.projectManager }}</p>
+                @if (p.projectManagerProfessionalEmail) {
+                  <p class="text-xs text-blue-600 dark:text-blue-400">
+                    {{ p.projectManagerProfessionalEmail }}
+                  </p>
+                }
+              </div>
+            }
+            @if (p.salesman) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Salesman</span>
+                <p class="text-gray-900 dark:text-gray-100">{{ p.salesman }}</p>
+                @if (p.salesmanProfessionalEmail) {
+                  <p class="text-xs text-blue-600 dark:text-blue-400">
+                    {{ p.salesmanProfessionalEmail }}
+                  </p>
+                }
+              </div>
+            }
+            @if (p.developer) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Developer</span>
+                <p class="text-gray-900 dark:text-gray-100">{{ p.developer }}</p>
+                @if (p.developerProfessionalEmail) {
+                  <p class="text-xs text-blue-600 dark:text-blue-400">
+                    {{ p.developerProfessionalEmail }}
+                  </p>
+                }
+              </div>
+            }
+            @if (p.procurementTeam) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Procurement Team</span>
+                <p class="text-gray-900 dark:text-gray-100">{{ p.procurementTeam }}</p>
+              </div>
+            }
+            @if (p.projectAccountant) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Project Accountant</span>
+                <p class="text-gray-900 dark:text-gray-100">{{ p.projectAccountant }}</p>
+              </div>
+            }
+            @if (p.totalTypesNumber) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Total Types</span>
+                <p class="text-gray-900 dark:text-gray-100">{{ p.totalTypesNumber }}</p>
+              </div>
+            }
+            @if (p.budgetAmount) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">Budget</span>
+                <p class="text-gray-900 dark:text-gray-100">
+                  {{ p.budgetAmount | number: '1.2-2' }} {{ p.currency ?? '' }}
+                </p>
+              </div>
+            }
+            @if (p.sharepointFolderLink) {
+              <div>
+                <span class="font-medium text-gray-500 dark:text-gray-400">SharePoint</span>
+                <p>
+                  <a
+                    [href]="p.sharepointFolderLink"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    <i class="pi pi-folder-open mr-1"></i>Open Folder
+                  </a>
+                </p>
+              </div>
             }
           </div>
         }
@@ -578,5 +695,20 @@ export class ProjectDetailComponent implements OnInit {
         });
       },
     });
+  }
+
+  hasProjectInfo(p: Project): boolean {
+    return !!(
+      p.apolloProjectId ||
+      p.projectManager ||
+      p.salesman ||
+      p.developer ||
+      p.procurementTeam ||
+      p.projectAccountant ||
+      p.totalTypesNumber ||
+      p.budgetAmount ||
+      p.sharepointFolderLink ||
+      p.contactName
+    );
   }
 }
