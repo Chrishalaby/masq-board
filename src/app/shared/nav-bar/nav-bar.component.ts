@@ -12,7 +12,9 @@ import { AuthService } from '../../auth/auth.service';
       class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-2 dark:border-gray-700 dark:bg-gray-900"
     >
       <div class="flex items-center gap-6">
-        <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">Masq Board</span>
+        <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+          <a routerLink="/" class="hover:opacity-80">Masq Board</a>
+        </span>
         <a
           routerLink="/projects"
           routerLinkActive="text-indigo-600 dark:text-indigo-400 font-semibold"
