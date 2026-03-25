@@ -16,56 +16,28 @@ export class TeamsCallService {
   }
 
   async startCall(teamsUserId: string): Promise<void> {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-    if (!this.initialized) return;
-
-    try {
-      microsoftTeams.call.startCall({
-        targets: [teamsUserId],
-        requestedModalities: [microsoftTeams.call.CallModalities.Audio],
-      });
-    } catch (error) {
-      console.error('Failed to start call:', error);
-    }
+    await this.openCallLink(teamsUserId, false);
   }
 
   async startVideoCall(teamsUserId: string): Promise<void> {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-    if (!this.initialized) return;
-
-    try {
-      microsoftTeams.call.startCall({
-        targets: [teamsUserId],
-        requestedModalities: [
-          microsoftTeams.call.CallModalities.Audio,
-          microsoftTeams.call.CallModalities.Video,
-        ],
-      });
-    } catch (error) {
-      console.error('Failed to start video call:', error);
-    }
+    await this.openCallLink(teamsUserId, true);
   }
 
   async startScreenShare(teamsUserId: string): Promise<void> {
+    await this.openCallLink(teamsUserId, true);
+  }
+
+  private async openCallLink(teamsUserId: string, withVideo: boolean): Promise<void> {
     if (!this.initialized) {
       await this.initialize();
     }
     if (!this.initialized) return;
 
+    const deepLink = `https://teams.microsoft.com/l/call/0/0?users=${encodeURIComponent(teamsUserId)}&withVideo=${withVideo}&source=desktopclient`;
     try {
-      microsoftTeams.call.startCall({
-        targets: [teamsUserId],
-        requestedModalities: [
-          microsoftTeams.call.CallModalities.Audio,
-          microsoftTeams.call.CallModalities.Video,
-        ],
-      });
+      await microsoftTeams.app.openLink(deepLink);
     } catch (error) {
-      console.error('Failed to start screen share call:', error);
+      console.error('Failed to open call link:', error);
     }
   }
 }
