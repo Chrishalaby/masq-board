@@ -126,11 +126,13 @@ export class TaskService {
     });
   }
 
-  addDependency(taskId: string, dependsOnTaskId: string): void {
-    this.http.post(`${this.baseUrl}/${taskId}/dependencies`, { dependsOnTaskId }).subscribe({
-      next: () => this.loadTasks(),
-      error: (err) => this.errorSignal.set(err.message),
-    });
+  addDependency(taskId: string, dependsOnTaskId: string): Observable<unknown> {
+    return this.http.post(`${this.baseUrl}/${taskId}/dependencies`, { dependsOnTaskId }).pipe(
+      tap({
+        next: () => this.loadTasks(),
+        error: (err) => this.errorSignal.set(err.message),
+      }),
+    );
   }
 
   removeDependency(taskId: string, depId: string): void {

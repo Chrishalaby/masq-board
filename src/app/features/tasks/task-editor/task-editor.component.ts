@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, input, OnInit, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  OnInit,
+  output,
+} from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { Checkbox } from 'primeng/checkbox';
@@ -8,7 +16,8 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
-import { take } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
 import { Label, Task, TASK_PRIORITIES, TASK_STATUSES } from '../../../models/task.model';
 import { LabelService } from '../../../services/label.service';
 import { ProjectService } from '../../../services/project.service';
@@ -180,6 +189,23 @@ import { UserService } from '../../../services/user.service';
           </div>
         </div>
 
+        <!-- Depending Task -->
+        <div class="flex flex-col gap-1">
+          <label for="dependingTask" class="text-sm font-medium">Depending Task</label>
+          <p-select
+            id="dependingTask"
+            [formControl]="dependingTaskControl"
+            [options]="availableTasks()"
+            optionLabel="title"
+            optionValue="id"
+            placeholder="Select a task this depends on"
+            [filter]="true"
+            filterBy="title"
+            [showClear]="true"
+            appendTo="body"
+          />
+        </div>
+
         <!-- Dependencies -->
         @if (task()) {
           <div class="flex flex-col gap-1">
@@ -280,8 +306,16 @@ export class TaskEditorComponent implements OnInit {
 
   readonly newLabelSelect = new FormControl<string | null>(null);
   readonly newChecklistControl = new FormControl('');
+  readonly dependingTaskControl = new FormControl<string | null>(null);
 
   private selectedLabels: Label[] = [];
+
+  readonly availableTasks = computed(() => {
+    const allTasks = this.taskService.tasks();
+    const currentId = this.task()?.id;
+    const existingDepIds = new Set(this.task()?.dependencies?.map((d) => d.dependsOnTaskId) ?? []);
+    return allTasks.filter((t) => t.id !== currentId && !existingDepIds.has(t.id));
+  });
 
   readonly form = new FormGroup({
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -405,10 +439,20 @@ export class TaskEditorComponent implements OnInit {
     };
 
     const existingTask = this.task();
+    const depId = this.dependingTaskControl.value;
+
     if (existingTask) {
       this.taskService
         .updateTask({ ...taskData, id: existingTask.id } as Task)
-        .pipe(take(1))
+        .pipe(
+          switchMap((updated) => {
+            if (depId) {
+              return this.taskService.addDependency(updated.id, depId);
+            }
+            return of(null);
+          }),
+          take(1),
+        )
         .subscribe({
           next: () => {
             this.saved.emit();
@@ -418,7 +462,15 @@ export class TaskEditorComponent implements OnInit {
     } else {
       this.taskService
         .addTask(taskData)
-        .pipe(take(1))
+        .pipe(
+          switchMap((created) => {
+            if (depId) {
+              return this.taskService.addDependency(created.id, depId);
+            }
+            return of(null);
+          }),
+          take(1),
+        )
         .subscribe({
           next: () => {
             this.saved.emit();
@@ -446,6 +498,7 @@ export class TaskEditorComponent implements OnInit {
     this.labelsArray.clear();
     this.checklistArray.clear();
     this.selectedLabels = [];
+    this.dependingTaskControl.reset();
 
     if (t) {
       this.form.patchValue({

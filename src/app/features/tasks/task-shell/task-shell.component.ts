@@ -7,6 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { SelectButton } from 'primeng/selectbutton';
 import { Task } from '../../../models/task.model';
@@ -22,6 +23,7 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
+    RouterLink,
     SelectButton,
     Button,
     TaskBoardComponent,
@@ -43,6 +45,14 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
           [allowEmpty]="false"
         />
         <p-button label="New Task" icon="pi pi-plus" (onClick)="openNewTask()" />
+        <a routerLink="/task-templates">
+          <p-button
+            label="Templates"
+            icon="pi pi-file-edit"
+            [outlined]="true"
+            severity="secondary"
+          />
+        </a>
       </div>
     </header>
 

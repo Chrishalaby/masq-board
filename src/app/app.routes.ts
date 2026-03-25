@@ -26,6 +26,13 @@ export const routes: Routes = [
       import('./features/tasks/task-shell/task-shell.component').then((m) => m.TaskShellComponent),
   },
   {
+    path: 'task-templates',
+    loadComponent: () =>
+      import('./features/tasks/task-templates/task-templates.component').then(
+        (m) => m.TaskTemplatesComponent,
+      ),
+  },
+  {
     path: 'notes',
     loadComponent: () =>
       import('./features/notes/notes-board/notes-board.component').then(

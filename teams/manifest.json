@@ -22,36 +22,6 @@
     "color": "color-192x192.png"
   },
   "accentColor": "#4F46E5",
-  "staticTabs": [
-    {
-      "entityId": "home",
-      "name": "Home",
-      "contentUrl": "https://masq-board.netlify.app",
-      "websiteUrl": "https://masq-board.netlify.app",
-      "scopes": ["personal"]
-    },
-    {
-      "entityId": "projects",
-      "name": "Projects",
-      "contentUrl": "https://masq-board.netlify.app/projects",
-      "websiteUrl": "https://masq-board.netlify.app/projects",
-      "scopes": ["personal"]
-    },
-    {
-      "entityId": "tasks",
-      "name": "Tasks",
-      "contentUrl": "https://masq-board.netlify.app/tasks",
-      "websiteUrl": "https://masq-board.netlify.app/tasks",
-      "scopes": ["personal"]
-    },
-    {
-      "entityId": "notes",
-      "name": "Notes",
-      "contentUrl": "https://masq-board.netlify.app/notes",
-      "websiteUrl": "https://masq-board.netlify.app/notes",
-      "scopes": ["personal"]
-    }
-  ],
   "configurableTabs": [
     {
       "configurationUrl": "https://masq-board.netlify.app",
