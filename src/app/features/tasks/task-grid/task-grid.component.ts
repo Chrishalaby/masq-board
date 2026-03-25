@@ -2,7 +2,6 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
-import { Tooltip } from 'primeng/tooltip';
 import { Task, TaskPriority, TaskStatus } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
 import { TaskService } from '../../../services/task.service';
@@ -10,7 +9,7 @@ import { TaskService } from '../../../services/task.service';
 @Component({
   selector: 'app-task-grid',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, TableModule, Tag, Tooltip],
+  imports: [DatePipe, TableModule, Tag],
   template: `
     <p-table
       [value]="tasks()"
@@ -46,14 +45,16 @@ import { TaskService } from '../../../services/task.service';
           [attr.aria-label]="'Open task: ' + task.title"
         >
           <td class="font-medium">{{ task.title }}</td>
-          <td
-            [class.cursor-pointer]="task.assignee"
-            [class.hover:text-blue-600]="task.assignee"
-            [pTooltip]="task.assignee ? 'Right-click to call ' + task.assignee.displayName : ''"
-            tooltipPosition="top"
-            (contextmenu)="onAssigneeRightClick($event, task)"
-          >
-            {{ task.assignee?.displayName || task.owner || '—' }}
+          <td>
+            @if (task.assignee) {
+              <span
+                class="cursor-pointer text-blue-600 hover:underline dark:text-blue-400"
+                (click)="onAssigneeClick($event, task)"
+                >{{ task.assignee.displayName }}</span
+              >
+            } @else {
+              {{ task.owner || '—' }}
+            }
           </td>
           <td>
             @if (task.project) {
@@ -95,7 +96,7 @@ export class TaskGridComponent {
   private readonly taskService = inject(TaskService);
 
   readonly taskClick = output<Task>();
-  readonly assigneeRightClick = output<{ user: User; event: MouseEvent }>();
+  readonly assigneeClick = output<{ user: User; event: MouseEvent }>();
   readonly tasks = this.taskService.tasks;
 
   protected prioritySeverity(p: TaskPriority): 'danger' | 'warn' | 'info' | 'success' {
@@ -128,10 +129,9 @@ export class TaskGridComponent {
     return map[s];
   }
 
-  protected onAssigneeRightClick(event: MouseEvent, task: Task): void {
+  protected onAssigneeClick(event: MouseEvent, task: Task): void {
     if (!task.assignee) return;
-    event.preventDefault();
     event.stopPropagation();
-    this.assigneeRightClick.emit({ user: task.assignee, event });
+    this.assigneeClick.emit({ user: task.assignee, event });
   }
 }

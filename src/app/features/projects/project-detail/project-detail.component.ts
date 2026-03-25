@@ -28,7 +28,7 @@ import { DynamicsJob, DynamicsService } from '../../../services/dynamics.service
 import { ProjectService } from '../../../services/project.service';
 import { TaskService } from '../../../services/task.service';
 import { UserService } from '../../../services/user.service';
-import { ContextMenuComponent } from '../../../shared/context-menu/context-menu.component';
+import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.component';
 import { TaskBoardComponent } from '../../tasks/task-board/task-board.component';
 import { TaskEditorComponent } from '../../tasks/task-editor/task-editor.component';
 import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
@@ -48,7 +48,7 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
     TaskBoardComponent,
     TaskGridComponent,
     TaskEditorComponent,
-    ContextMenuComponent,
+    CallPopoverComponent,
     Tooltip,
     Dialog,
     DatePicker,
@@ -172,9 +172,9 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
             @for (m of p.members; track m.id) {
               <span
                 class="cursor-pointer rounded-full bg-gray-100 px-2 py-1 text-xs hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-                [pTooltip]="'Right-click to call ' + (m.user?.displayName ?? m.userId)"
+                [pTooltip]="'Click to call ' + (m.user?.displayName ?? m.userId)"
                 tooltipPosition="top"
-                (contextmenu)="onMemberRightClick($event, m)"
+                (click)="onMemberClick($event, m)"
               >
                 {{ m.user?.displayName ?? m.userId }} — {{ m.role }}
               </span>
@@ -335,13 +335,13 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         @case ('board') {
           <app-task-board
             (taskClick)="openEditTask($event)"
-            (assigneeRightClick)="onAssigneeRightClick($event)"
+            (assigneeClick)="onAssigneeClick($event)"
           />
         }
         @case ('grid') {
           <app-task-grid
             (taskClick)="openEditTask($event)"
-            (assigneeRightClick)="onAssigneeRightClick($event)"
+            (assigneeClick)="onAssigneeClick($event)"
           />
         }
       }
@@ -354,7 +354,7 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         (saved)="onTaskSaved()"
       />
 
-      <app-context-menu (viewDetails)="openEditTask($event)" />
+      <app-call-popover />
 
       <!-- Book Kickoff Dialog -->
       <p-dialog
@@ -502,7 +502,7 @@ export class ProjectDetailComponent implements OnInit {
   readonly activeView = signal<'board' | 'grid'>('board');
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
-  readonly contextMenu = viewChild(ContextMenuComponent);
+  readonly callPopover = viewChild(CallPopoverComponent);
 
   // Kickoff
   readonly kickoffDialogVisible = signal(false);
@@ -577,15 +577,14 @@ export class ProjectDetailComponent implements OnInit {
     return map[s];
   }
 
-  onMemberRightClick(event: MouseEvent, member: ProjectMember): void {
+  onMemberClick(event: MouseEvent, member: ProjectMember): void {
     if (!member.user) return;
-    event.preventDefault();
     const user = member.user as User;
-    this.contextMenu()?.openForUser(user, event.target as HTMLElement, event);
+    this.callPopover()?.show(user, event);
   }
 
-  onAssigneeRightClick(data: { user: User; event: MouseEvent }): void {
-    this.contextMenu()?.openForUser(data.user, data.event.target as HTMLElement, data.event);
+  onAssigneeClick(data: { user: User; event: MouseEvent }): void {
+    this.callPopover()?.show(data.user, data.event);
   }
 
   // --- Kickoff ---

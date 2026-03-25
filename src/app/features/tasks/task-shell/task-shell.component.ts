@@ -13,7 +13,7 @@ import { SelectButton } from 'primeng/selectbutton';
 import { Task } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
 import { TaskService } from '../../../services/task.service';
-import { ContextMenuComponent } from '../../../shared/context-menu/context-menu.component';
+import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.component';
 import { TaskBoardComponent } from '../task-board/task-board.component';
 import { TaskEditorComponent } from '../task-editor/task-editor.component';
 import { TaskGridComponent } from '../task-grid/task-grid.component';
@@ -29,7 +29,7 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
     TaskBoardComponent,
     TaskGridComponent,
     TaskEditorComponent,
-    ContextMenuComponent,
+    CallPopoverComponent,
   ],
   template: `
     <header
@@ -63,13 +63,13 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
       @case ('board') {
         <app-task-board
           (taskClick)="openEditTask($event)"
-          (assigneeRightClick)="onAssigneeRightClick($event)"
+          (assigneeClick)="onAssigneeClick($event)"
         />
       }
       @case ('grid') {
         <app-task-grid
           (taskClick)="openEditTask($event)"
-          (assigneeRightClick)="onAssigneeRightClick($event)"
+          (assigneeClick)="onAssigneeClick($event)"
         />
       }
     }
@@ -81,7 +81,7 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
       (saved)="onSaved()"
     />
 
-    <app-context-menu (viewDetails)="openEditTask($event)" />
+    <app-call-popover />
   `,
 })
 export class TaskShellComponent implements OnInit {
@@ -95,7 +95,7 @@ export class TaskShellComponent implements OnInit {
   readonly activeView = signal<'board' | 'grid'>('board');
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
-  readonly contextMenu = viewChild(ContextMenuComponent);
+  readonly callPopover = viewChild(CallPopoverComponent);
 
   ngOnInit(): void {
     this.taskService.loadTasks();
@@ -116,7 +116,7 @@ export class TaskShellComponent implements OnInit {
     this.taskService.loadTasks();
   }
 
-  onAssigneeRightClick(data: { user: User; event: MouseEvent }): void {
-    this.contextMenu()?.openForUser(data.user, data.event.target as HTMLElement, data.event);
+  onAssigneeClick(data: { user: User; event: MouseEvent }): void {
+    this.callPopover()?.show(data.user, data.event);
   }
 }

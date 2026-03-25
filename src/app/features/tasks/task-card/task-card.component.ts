@@ -2,14 +2,13 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { ProgressBar } from 'primeng/progressbar';
 import { Tag } from 'primeng/tag';
-import { Tooltip } from 'primeng/tooltip';
 import { Task, TaskPriority } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
 
 @Component({
   selector: 'app-task-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, Tag, ProgressBar, Tooltip],
+  imports: [DatePipe, Tag, ProgressBar],
   template: `
     <div
       class="task-card cursor-pointer rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
@@ -32,11 +31,14 @@ import { User } from '../../../models/user.model';
         class="mb-2 text-xs text-gray-500 dark:text-gray-400"
         [class.cursor-pointer]="task().assignee"
         [class.hover:text-blue-600]="task().assignee"
-        [pTooltip]="task().assignee ? 'Right-click to call ' + task().assignee!.displayName : ''"
-        tooltipPosition="top"
-        (contextmenu)="onAssigneeRightClick($event)"
       >
-        {{ task().assignee?.displayName || task().owner || 'Unassigned' }}
+        @if (task().assignee) {
+          <span (click)="onAssigneeClick($event)" class="hover:underline">{{
+            task().assignee!.displayName
+          }}</span>
+        } @else {
+          {{ task().owner || 'Unassigned' }}
+        }
       </p>
 
       @if (task().project) {
@@ -94,7 +96,7 @@ import { User } from '../../../models/user.model';
 export class TaskCardComponent {
   readonly task = input.required<Task>();
   readonly cardClick = output<Task>();
-  readonly assigneeRightClick = output<{ user: User; event: MouseEvent }>();
+  readonly assigneeClick = output<{ user: User; event: MouseEvent }>();
 
   protected readonly prioritySeverity = computed(() => {
     const map: Record<TaskPriority, 'danger' | 'warn' | 'info' | 'success'> = {
@@ -113,11 +115,10 @@ export class TaskCardComponent {
     return { done, total: checklist.length, percent: Math.round((done / checklist.length) * 100) };
   });
 
-  protected onAssigneeRightClick(event: MouseEvent): void {
+  protected onAssigneeClick(event: MouseEvent): void {
     const assignee = this.task().assignee;
     if (!assignee) return;
-    event.preventDefault();
     event.stopPropagation();
-    this.assigneeRightClick.emit({ user: assignee, event });
+    this.assigneeClick.emit({ user: assignee, event });
   }
 }
