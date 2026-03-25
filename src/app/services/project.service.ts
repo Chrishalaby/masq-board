@@ -153,4 +153,8 @@ export class ProjectService {
       dynamicsNo,
     });
   }
+
+  createSharepointFolder(projectId: string): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/${projectId}/create-sharepoint-folder`, {});
+  }
 }

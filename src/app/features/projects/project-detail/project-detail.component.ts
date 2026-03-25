@@ -103,6 +103,17 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
                 (onClick)="openLinkDynamics()"
               />
             }
+            @if (!p.sharepointFolderLink) {
+              <p-button
+                label="Create SP Folder"
+                icon="pi pi-folder"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                [loading]="spFolderLoading()"
+                (onClick)="createSharepointFolder()"
+              />
+            }
             <p-selectbutton
               [options]="viewOptions"
               [(ngModel)]="activeView"
@@ -515,6 +526,9 @@ export class ProjectDetailComponent implements OnInit {
   readonly selectedDynamicsNo = signal<string>('');
   readonly dynamicsJobOptions = signal<{ label: string; value: string }[]>([]);
 
+  // SharePoint folder
+  readonly spFolderLoading = signal(false);
+
   readonly viewOptions = [
     { label: 'Board', value: 'board' },
     { label: 'Table', value: 'grid' },
@@ -692,6 +706,31 @@ export class ProjectDetailComponent implements OnInit {
           severity: 'error',
           summary: 'Link Failed',
           detail: err.error?.message || 'Could not link to Dynamics job',
+        });
+      },
+    });
+  }
+
+  createSharepointFolder(): void {
+    const p = this.project();
+    if (!p) return;
+    this.spFolderLoading.set(true);
+    this.projectService.createSharepointFolder(p.id).subscribe({
+      next: (updated) => {
+        this.project.set({ ...p, ...updated });
+        this.spFolderLoading.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'SharePoint Folder',
+          detail: 'Folder created successfully',
+        });
+      },
+      error: (err) => {
+        this.spFolderLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'SharePoint Error',
+          detail: err.error?.message || 'Could not create SharePoint folder',
         });
       },
     });
