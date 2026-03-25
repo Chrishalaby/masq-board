@@ -13,7 +13,7 @@ import { AuthService } from '../../auth/auth.service';
     >
       <div class="flex items-center gap-6">
         <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-          <a routerLink="/" class="hover:opacity-80">Masq Board</a>
+          <a routerLink="/" class="hover:opacity-80">MASQ Collaboration Suite</a>
         </span>
         <a
           routerLink="/projects"

@@ -10,12 +10,12 @@
     "termsOfUseUrl": "https://masq-board.netlify.app/terms"
   },
   "name": {
-    "short": "Masq Board",
-    "full": "Masq Board – Task & Project Management"
+    "short": "MASQ Collaboration Suite",
+    "full": "MASQ Collaboration Suite – Task & Project Management"
   },
   "description": {
-    "short": "Internal task and project management board",
-    "full": "A custom internal task management tool that replaces Microsoft Planner. Supports Kanban board view, table view, drag-and-drop status changes, milestones, risk tracking, project roles, in-app calling, and CRM integration."
+    "short": "Internal collaboration and project management suite",
+    "full": "MASQ Collaboration Suite — an internal project management tool with Kanban board, table view, drag-and-drop status changes, milestones, risk tracking, project roles, in-app calling, and CRM integration."
   },
   "icons": {
     "outline": "outline-32x32.png",
@@ -23,6 +23,13 @@
   },
   "accentColor": "#4F46E5",
   "staticTabs": [
+    {
+      "entityId": "home",
+      "name": "Home",
+      "contentUrl": "https://masq-board.netlify.app",
+      "websiteUrl": "https://masq-board.netlify.app",
+      "scopes": ["personal"]
+    },
     {
       "entityId": "projects",
       "name": "Projects",
