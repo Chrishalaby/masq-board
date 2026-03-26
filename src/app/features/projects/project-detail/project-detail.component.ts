@@ -15,7 +15,7 @@ import { Button } from 'primeng/button';
 import { DatePicker } from 'primeng/datepicker';
 import { Dialog } from 'primeng/dialog';
 import { InputNumber } from 'primeng/inputnumber';
-import { Select } from 'primeng/select';
+import { InputText } from 'primeng/inputtext';
 import { SelectButton } from 'primeng/selectbutton';
 import { Tag } from 'primeng/tag';
 import { Toast } from 'primeng/toast';
@@ -24,7 +24,6 @@ import { Tooltip } from 'primeng/tooltip';
 import { Project, ProjectMember, ProjectStatus } from '../../../models/project.model';
 import { Task } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
-import { DynamicsJob, DynamicsService } from '../../../services/dynamics.service';
 import { ProjectService } from '../../../services/project.service';
 import { TaskService } from '../../../services/task.service';
 import { UserService } from '../../../services/user.service';
@@ -32,6 +31,7 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
 import { TaskBoardComponent } from '../../tasks/task-board/task-board.component';
 import { TaskEditorComponent } from '../../tasks/task-editor/task-editor.component';
 import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
+import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
 
 @Component({
   selector: 'app-project-detail',
@@ -49,11 +49,12 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
     TaskGridComponent,
     TaskEditorComponent,
     CallPopoverComponent,
+    CpmChartComponent,
     Tooltip,
     Dialog,
     DatePicker,
     InputNumber,
-    Select,
+    InputText,
     Toast,
     AutoComplete,
     ToggleSwitch,
@@ -101,6 +102,16 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
                 [outlined]="true"
                 size="small"
                 (onClick)="openLinkDynamics()"
+              />
+            } @else if (!p.procurementTeam || !p.projectAccountant) {
+              <p-button
+                label="Sync from BC"
+                icon="pi pi-sync"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                [loading]="dynamicsLinkLoading()"
+                (onClick)="onSyncFromBC()"
               />
             }
             @if (!p.sharepointFolderLink) {
@@ -165,6 +176,15 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
             >
               <i class="pi pi-users mr-1"></i>Attendance
             </button>
+          }
+          @if (p.projectAccountant) {
+            <span><i class="pi pi-calculator mr-1"></i>Accountant: {{ p.projectAccountant }}</span>
+          }
+          @if (p.procurementTeam) {
+            <span><i class="pi pi-truck mr-1"></i>Procurement: {{ p.procurementTeam }}</span>
+          }
+          @if (p.branch) {
+            <span><i class="pi pi-map-marker mr-1"></i>Branch: {{ p.branch }}</span>
           }
         </div>
         @if (p.members?.length) {
@@ -346,6 +366,8 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         }
       }
 
+      <app-cpm-chart [tasks]="projectTasks()" />
+
       <app-task-editor
         [task]="selectedTask()"
         [visible]="editorVisible()"
@@ -442,33 +464,25 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         header="Link to Dynamics BC Job"
         [(visible)]="dynamicsDialogVisible"
         [modal]="true"
-        [style]="{ width: '32rem' }"
+        [style]="{ width: '28rem' }"
       >
         <div class="flex flex-col gap-4">
-          @if (dynamicsService.loading()) {
-            <div class="flex items-center gap-2 text-sm text-gray-500">
-              <i class="pi pi-spinner pi-spin"></i> Loading jobs from Business Central...
-            </div>
-          } @else {
-            <div>
-              <label class="mb-1 block text-sm font-medium" for="bcJob">Select BC Job</label>
-              <p-select
-                [options]="dynamicsJobOptions()"
-                [(ngModel)]="selectedDynamicsNo"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Choose a job..."
-                [filter]="true"
-                filterBy="label"
-                inputId="bcJob"
-                class="w-full"
-              />
-            </div>
-            @if (selectedDynamicsNo()) {
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                This will sync client info, dates, and budget from the BC job into the project.
-              </p>
-            }
+          <div>
+            <label class="mb-1 block text-sm font-medium" for="bcJobNo">Dynamics Job No *</label>
+            <input
+              pInputText
+              id="bcJobNo"
+              [ngModel]="selectedDynamicsNo()"
+              (ngModelChange)="selectedDynamicsNo.set($event)"
+              placeholder="Enter BC Job No (e.g. J00123)"
+              class="w-full"
+            />
+          </div>
+          @if (selectedDynamicsNo()) {
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              This will query Business Central for the job and sync Person Responsible and Project
+              Accountant.
+            </p>
           }
         </div>
         <ng-template #footer>
@@ -496,9 +510,9 @@ export class ProjectDetailComponent implements OnInit {
   private readonly taskService = inject(TaskService);
   private readonly messageService = inject(MessageService);
   private readonly userService = inject(UserService);
-  readonly dynamicsService = inject(DynamicsService);
 
   readonly project = signal<Project | null>(null);
+  readonly projectTasks = this.taskService.tasks;
   readonly activeView = signal<'board' | 'grid'>('board');
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
@@ -524,7 +538,6 @@ export class ProjectDetailComponent implements OnInit {
   readonly dynamicsDialogVisible = signal(false);
   readonly dynamicsLinkLoading = signal(false);
   readonly selectedDynamicsNo = signal<string>('');
-  readonly dynamicsJobOptions = signal<{ label: string; value: string }[]>([]);
 
   // SharePoint folder
   readonly spFolderLoading = signal(false);
@@ -662,24 +675,33 @@ export class ProjectDetailComponent implements OnInit {
   // --- Dynamics Link ---
 
   openLinkDynamics(): void {
-    this.dynamicsService.loadJobs();
     this.selectedDynamicsNo.set('');
-
-    // Build options reactively when jobs load
-    const checkJobs = setInterval(() => {
-      const jobs = this.dynamicsService.jobs();
-      if (jobs.length > 0 || !this.dynamicsService.loading()) {
-        clearInterval(checkJobs);
-        this.dynamicsJobOptions.set(
-          jobs.map((j: DynamicsJob) => ({
-            label: `${j.No} — ${j.Description}`,
-            value: j.No,
-          })),
-        );
-      }
-    }, 200);
-
     this.dynamicsDialogVisible.set(true);
+  }
+
+  onSyncFromBC(): void {
+    const p = this.project();
+    if (!p?.dynamicsNo) return;
+    this.dynamicsLinkLoading.set(true);
+    this.projectService.linkToDynamics(p.id, p.dynamicsNo).subscribe({
+      next: (updated) => {
+        this.project.set({ ...p, ...updated });
+        this.dynamicsLinkLoading.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Synced from BC',
+          detail: 'Person Responsible and Project Accountant updated',
+        });
+      },
+      error: (err) => {
+        this.dynamicsLinkLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Sync Failed',
+          detail: err.error?.message || 'Could not sync from BC',
+        });
+      },
+    });
   }
 
   onLinkDynamics(): void {

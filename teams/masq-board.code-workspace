@@ -1,0 +1,11 @@
+{
+  "folders": [
+	{
+		"path": ".."
+	},
+	{
+		"path": "../../masq-board-be"
+	}
+],
+  "settings": {}
+}

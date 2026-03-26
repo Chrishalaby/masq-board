@@ -29,6 +29,8 @@ export interface Project {
   readonly isHot: boolean;
   readonly apolloProjectId?: string;
   readonly dynamicsNo?: string;
+  readonly branch?: string;
+  readonly dynamicsCompanyId?: string;
   readonly clientId?: string;
   readonly clientName?: string;
   readonly contactId?: string;
