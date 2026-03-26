@@ -3,15 +3,14 @@ import { RouterOutlet } from '@angular/router';
 import { Toast } from 'primeng/toast';
 import { AuthService } from './auth/auth.service';
 import { CallOverlayComponent } from './shared/call-overlay/call-overlay.component';
-import { NavBarComponent } from './shared/nav-bar/nav-bar.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavBarComponent, CallOverlayComponent, Toast],
+  imports: [RouterOutlet, /* NavBarComponent, */ CallOverlayComponent, Toast],
   template: `
     <p-toast />
     <div class="flex h-screen flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      <app-nav-bar />
+      <!-- <app-nav-bar /> -->
       <div class="flex-1 overflow-auto">
         <router-outlet />
       </div>
