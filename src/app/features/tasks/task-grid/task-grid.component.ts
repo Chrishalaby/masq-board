@@ -78,8 +78,8 @@ import { TaskService } from '../../../services/task.service';
           <td>{{ task.currentMilestone }}</td>
           <td>{{ task.nextMilestone }}</td>
           <td>
-            @if (task.dependencyCount) {
-              <span class="text-sm">🔗 {{ task.dependencyCount }}</span>
+            @if (task.dependencies?.length) {
+              <span class="text-sm">🔗 {{ task.dependencies!.length }}</span>
             }
           </td>
           <td>

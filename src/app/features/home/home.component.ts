@@ -20,49 +20,58 @@ import { AuthService } from '../../auth/auth.service';
       z-index: 0;
       background: linear-gradient(
         135deg,
-        rgba(99, 102, 241, 0.08) 0%,
-        rgba(139, 92, 246, 0.06) 25%,
-        rgba(59, 130, 246, 0.05) 50%,
-        rgba(16, 185, 129, 0.04) 75%,
-        rgba(99, 102, 241, 0.08) 100%
+        rgba(99, 102, 241, 0.15) 0%,
+        rgba(139, 92, 246, 0.12) 25%,
+        rgba(59, 130, 246, 0.1) 50%,
+        rgba(16, 185, 129, 0.08) 75%,
+        rgba(99, 102, 241, 0.15) 100%
       );
       background-size: 400% 400%;
-      animation: gradientShift 20s ease infinite;
+      animation: gradientShift 15s ease infinite;
     }
 
     .gradient-orb {
       position: fixed;
       border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.12;
+      filter: blur(70px);
+      opacity: 0.25;
       z-index: 0;
     }
 
     .orb-1 {
-      width: 600px;
-      height: 600px;
-      top: -150px;
-      right: -100px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.4), transparent 70%);
-      animation: orbFloat1 25s ease-in-out infinite;
+      width: 650px;
+      height: 650px;
+      top: -120px;
+      right: -80px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.5), transparent 70%);
+      animation: orbFloat1 18s ease-in-out infinite;
     }
 
     .orb-2 {
-      width: 500px;
-      height: 500px;
-      bottom: -100px;
-      left: -80px;
-      background: radial-gradient(circle, rgba(16, 185, 129, 0.35), transparent 70%);
-      animation: orbFloat2 30s ease-in-out infinite;
+      width: 550px;
+      height: 550px;
+      bottom: -80px;
+      left: -60px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.45), transparent 70%);
+      animation: orbFloat2 22s ease-in-out infinite;
     }
 
     .orb-3 {
-      width: 400px;
-      height: 400px;
-      top: 40%;
+      width: 450px;
+      height: 450px;
+      top: 35%;
       left: 50%;
-      background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%);
-      animation: orbFloat3 22s ease-in-out infinite;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.45), transparent 70%);
+      animation: orbFloat3 16s ease-in-out infinite;
+    }
+
+    .orb-4 {
+      width: 350px;
+      height: 350px;
+      top: 10%;
+      left: 20%;
+      background: radial-gradient(circle, rgba(244, 114, 182, 0.35), transparent 70%);
+      animation: orbFloat4 20s ease-in-out infinite;
     }
 
     @keyframes gradientShift {
@@ -70,8 +79,14 @@ import { AuthService } from '../../auth/auth.service';
       100% {
         background-position: 0% 50%;
       }
+      25% {
+        background-position: 50% 100%;
+      }
       50% {
         background-position: 100% 50%;
+      }
+      75% {
+        background-position: 50% 0%;
       }
     }
 
@@ -80,11 +95,14 @@ import { AuthService } from '../../auth/auth.service';
       100% {
         transform: translate(0, 0) scale(1);
       }
-      33% {
-        transform: translate(-40px, 60px) scale(1.05);
+      25% {
+        transform: translate(-60px, 40px) scale(1.1);
       }
-      66% {
-        transform: translate(30px, -30px) scale(0.95);
+      50% {
+        transform: translate(-20px, 80px) scale(0.95);
+      }
+      75% {
+        transform: translate(40px, -20px) scale(1.05);
       }
     }
 
@@ -93,11 +111,14 @@ import { AuthService } from '../../auth/auth.service';
       100% {
         transform: translate(0, 0) scale(1);
       }
-      33% {
-        transform: translate(50px, -40px) scale(1.08);
+      25% {
+        transform: translate(60px, -50px) scale(1.1);
       }
-      66% {
-        transform: translate(-30px, 20px) scale(0.92);
+      50% {
+        transform: translate(30px, -80px) scale(0.9);
+      }
+      75% {
+        transform: translate(-40px, 30px) scale(1.05);
       }
     }
 
@@ -106,8 +127,21 @@ import { AuthService } from '../../auth/auth.service';
       100% {
         transform: translate(-50%, 0) scale(1);
       }
+      33% {
+        transform: translate(-40%, -60px) scale(1.15);
+      }
+      66% {
+        transform: translate(-60%, 40px) scale(0.9);
+      }
+    }
+
+    @keyframes orbFloat4 {
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
       50% {
-        transform: translate(-50%, -50px) scale(1.1);
+        transform: translate(80px, 60px) scale(1.12);
       }
     }
 
@@ -121,6 +155,7 @@ import { AuthService } from '../../auth/auth.service';
     <div class="gradient-orb orb-1" aria-hidden="true"></div>
     <div class="gradient-orb orb-2" aria-hidden="true"></div>
     <div class="gradient-orb orb-3" aria-hidden="true"></div>
+    <div class="gradient-orb orb-4" aria-hidden="true"></div>
 
     <div class="content mx-auto max-w-4xl px-6 py-12">
       <div class="mb-10 text-center">

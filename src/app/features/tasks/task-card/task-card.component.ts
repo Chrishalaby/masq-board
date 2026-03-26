@@ -68,12 +68,12 @@ import { User } from '../../../models/user.model';
       }
 
       <div class="flex items-center gap-2">
-        @if (task().dependencyCount) {
+        @if (task().dependencies?.length) {
           <span
             class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
             title="Dependencies"
           >
-            🔗 {{ task().dependencyCount }}
+            🔗 {{ task().dependencies!.length }}
           </span>
         }
         @if (checklistProgress(); as progress) {
