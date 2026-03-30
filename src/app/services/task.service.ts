@@ -152,6 +152,7 @@ export class TaskService {
       status: task.status,
       startDate: task.startDate || undefined,
       dueDate: task.dueDate || undefined,
+      milestoneAchieved: task.milestoneAchieved || undefined,
       currentMilestone: task.currentMilestone || undefined,
       nextMilestone: task.nextMilestone || undefined,
       delayRisk: task.delayRisk || undefined,

@@ -91,6 +91,7 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         [task]="selectedTask()"
         [visible]="editorVisible()"
         [initiativeId]="ini.id"
+        [departmentId]="ini.departmentId"
         (visibleChange)="editorVisible.set($event)"
         (saved)="onTaskSaved()"
       />

@@ -37,6 +37,7 @@ export interface Task {
   status: TaskStatus;
   startDate?: string;
   dueDate?: string;
+  milestoneAchieved?: string;
   currentMilestone?: string;
   nextMilestone?: string;
   delayRisk?: string;

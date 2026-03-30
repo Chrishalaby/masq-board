@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Button } from 'primeng/button';
 import { AuthService } from '../../auth/auth.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-nav-bar',
@@ -33,6 +34,20 @@ import { AuthService } from '../../auth/auth.service';
           class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
           >Notes</a
         >
+        <a
+          routerLink="/departments"
+          routerLinkActive="text-indigo-600 dark:text-indigo-400 font-semibold"
+          class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          >Departments</a
+        >
+        @if (userService.currentUser()?.isAdmin) {
+          <a
+            routerLink="/admin"
+            routerLinkActive="text-indigo-600 dark:text-indigo-400 font-semibold"
+            class="text-sm font-medium text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+            >Admin</a
+          >
+        }
       </div>
       <div class="flex items-center gap-3">
         @if (auth.isAuthenticated()) {
@@ -58,4 +73,5 @@ import { AuthService } from '../../auth/auth.service';
 })
 export class NavBarComponent {
   protected readonly auth = inject(AuthService);
+  protected readonly userService = inject(UserService);
 }

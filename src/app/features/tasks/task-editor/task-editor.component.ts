@@ -7,6 +7,7 @@ import {
   input,
   OnInit,
   output,
+  signal,
   untracked,
 } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -21,6 +22,7 @@ import { Textarea } from 'primeng/textarea';
 import { of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
 import { Label, Task, TASK_PRIORITIES, TASK_STATUSES } from '../../../models/task.model';
+import { UserAssignment } from '../../../models/user-assignment.model';
 import { LabelService } from '../../../services/label.service';
 import { ProjectService } from '../../../services/project.service';
 import { TaskService } from '../../../services/task.service';
@@ -64,7 +66,7 @@ import { UserService } from '../../../services/user.service';
             <p-select
               id="assigneeId"
               formControlName="assigneeId"
-              [options]="users()"
+              [options]="assignableUsers()"
               optionLabel="displayName"
               optionValue="id"
               placeholder="Select assignee"
@@ -146,12 +148,16 @@ import { UserService } from '../../../services/user.service';
 
         <!-- Description -->
         <div class="flex flex-col gap-1">
-          <label for="description" class="text-sm font-medium">Description</label>
+          <label for="description" class="text-sm font-medium">Description (List All Milestones)</label>
           <textarea pTextarea id="description" formControlName="description" rows="3"></textarea>
         </div>
 
         <!-- Milestones -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="flex flex-col gap-1">
+            <label for="milestoneAchieved" class="text-sm font-medium">Milestone Achieved</label>
+            <input pInputText id="milestoneAchieved" formControlName="milestoneAchieved" />
+          </div>
           <div class="flex flex-col gap-1">
             <label for="currentMilestone" class="text-sm font-medium">Current Milestone</label>
             <input pInputText id="currentMilestone" formControlName="currentMilestone" />
@@ -302,10 +308,11 @@ export class TaskEditorComponent implements OnInit {
   readonly saved = output<void>();
   readonly projectId = input<string | undefined>(undefined);
   readonly initiativeId = input<string | undefined>(undefined);
+  /** Optional: pass department users when inside an initiative context */
+  readonly departmentId = input<string | undefined>(undefined);
 
   readonly priorities = TASK_PRIORITIES;
   readonly statuses = TASK_STATUSES;
-  readonly users = this.userService.users;
   readonly projects = this.projectService.projects;
   readonly availableLabels = this.labelService.labels;
 
@@ -314,6 +321,46 @@ export class TaskEditorComponent implements OnInit {
   readonly dependingTaskControl = new FormControl<string | null>(null);
 
   private selectedLabels: Label[] = [];
+
+  /** Assignments for the current user (populated in ngOnInit) */
+  private readonly myAssignments = signal<UserAssignment[]>([]);
+
+  /**
+   * Filtered list of users that the current user is allowed to assign tasks to.
+   * Rules (evaluated in order):
+   *  1. isGeneralSupervisor + no initiative → all users
+   *  2. isGeneralSupervisor + initiative   → department users only
+   *  3. Has canAssignTo rows               → those users + self
+   *  4. Regular user                       → self only
+   * Self is always included.
+   */
+  readonly assignableUsers = computed(() => {
+    const allUsers = this.userService.users();
+    const me = this.userService.currentUser();
+    if (!me) return allUsers; // not loaded yet — show all as fallback
+
+    const self = allUsers.find((u) => u.id === me.id);
+    const selfArr = self ? [self] : [];
+
+    if (me.isGeneralSupervisor) {
+      if (this.departmentId()) {
+        // Inside an initiative: filter to the initiative's department
+        const deptUsers = allUsers.filter((u) => u.departmentId === this.departmentId());
+        return deptUsers.some((u) => u.id === me.id) ? deptUsers : [...selfArr, ...deptUsers];
+      }
+      return allUsers;
+    }
+
+    const assignments = this.myAssignments();
+    if (assignments.length > 0) {
+      const assignableIds = new Set(assignments.map((a) => a.canAssignToUserId));
+      const assignable = allUsers.filter((u) => assignableIds.has(u.id));
+      return assignable.some((u) => u.id === me.id) ? assignable : [...selfArr, ...assignable];
+    }
+
+    // Regular user — self only
+    return selfArr;
+  });
 
   constructor() {
     effect(() => {
@@ -347,6 +394,7 @@ export class TaskEditorComponent implements OnInit {
     startDate: new FormControl<Date | null>(null),
     dueDate: new FormControl<Date | null>(null),
     description: new FormControl('', { nonNullable: true }),
+    milestoneAchieved: new FormControl('', { nonNullable: true }),
     currentMilestone: new FormControl('', { nonNullable: true }),
     nextMilestone: new FormControl('', { nonNullable: true }),
     delayRisk: new FormControl('', { nonNullable: true }),
@@ -368,8 +416,31 @@ export class TaskEditorComponent implements OnInit {
 
   ngOnInit(): void {
     this.userService.loadUsers();
+    this.userService.loadCurrentUser();
     this.projectService.loadProjects();
     this.labelService.loadLabels();
+
+    // Load this user's canAssignTo relationships for filtering
+    const me = this.userService.currentUser();
+    if (me?.departmentId) {
+      this.userService
+        .getAssignments({ userId: me.id, departmentId: me.departmentId })
+        .subscribe({ next: (rows) => this.myAssignments.set(rows) });
+    }
+    // If not loaded yet, re-attempt once currentUser loads
+    effect(
+      () => {
+        const user = this.userService.currentUser();
+        if (user?.departmentId && this.myAssignments().length === 0) {
+          untracked(() => {
+            this.userService
+              .getAssignments({ userId: user.id, departmentId: user.departmentId! })
+              .subscribe({ next: (rows) => this.myAssignments.set(rows) });
+          });
+        }
+      },
+      { allowSignalWrites: true },
+    );
   }
 
   onVisibleChange(val: boolean): void {
@@ -443,6 +514,7 @@ export class TaskEditorComponent implements OnInit {
       status: raw.status,
       startDate: raw.startDate ? this.formatDate(raw.startDate) : undefined,
       dueDate: raw.dueDate ? this.formatDate(raw.dueDate) : undefined,
+      milestoneAchieved: raw.milestoneAchieved || undefined,
       currentMilestone: raw.currentMilestone || undefined,
       nextMilestone: raw.nextMilestone || undefined,
       delayRisk: raw.delayRisk || undefined,
@@ -525,6 +597,7 @@ export class TaskEditorComponent implements OnInit {
         startDate: t.startDate ? new Date(t.startDate) : null,
         dueDate: t.dueDate ? new Date(t.dueDate) : null,
         description: t.description,
+        milestoneAchieved: t.milestoneAchieved ?? '',
         currentMilestone: t.currentMilestone ?? '',
         nextMilestone: t.nextMilestone ?? '',
         delayRisk: t.delayRisk ?? '',
