@@ -165,7 +165,7 @@ import { AuthService } from '../../auth/auth.service';
         <p class="mt-2 text-gray-500 dark:text-gray-400">What would you like to work on?</p>
       </div>
 
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         @for (card of cards; track card.route) {
           <a
             [routerLink]="card.route"
@@ -213,6 +213,13 @@ export class HomeComponent {
       route: '/notes',
       icon: 'pi pi-file-edit',
       bgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300',
+    },
+    {
+      title: 'Departments',
+      description: 'Manage your department initiatives and track progress.',
+      route: '/departments',
+      icon: 'pi pi-building',
+      bgClass: 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300',
     },
   ];
 }

@@ -58,7 +58,7 @@ import { UserService } from '../../../services/user.service';
         </div>
 
         <!-- Assignee + Project row -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid gap-3" [class]="initiativeId() ? 'grid-cols-1' : 'grid-cols-2'">
           <div class="flex flex-col gap-1">
             <label for="assigneeId" class="text-sm font-medium">Assignee</label>
             <p-select
@@ -73,18 +73,20 @@ import { UserService } from '../../../services/user.service';
               [showClear]="true"
             />
           </div>
-          <div class="flex flex-col gap-1">
-            <label for="projectId" class="text-sm font-medium">Project</label>
-            <p-select
-              id="projectId"
-              formControlName="projectId"
-              [options]="projects()"
-              optionLabel="name"
-              optionValue="id"
-              placeholder="Standalone (no project)"
-              [showClear]="true"
-            />
-          </div>
+          @if (!initiativeId()) {
+            <div class="flex flex-col gap-1">
+              <label for="projectId" class="text-sm font-medium">Project</label>
+              <p-select
+                id="projectId"
+                formControlName="projectId"
+                [options]="projects()"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Standalone (no project)"
+                [showClear]="true"
+              />
+            </div>
+          }
         </div>
 
         <!-- Priority + Status row -->
@@ -299,6 +301,7 @@ export class TaskEditorComponent implements OnInit {
   readonly visibleChange = output<boolean>();
   readonly saved = output<void>();
   readonly projectId = input<string | undefined>(undefined);
+  readonly initiativeId = input<string | undefined>(undefined);
 
   readonly priorities = TASK_PRIORITIES;
   readonly statuses = TASK_STATUSES;
@@ -445,6 +448,7 @@ export class TaskEditorComponent implements OnInit {
       delayRisk: raw.delayRisk || undefined,
       assigneeId: raw.assigneeId || undefined,
       projectId: raw.projectId || this.projectId() || undefined,
+      initiativeId: this.initiativeId() || this.task()?.initiativeId || undefined,
       labels: this.selectedLabels,
       checklist: raw.checklist.length ? raw.checklist : undefined,
     };

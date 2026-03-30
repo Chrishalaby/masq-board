@@ -45,6 +45,8 @@ export interface Task {
   // Relations
   projectId?: string;
   project?: { id: string; name: string };
+  initiativeId?: string;
+  initiative?: { id: string; name: string };
   assigneeId?: string;
   assignee?: User;
   createdById?: string;

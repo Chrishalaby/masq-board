@@ -9,6 +9,7 @@ interface QueryTaskParams {
   priority?: string;
   assigneeId?: string;
   projectId?: string;
+  initiativeId?: string;
   standaloneOnly?: boolean;
 }
 
@@ -48,6 +49,7 @@ export class TaskService {
     if (query?.priority) params = params.set('priority', query.priority);
     if (query?.assigneeId) params = params.set('assigneeId', query.assigneeId);
     if (query?.projectId) params = params.set('projectId', query.projectId);
+    if (query?.initiativeId) params = params.set('initiativeId', query.initiativeId);
     if (query?.standaloneOnly) params = params.set('standaloneOnly', 'true');
 
     this.http.get<Task[]>(this.baseUrl, { params }).subscribe({
@@ -154,6 +156,7 @@ export class TaskService {
       nextMilestone: task.nextMilestone || undefined,
       delayRisk: task.delayRisk || undefined,
       projectId: task.projectId || undefined,
+      initiativeId: task.initiativeId || undefined,
       assigneeId: task.assigneeId || undefined,
       labelIds: task.labels?.map((l) => l.id) || undefined,
       checklist: task.checklist?.map((c) => ({

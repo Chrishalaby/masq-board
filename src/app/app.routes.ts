@@ -44,4 +44,18 @@ export const routes: Routes = [
         (m) => m.NotesBoardComponent,
       ),
   },
+  {
+    path: 'departments',
+    loadComponent: () =>
+      import('./features/departments/department-management/department-management.component').then(
+        (m) => m.DepartmentManagementComponent,
+      ),
+  },
+  {
+    path: 'departments/initiatives/:id',
+    loadComponent: () =>
+      import('./features/departments/initiative-detail/initiative-detail.component').then(
+        (m) => m.InitiativeDetailComponent,
+      ),
+  },
 ];

@@ -6,6 +6,7 @@ export interface User {
   jobTitle?: string;
   avatarUrl?: string;
   isActive: boolean;
+  departmentId?: string;
   createdAt: string;
   updatedAt: string;
 }
