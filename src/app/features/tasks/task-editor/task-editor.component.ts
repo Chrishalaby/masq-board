@@ -148,7 +148,9 @@ import { UserService } from '../../../services/user.service';
 
         <!-- Description -->
         <div class="flex flex-col gap-1">
-          <label for="description" class="text-sm font-medium">Description (List All Milestones)</label>
+          <label for="description" class="text-sm font-medium"
+            >Description (List All Milestones)</label
+          >
           <textarea pTextarea id="description" formControlName="description" rows="3"></textarea>
         </div>
 

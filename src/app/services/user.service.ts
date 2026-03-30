@@ -36,12 +36,18 @@ export class UserService {
   }
 
   /** Admin: update user fields (departmentId, isAdmin, isGeneralSupervisor, etc.) */
-  updateUser(id: string, data: Partial<Pick<User, 'displayName' | 'departmentId' | 'isAdmin' | 'isGeneralSupervisor' | 'isActive' | 'jobTitle'>>): Observable<User> {
+  updateUser(
+    id: string,
+    data: Partial<
+      Pick<
+        User,
+        'displayName' | 'departmentId' | 'isAdmin' | 'isGeneralSupervisor' | 'isActive' | 'jobTitle'
+      >
+    >,
+  ): Observable<User> {
     return this.http.patch<User>(`${this.baseUrl}/${id}`, data).pipe(
       tap((updated) => {
-        this.usersSignal.update((users) =>
-          users.map((u) => (u.id === updated.id ? updated : u)),
-        );
+        this.usersSignal.update((users) => users.map((u) => (u.id === updated.id ? updated : u)));
         if (this.currentUserSignal()?.id === updated.id) {
           this.currentUserSignal.set(updated);
         }
@@ -58,7 +64,11 @@ export class UserService {
     return this.http.get<UserAssignment[]>(this.assignmentsUrl, { params });
   }
 
-  createAssignment(data: { userId: string; canAssignToUserId: string; departmentId: string }): Observable<UserAssignment> {
+  createAssignment(data: {
+    userId: string;
+    canAssignToUserId: string;
+    departmentId: string;
+  }): Observable<UserAssignment> {
     return this.http.post<UserAssignment>(this.assignmentsUrl, data);
   }
 

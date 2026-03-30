@@ -72,20 +72,28 @@ type AdminTab = 'users' | 'departments' | 'assignments';
           <p-tabpanel value="users">
             <div class="py-4">
               <div class="mb-4 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                  All Users
-                </h2>
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">All Users</h2>
               </div>
 
               <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                 <table class="w-full text-sm">
                   <thead class="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Name</th>
-                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Email</th>
-                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Department</th>
-                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Roles</th>
-                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300"></th>
+                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
+                        Name
+                      </th>
+                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
+                        Email
+                      </th>
+                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
+                        Department
+                      </th>
+                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
+                        Roles
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300"
+                      ></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -130,9 +138,7 @@ type AdminTab = 'users' | 'departments' | 'assignments';
           <p-tabpanel value="departments">
             <div class="py-4">
               <div class="mb-4 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                  Departments
-                </h2>
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Departments</h2>
                 <p-button
                   label="New Department"
                   icon="pi pi-plus"
@@ -149,7 +155,9 @@ type AdminTab = 'users' | 'departments' | 'assignments';
                     <div>
                       <p class="font-semibold text-gray-900 dark:text-gray-100">{{ dept.name }}</p>
                       @if (dept.description) {
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ dept.description }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                          {{ dept.description }}
+                        </p>
                       }
                       @if (dept.headOfDepartment) {
                         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
@@ -203,7 +211,9 @@ type AdminTab = 'users' | 'departments' | 'assignments';
 
               <!-- Filter by department -->
               <div class="mb-4 flex items-center gap-3">
-                <label class="text-sm font-medium text-gray-600 dark:text-gray-300" for="filterDept">Filter by Department</label>
+                <label class="text-sm font-medium text-gray-600 dark:text-gray-300" for="filterDept"
+                  >Filter by Department</label
+                >
                 <p-select
                   id="filterDept"
                   [(ngModel)]="assignmentDeptFilter"
@@ -220,9 +230,15 @@ type AdminTab = 'users' | 'departments' | 'assignments';
                 <table class="w-full text-sm">
                   <thead class="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Supervisor</th>
-                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Can Assign To</th>
-                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Department</th>
+                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
+                        Supervisor
+                      </th>
+                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
+                        Can Assign To
+                      </th>
+                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
+                        Department
+                      </th>
                       <th class="px-4 py-3"></th>
                     </tr>
                   </thead>
@@ -252,7 +268,10 @@ type AdminTab = 'users' | 'departments' | 'assignments';
                     }
                     @if (assignments().length === 0) {
                       <tr>
-                        <td colspan="4" class="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+                        <td
+                          colspan="4"
+                          class="py-8 text-center text-sm text-gray-400 dark:text-gray-500"
+                        >
                           No assignment permissions defined.
                         </td>
                       </tr>
@@ -303,13 +322,22 @@ type AdminTab = 'users' | 'departments' | 'assignments';
               <label for="uIsAdmin" class="text-sm">Admin</label>
             </div>
             <div class="flex items-center gap-2">
-              <p-checkbox [(ngModel)]="userForm.isGeneralSupervisor" [binary]="true" inputId="uIsGS" />
+              <p-checkbox
+                [(ngModel)]="userForm.isGeneralSupervisor"
+                [binary]="true"
+                inputId="uIsGS"
+              />
               <label for="uIsGS" class="text-sm">General Supervisor</label>
             </div>
           </div>
         </div>
         <ng-template #footer>
-          <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="userDialogVisible.set(false)" />
+          <p-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            (onClick)="userDialogVisible.set(false)"
+          />
           <p-button label="Save" [loading]="saving()" (onClick)="onSaveUser()" />
         </ng-template>
       }
@@ -330,7 +358,13 @@ type AdminTab = 'users' | 'departments' | 'assignments';
         </div>
         <div class="flex flex-col gap-1">
           <label for="dDesc" class="text-sm font-medium">Description</label>
-          <textarea pTextarea id="dDesc" [(ngModel)]="deptForm.description" rows="2" class="w-full"></textarea>
+          <textarea
+            pTextarea
+            id="dDesc"
+            [(ngModel)]="deptForm.description"
+            rows="2"
+            class="w-full"
+          ></textarea>
         </div>
         <div class="flex flex-col gap-1">
           <label for="dHead" class="text-sm font-medium">Head of Department</label>
@@ -348,8 +382,18 @@ type AdminTab = 'users' | 'departments' | 'assignments';
         </div>
       </div>
       <ng-template #footer>
-        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="deptDialogVisible.set(false)" />
-        <p-button label="Save" [disabled]="!deptForm.name.trim()" [loading]="saving()" (onClick)="onSaveDepartment()" />
+        <p-button
+          label="Cancel"
+          severity="secondary"
+          [text]="true"
+          (onClick)="deptDialogVisible.set(false)"
+        />
+        <p-button
+          label="Save"
+          [disabled]="!deptForm.name.trim()"
+          [loading]="saving()"
+          (onClick)="onSaveDepartment()"
+        />
       </ng-template>
     </p-dialog>
 
@@ -401,10 +445,17 @@ type AdminTab = 'users' | 'departments' | 'assignments';
         </div>
       </div>
       <ng-template #footer>
-        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="assignDialogVisible.set(false)" />
+        <p-button
+          label="Cancel"
+          severity="secondary"
+          [text]="true"
+          (onClick)="assignDialogVisible.set(false)"
+        />
         <p-button
           label="Add"
-          [disabled]="!assignForm.userId || !assignForm.canAssignToUserId || !assignForm.departmentId"
+          [disabled]="
+            !assignForm.userId || !assignForm.canAssignToUserId || !assignForm.departmentId
+          "
           [loading]="saving()"
           (onClick)="onSaveAssignment()"
         />
@@ -428,7 +479,13 @@ export class AdminPanelComponent implements OnInit {
   // User edit
   readonly userDialogVisible = signal(false);
   readonly editingUser = signal<User | null>(null);
-  userForm = { displayName: '', jobTitle: '', departmentId: undefined as string | undefined, isAdmin: false, isGeneralSupervisor: false };
+  userForm = {
+    displayName: '',
+    jobTitle: '',
+    departmentId: undefined as string | undefined,
+    isAdmin: false,
+    isGeneralSupervisor: false,
+  };
 
   // Department edit
   readonly deptDialogVisible = signal(false);
@@ -438,7 +495,11 @@ export class AdminPanelComponent implements OnInit {
   // Assignment creation
   readonly assignDialogVisible = signal(false);
   assignmentDeptFilter: string | undefined = undefined;
-  assignForm = { userId: undefined as string | undefined, canAssignToUserId: undefined as string | undefined, departmentId: undefined as string | undefined };
+  assignForm = {
+    userId: undefined as string | undefined,
+    canAssignToUserId: undefined as string | undefined,
+    departmentId: undefined as string | undefined,
+  };
 
   readonly usersInSelectedAssignDept = computed(() => {
     const deptId = this.assignForm.departmentId;
@@ -497,7 +558,11 @@ export class AdminPanelComponent implements OnInit {
         },
         error: () => {
           this.saving.set(false);
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not update user' });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Could not update user',
+          });
         },
       });
   }
@@ -547,7 +612,11 @@ export class AdminPanelComponent implements OnInit {
       },
       error: () => {
         this.saving.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not save department' });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Could not save department',
+        });
       },
     });
   }
@@ -555,14 +624,23 @@ export class AdminPanelComponent implements OnInit {
   onDeleteDepartment(dept: Department): void {
     this.departmentService.deleteDepartment(dept.id).subscribe({
       next: () => this.messageService.add({ severity: 'success', summary: 'Department deleted' }),
-      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not delete department' }),
+      error: () =>
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Could not delete department',
+        }),
     });
   }
 
   // --- Assignments ---
 
   openNewAssignment(): void {
-    this.assignForm = { userId: undefined, canAssignToUserId: undefined, departmentId: this.assignmentDeptFilter };
+    this.assignForm = {
+      userId: undefined,
+      canAssignToUserId: undefined,
+      departmentId: this.assignmentDeptFilter,
+    };
     this.assignDialogVisible.set(true);
   }
 
@@ -570,20 +648,22 @@ export class AdminPanelComponent implements OnInit {
     const { userId, canAssignToUserId, departmentId } = this.assignForm;
     if (!userId || !canAssignToUserId || !departmentId) return;
     this.saving.set(true);
-    this.userService
-      .createAssignment({ userId, canAssignToUserId, departmentId })
-      .subscribe({
-        next: (created) => {
-          this.saving.set(false);
-          this.assignDialogVisible.set(false);
-          this.assignments.update((list) => [created, ...list]);
-          this.messageService.add({ severity: 'success', summary: 'Permission added' });
-        },
-        error: () => {
-          this.saving.set(false);
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not add permission' });
-        },
-      });
+    this.userService.createAssignment({ userId, canAssignToUserId, departmentId }).subscribe({
+      next: (created) => {
+        this.saving.set(false);
+        this.assignDialogVisible.set(false);
+        this.assignments.update((list) => [created, ...list]);
+        this.messageService.add({ severity: 'success', summary: 'Permission added' });
+      },
+      error: () => {
+        this.saving.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Could not add permission',
+        });
+      },
+    });
   }
 
   onDeleteAssignment(a: UserAssignment): void {
@@ -592,7 +672,12 @@ export class AdminPanelComponent implements OnInit {
         this.assignments.update((list) => list.filter((x) => x.id !== a.id));
         this.messageService.add({ severity: 'success', summary: 'Permission removed' });
       },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not remove permission' }),
+      error: () =>
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Could not remove permission',
+        }),
     });
   }
 }
