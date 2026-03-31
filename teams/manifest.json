@@ -50,6 +50,20 @@
       "contentUrl": "https://masq-board.netlify.app/notes",
       "websiteUrl": "https://masq-board.netlify.app/notes",
       "scopes": ["personal"]
+    },
+    {
+      "entityId": "departments",
+      "name": "Departments",
+      "contentUrl": "https://masq-board.netlify.app/departments",
+      "websiteUrl": "https://masq-board.netlify.app/departments",
+      "scopes": ["personal"]
+    },
+    {
+      "entityId": "admin",
+      "name": "Admin",
+      "contentUrl": "https://masq-board.netlify.app/admin",
+      "websiteUrl": "https://masq-board.netlify.app/admin",
+      "scopes": ["personal"]
     }
   ],
   "configurableTabs": [
