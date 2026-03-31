@@ -1,5 +1,7 @@
 import { inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { CanActivateFn, Router } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { UserService } from '../services/user.service';
 
 export const adminGuard: CanActivateFn = () => {
@@ -7,14 +9,17 @@ export const adminGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   const user = userService.currentUser();
-  if (user?.isAdmin) return true;
-
-  // If user not loaded yet, load it and re-check
-  if (user === null) {
-    userService.loadCurrentUser();
-    // Redirect to home — on next navigation the guard will re-evaluate after load
+  if (user) {
+    console.log('[adminGuard] currentUser:', user.email, 'isAdmin:', user.isAdmin);
+    return user.isAdmin || router.createUrlTree(['/']);
   }
 
-  router.navigate(['/']);
-  return false;
+  console.log('[adminGuard] waiting for currentUser signal…');
+  return toObservable(userService.currentUser).pipe(
+    filter((u) => u !== null),
+    map((u) => {
+      console.log('[adminGuard] currentUser:', u.email, 'isAdmin:', u.isAdmin);
+      return u.isAdmin || router.createUrlTree(['/']);
+    }),
+  );
 };

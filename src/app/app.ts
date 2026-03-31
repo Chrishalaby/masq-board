@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Toast } from 'primeng/toast';
 import { AuthService } from './auth/auth.service';
+import { UserService } from './services/user.service';
 import { CallOverlayComponent } from './shared/call-overlay/call-overlay.component';
 
 @Component({
@@ -20,9 +21,11 @@ import { CallOverlayComponent } from './shared/call-overlay/call-overlay.compone
 })
 export class App implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly userService = inject(UserService);
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     document.documentElement.classList.add('dark');
-    this.auth.initialize();
+    await this.auth.initialize();
+    this.userService.loadCurrentUser();
   }
 }
