@@ -39,6 +39,7 @@ import { ProjectService } from '../../../services/project.service';
             optionLabel="label"
             optionValue="value"
             placeholder="Select"
+            appendTo="body"
           />
         </div>
 

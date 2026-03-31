@@ -73,6 +73,7 @@ import { UserService } from '../../../services/user.service';
               [filter]="true"
               filterBy="displayName"
               [showClear]="true"
+              appendTo="body"
             />
           </div>
           @if (!initiativeId()) {
@@ -86,6 +87,7 @@ import { UserService } from '../../../services/user.service';
                 optionValue="id"
                 placeholder="Standalone (no project)"
                 [showClear]="true"
+                appendTo="body"
               />
             </div>
           }
@@ -102,6 +104,7 @@ import { UserService } from '../../../services/user.service';
               optionLabel="label"
               optionValue="value"
               placeholder="Select"
+              appendTo="body"
             />
           </div>
           <div class="flex flex-col gap-1">
@@ -113,6 +116,7 @@ import { UserService } from '../../../services/user.service';
               optionLabel="label"
               optionValue="value"
               placeholder="Select"
+              appendTo="body"
             />
           </div>
         </div>

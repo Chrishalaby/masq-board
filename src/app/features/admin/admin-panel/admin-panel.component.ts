@@ -313,6 +313,7 @@ type AdminTab = 'users' | 'departments' | 'assignments';
               optionValue="id"
               placeholder="No department"
               [showClear]="true"
+              appendTo="body"
             />
           </div>
           <div class="flex flex-col gap-2">
@@ -378,6 +379,7 @@ type AdminTab = 'users' | 'departments' | 'assignments';
             [showClear]="true"
             [filter]="true"
             filterBy="displayName"
+            appendTo="body"
           />
         </div>
       </div>
@@ -415,6 +417,7 @@ type AdminTab = 'users' | 'departments' | 'assignments';
             optionLabel="name"
             optionValue="id"
             placeholder="Select department"
+            appendTo="body"
           />
         </div>
         <div class="flex flex-col gap-1">
@@ -428,6 +431,7 @@ type AdminTab = 'users' | 'departments' | 'assignments';
             placeholder="Select supervisor"
             [filter]="true"
             filterBy="displayName"
+            appendTo="body"
           />
         </div>
         <div class="flex flex-col gap-1">
@@ -441,6 +445,7 @@ type AdminTab = 'users' | 'departments' | 'assignments';
             placeholder="Select target user"
             [filter]="true"
             filterBy="displayName"
+            appendTo="body"
           />
         </div>
       </div>

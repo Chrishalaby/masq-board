@@ -150,6 +150,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
             [options]="priorities"
             optionLabel="label"
             optionValue="value"
+            appendTo="body"
           />
         </div>
 
