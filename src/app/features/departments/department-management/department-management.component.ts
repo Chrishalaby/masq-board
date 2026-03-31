@@ -48,6 +48,17 @@ import { UserService } from '../../../services/user.service';
                 — {{ department()!.description }}
               }
             </p>
+            @if (department()!.sharepointFolderLink) {
+              <a
+                [href]="department()!.sharepointFolderLink"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
+              >
+                <i class="pi pi-folder-open"></i>
+                Open SharePoint Folder
+              </a>
+            }
           }
         </div>
         @if (department()) {
@@ -111,6 +122,18 @@ import { UserService } from '../../../services/user.service';
                     <p class="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
                       {{ initiative.description }}
                     </p>
+                  }
+                  @if (initiative.sharepointFolderLink) {
+                    <a
+                      [href]="initiative.sharepointFolderLink"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                      (click)="$event.stopPropagation()"
+                    >
+                      <i class="pi pi-folder-open"></i>
+                      SharePoint Folder
+                    </a>
                   }
                 </div>
                 <div class="ml-4 flex shrink-0 items-center gap-2">

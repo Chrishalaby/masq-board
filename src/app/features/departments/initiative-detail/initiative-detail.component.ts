@@ -68,6 +68,17 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         @if (ini.description) {
           <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ ini.description }}</p>
         }
+        @if (ini.sharepointFolderLink) {
+          <a
+            [href]="ini.sharepointFolderLink"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
+          >
+            <i class="pi pi-folder-open"></i>
+            Open SharePoint Folder
+          </a>
+        }
       </header>
 
       @switch (activeView()) {

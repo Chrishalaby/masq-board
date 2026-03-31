@@ -6,6 +6,7 @@ export interface Initiative {
   description?: string;
   departmentId: string;
   department?: Department;
+  sharepointFolderLink?: string;
   createdAt: string;
   updatedAt: string;
 }

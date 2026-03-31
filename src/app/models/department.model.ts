@@ -6,6 +6,7 @@ export interface Department {
   description?: string;
   headOfDepartmentId?: string;
   headOfDepartment?: User;
+  sharepointFolderLink?: string;
   createdAt: string;
   updatedAt: string;
 }
