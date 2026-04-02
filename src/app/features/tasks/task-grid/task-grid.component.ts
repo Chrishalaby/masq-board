@@ -112,8 +112,8 @@ export class TaskGridComponent {
   protected statusSeverity(s: TaskStatus): 'danger' | 'warn' | 'info' | 'success' | 'secondary' {
     const map: Record<TaskStatus, 'danger' | 'warn' | 'info' | 'success' | 'secondary'> = {
       'not-started': 'secondary',
+      'on-hold': 'warn',
       'in-progress': 'info',
-      blocked: 'danger',
       completed: 'success',
     };
     return map[s];
@@ -122,8 +122,8 @@ export class TaskGridComponent {
   protected statusLabel(s: TaskStatus): string {
     const map: Record<TaskStatus, string> = {
       'not-started': 'Not Started',
+      'on-hold': 'On Hold',
       'in-progress': 'In Progress',
-      blocked: 'Blocked',
       completed: 'Completed',
     };
     return map[s];

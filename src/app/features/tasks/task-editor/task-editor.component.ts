@@ -393,7 +393,7 @@ export class TaskEditorComponent implements OnInit {
     priority: new FormControl<'low' | 'medium' | 'high' | 'urgent'>('medium', {
       nonNullable: true,
     }),
-    status: new FormControl<'not-started' | 'in-progress' | 'blocked' | 'completed'>(
+    status: new FormControl<'not-started' | 'on-hold' | 'in-progress' | 'completed'>(
       'not-started',
       { nonNullable: true },
     ),

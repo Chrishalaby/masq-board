@@ -30,8 +30,8 @@ export class TaskService {
     const tasks = this.tasksSignal();
     const grouped: Record<TaskStatus, Task[]> = {
       'not-started': [],
+      'on-hold': [],
       'in-progress': [],
-      blocked: [],
       completed: [],
     };
     for (const task of tasks) {

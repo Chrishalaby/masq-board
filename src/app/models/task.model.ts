@@ -1,7 +1,7 @@
 import { User } from './user.model';
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type TaskStatus = 'not-started' | 'in-progress' | 'blocked' | 'completed';
+export type TaskStatus = 'not-started' | 'on-hold' | 'in-progress' | 'completed';
 export type DependencyType =
   | 'finish-to-start'
   | 'start-to-start'
@@ -63,8 +63,8 @@ export interface Task {
 
 export const TASK_STATUSES: { value: TaskStatus; label: string }[] = [
   { value: 'not-started', label: 'Not Started' },
+  { value: 'on-hold', label: 'On Hold' },
   { value: 'in-progress', label: 'In Progress' },
-  { value: 'blocked', label: 'Blocked' },
   { value: 'completed', label: 'Completed' },
 ];
 

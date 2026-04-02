@@ -60,8 +60,8 @@ export class TaskBoardComponent {
   protected columnHeaderClass(status: TaskStatus): string {
     const map: Record<TaskStatus, string> = {
       'not-started': 'bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+      'on-hold': 'bg-amber-400 text-white dark:bg-amber-700',
       'in-progress': 'bg-blue-400 text-white dark:bg-blue-700',
-      blocked: 'bg-red-400 text-white dark:bg-red-700',
       completed: 'bg-green-400 text-white dark:bg-green-700',
     };
     return map[status];

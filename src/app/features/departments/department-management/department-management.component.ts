@@ -1,14 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   OnInit,
   signal,
-  untracked,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Dialog } from 'primeng/dialog';
@@ -17,62 +18,91 @@ import { Textarea } from 'primeng/textarea';
 import { Toast } from 'primeng/toast';
 import { Department } from '../../../models/department.model';
 import { Initiative } from '../../../models/initiative.model';
+import { User } from '../../../models/user.model';
 import { DepartmentService } from '../../../services/department.service';
 import { InitiativeService } from '../../../services/initiative.service';
 import { UserService } from '../../../services/user.service';
+import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.component';
 
 @Component({
   selector: 'app-department-management',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [MessageService],
-  imports: [RouterLink, Button, Dialog, FormsModule, InputText, Textarea, Toast],
+  imports: [
+    RouterLink,
+    Button,
+    Dialog,
+    FormsModule,
+    InputText,
+    Textarea,
+    Toast,
+    CallPopoverComponent,
+  ],
   template: `
     <p-toast />
 
-    <div class="mx-auto max-w-4xl px-6 py-8">
-      <!-- Back -->
+    <div class="mx-auto max-w-6xl px-6 py-8">
       <div class="mb-4">
-        <a routerLink="/" class="text-sm text-blue-600 hover:underline dark:text-blue-400"
-          >← Home</a
-        >
-      </div>
-
-      <!-- Header -->
-      <div class="mb-6 flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Department Management</h1>
-          @if (department()) {
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {{ department()!.name }}
-              @if (department()!.description) {
-                — {{ department()!.description }}
-              }
-            </p>
-            @if (department()!.sharepointFolderLink) {
-              <a
-                [href]="department()!.sharepointFolderLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
-              >
-                <i class="pi pi-folder-open"></i>
-                Open SharePoint Folder
-              </a>
-            }
-          }
-        </div>
-        @if (department()) {
-          <p-button
-            label="New Initiative"
-            icon="pi pi-plus"
-            size="small"
-            (onClick)="openNewInitiative()"
-          />
+        @if (selectedDepartment() && isGeneralSupervisor()) {
+          <a
+            routerLink="/departments"
+            class="text-sm text-blue-600 hover:underline dark:text-blue-400"
+            >← All Departments</a
+          >
+        } @else {
+          <a routerLink="/" class="text-sm text-blue-600 hover:underline dark:text-blue-400"
+            >← Home</a
+          >
         }
       </div>
 
-      <!-- No department state -->
-      @if (!loading() && !department()) {
+      @if (showDepartmentsList()) {
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Departments</h1>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            General Supervisor view: all departments.
+          </p>
+        </div>
+
+        @if (departments().length === 0) {
+          <div
+            class="rounded-lg border border-dashed border-gray-300 p-12 text-center dark:border-gray-600"
+          >
+            <i class="pi pi-building text-4xl text-gray-300 dark:text-gray-600"></i>
+            <p class="mt-3 text-gray-500 dark:text-gray-400">No departments found.</p>
+          </div>
+        } @else {
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            @for (dept of departments(); track dept.id) {
+              <a
+                [routerLink]="['/departments', dept.id]"
+                class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-indigo-400 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-500"
+              >
+                <h3
+                  class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-gray-100 dark:group-hover:text-indigo-400"
+                >
+                  {{ dept.name }}
+                </h3>
+                @if (dept.description) {
+                  <p class="mt-1 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
+                    {{ dept.description }}
+                  </p>
+                }
+                @if (dept.sharepointFolderLink) {
+                  <span
+                    class="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400"
+                  >
+                    <i class="pi pi-folder-open"></i>
+                    SharePoint linked
+                  </span>
+                }
+              </a>
+            }
+          </div>
+        }
+      }
+
+      @if (!loading() && !selectedDepartment() && !showDepartmentsList()) {
         <div
           class="rounded-lg border border-dashed border-gray-300 p-12 text-center dark:border-gray-600"
         >
@@ -86,85 +116,157 @@ import { UserService } from '../../../services/user.service';
         </div>
       }
 
-      <!-- Initiatives list -->
-      @if (department()) {
-        @if (initiatives().length === 0) {
-          <div
-            class="rounded-lg border border-dashed border-gray-300 p-12 text-center dark:border-gray-600"
-          >
-            <i class="pi pi-flag text-4xl text-gray-300 dark:text-gray-600"></i>
-            <p class="mt-3 text-gray-500 dark:text-gray-400">No initiatives yet.</p>
-            <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">
-              Create the first initiative for your department.
-            </p>
-            <p-button
-              label="New Initiative"
-              icon="pi pi-plus"
-              class="mt-4"
-              size="small"
-              (onClick)="openNewInitiative()"
-            />
-          </div>
-        } @else {
-          <div class="flex flex-col gap-3">
-            @for (initiative of initiatives(); track initiative.id) {
+      @if (selectedDepartment(); as dept) {
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ dept.name }}</h1>
+            @if (dept.description) {
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ dept.description }}</p>
+            }
+            @if (dept.sharepointFolderLink) {
               <a
-                [routerLink]="['/departments/initiatives', initiative.id]"
-                class="group flex items-center justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-indigo-400 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-500"
+                [href]="dept.sharepointFolderLink"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
               >
-                <div class="min-w-0 flex-1">
-                  <h3
-                    class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-gray-100 dark:group-hover:text-indigo-400"
-                  >
-                    {{ initiative.name }}
-                  </h3>
-                  @if (initiative.description) {
-                    <p class="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
-                      {{ initiative.description }}
-                    </p>
-                  }
-                  @if (initiative.sharepointFolderLink) {
-                    <a
-                      [href]="initiative.sharepointFolderLink"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
-                      (click)="$event.stopPropagation()"
-                    >
-                      <i class="pi pi-folder-open"></i>
-                      SharePoint Folder
-                    </a>
-                  }
-                </div>
-                <div class="ml-4 flex shrink-0 items-center gap-2">
-                  <p-button
-                    icon="pi pi-pencil"
-                    severity="secondary"
-                    [text]="true"
-                    size="small"
-                    ariaLabel="Edit initiative"
-                    (click)="openEditInitiative(initiative, $event)"
-                  />
-                  <p-button
-                    icon="pi pi-trash"
-                    severity="danger"
-                    [text]="true"
-                    size="small"
-                    ariaLabel="Delete initiative"
-                    (click)="onDeleteInitiative(initiative, $event)"
-                  />
-                  <i
-                    class="pi pi-chevron-right text-gray-300 group-hover:text-indigo-400 dark:text-gray-600"
-                  ></i>
-                </div>
+                <i class="pi pi-folder-open"></i>
+                Open SharePoint Folder
               </a>
             }
           </div>
-        }
+          <p-button
+            label="New Initiative"
+            icon="pi pi-plus"
+            size="small"
+            (onClick)="openNewInitiative()"
+          />
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-4">
+          <section class="lg:col-span-1">
+            <div
+              class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+            >
+              <h2
+                class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+              >
+                Department Users
+              </h2>
+
+              @if (departmentUsers().length === 0) {
+                <p class="text-sm text-gray-400 dark:text-gray-500">No users in this department.</p>
+              } @else {
+                <div class="flex flex-col gap-2">
+                  @for (user of departmentUsers(); track user.id) {
+                    <div
+                      class="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 dark:border-gray-700"
+                    >
+                      <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {{ user.displayName }}
+                        </p>
+                        @if (user.jobTitle) {
+                          <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+                            {{ user.jobTitle }}
+                          </p>
+                        }
+                      </div>
+                      <p-button
+                        icon="pi pi-phone"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="success"
+                        size="small"
+                        ariaLabel="Call user"
+                        (onClick)="onDepartmentUserCall(user, $event)"
+                      />
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+
+          <section class="lg:col-span-3">
+            @if (initiatives().length === 0) {
+              <div
+                class="rounded-lg border border-dashed border-gray-300 p-12 text-center dark:border-gray-600"
+              >
+                <i class="pi pi-flag text-4xl text-gray-300 dark:text-gray-600"></i>
+                <p class="mt-3 text-gray-500 dark:text-gray-400">No initiatives yet.</p>
+                <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                  Create the first initiative for this department.
+                </p>
+                <p-button
+                  label="New Initiative"
+                  icon="pi pi-plus"
+                  class="mt-4"
+                  size="small"
+                  (onClick)="openNewInitiative()"
+                />
+              </div>
+            } @else {
+              <div class="flex flex-col gap-3">
+                @for (initiative of initiatives(); track initiative.id) {
+                  <a
+                    [routerLink]="['/departments/initiatives', initiative.id]"
+                    class="group flex items-center justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-indigo-400 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-500"
+                  >
+                    <div class="min-w-0 flex-1">
+                      <h3
+                        class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-gray-100 dark:group-hover:text-indigo-400"
+                      >
+                        {{ initiative.name }}
+                      </h3>
+                      @if (initiative.description) {
+                        <p class="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
+                          {{ initiative.description }}
+                        </p>
+                      }
+                      @if (initiative.sharepointFolderLink) {
+                        <a
+                          [href]="initiative.sharepointFolderLink"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                          (click)="$event.stopPropagation()"
+                        >
+                          <i class="pi pi-folder-open"></i>
+                          SharePoint Folder
+                        </a>
+                      }
+                    </div>
+                    <div class="ml-4 flex shrink-0 items-center gap-2">
+                      <p-button
+                        icon="pi pi-pencil"
+                        severity="secondary"
+                        [text]="true"
+                        size="small"
+                        ariaLabel="Edit initiative"
+                        (click)="openEditInitiative(initiative, $event)"
+                      />
+                      <p-button
+                        icon="pi pi-trash"
+                        severity="danger"
+                        [text]="true"
+                        size="small"
+                        ariaLabel="Delete initiative"
+                        (click)="onDeleteInitiative(initiative, $event)"
+                      />
+                      <i
+                        class="pi pi-chevron-right text-gray-300 group-hover:text-indigo-400 dark:text-gray-600"
+                      ></i>
+                    </div>
+                  </a>
+                }
+              </div>
+            }
+          </section>
+        </div>
       }
     </div>
 
-    <!-- New/Edit Initiative Dialog -->
     <p-dialog
       [header]="editingInitiative() ? 'Edit Initiative' : 'New Initiative'"
       [(visible)]="dialogVisible"
@@ -210,49 +312,81 @@ import { UserService } from '../../../services/user.service';
         />
       </ng-template>
     </p-dialog>
+
+    <app-call-popover />
   `,
 })
 export class DepartmentManagementComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly userService = inject(UserService);
   private readonly departmentService = inject(DepartmentService);
   private readonly initiativeService = inject(InitiativeService);
   private readonly messageService = inject(MessageService);
 
+  readonly currentUser = this.userService.currentUser;
+  readonly isGeneralSupervisor = computed(() => this.currentUser()?.isGeneralSupervisor === true);
+  readonly departments = this.departmentService.departments;
+  readonly departmentUsers = this.userService.users;
+
   readonly loading = signal(true);
-  readonly department = signal<Department | null>(null);
+  readonly routeDepartmentId = signal<string | null>(null);
+  readonly selectedDepartment = signal<Department | null>(null);
   readonly initiatives = this.initiativeService.initiatives;
 
   readonly dialogVisible = signal(false);
   readonly editingInitiative = signal<Initiative | null>(null);
   readonly saving = signal(false);
+  readonly callPopover = viewChild(CallPopoverComponent);
+
+  readonly showDepartmentsList = computed(
+    () => this.isGeneralSupervisor() && !this.routeDepartmentId(),
+  );
 
   formName = '';
   formDescription = '';
 
-  private departmentLoaded = false;
-
   constructor() {
     effect(() => {
-      const user = this.userService.currentUser();
-      if (user !== null && !this.departmentLoaded) {
-        this.departmentLoaded = true;
-        untracked(() => {
-          this.loading.set(false);
-          if (user.departmentId) {
-            this.departmentService.getDepartment(user.departmentId).subscribe({
-              next: (dept) => {
-                this.department.set(dept);
-                this.initiativeService.loadInitiatives(dept.id);
-              },
-            });
-          }
-        });
+      const user = this.currentUser();
+      const routeDepartmentId = this.routeDepartmentId();
+      if (user === null) {
+        this.loading.set(true);
+        return;
       }
+
+      this.loading.set(false);
+
+      if (user.isGeneralSupervisor) {
+        this.departmentService.loadDepartments();
+
+        if (routeDepartmentId) {
+          this.loadDepartmentDetail(routeDepartmentId);
+        } else {
+          this.selectedDepartment.set(null);
+        }
+        return;
+      }
+
+      if (!user.departmentId) {
+        this.selectedDepartment.set(null);
+        return;
+      }
+
+      if (routeDepartmentId && routeDepartmentId !== user.departmentId) {
+        this.router.navigate(['/departments', user.departmentId]);
+        return;
+      }
+
+      this.loadDepartmentDetail(user.departmentId);
     });
   }
 
   ngOnInit(): void {
     this.userService.loadCurrentUser();
+    this.route.paramMap.subscribe((params) => {
+      this.routeDepartmentId.set(params.get('id'));
+    });
   }
 
   openNewInitiative(): void {
@@ -272,7 +406,7 @@ export class DepartmentManagementComponent implements OnInit {
   }
 
   onSaveInitiative(): void {
-    const dept = this.department();
+    const dept = this.selectedDepartment();
     if (!dept || !this.formName.trim()) return;
 
     this.saving.set(true);
@@ -322,6 +456,23 @@ export class DepartmentManagementComponent implements OnInit {
           summary: 'Error',
           detail: 'Could not delete initiative',
         });
+      },
+    });
+  }
+
+  onDepartmentUserCall(user: User, event: MouseEvent): void {
+    this.callPopover()?.show(user, event);
+  }
+
+  private loadDepartmentDetail(departmentId: string): void {
+    this.departmentService.getDepartment(departmentId).subscribe({
+      next: (dept) => {
+        this.selectedDepartment.set(dept);
+        this.initiativeService.loadInitiatives(dept.id);
+        this.userService.loadUsers(dept.id);
+      },
+      error: () => {
+        this.selectedDepartment.set(null);
       },
     });
   }

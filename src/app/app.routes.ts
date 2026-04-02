@@ -60,6 +60,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'departments/:id',
+    loadComponent: () =>
+      import('./features/departments/department-management/department-management.component').then(
+        (m) => m.DepartmentManagementComponent,
+      ),
+  },
+  {
     path: 'admin',
     loadComponent: () =>
       import('./features/admin/admin-panel/admin-panel.component').then(
