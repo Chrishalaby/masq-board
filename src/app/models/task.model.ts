@@ -7,6 +7,14 @@ export type DependencyType =
   | 'start-to-start'
   | 'finish-to-finish'
   | 'start-to-finish';
+export type TaskAssigneeRole = 'leader' | 'member';
+
+export interface TaskAssignee {
+  id?: string;
+  userId: string;
+  role?: TaskAssigneeRole | null;
+  user?: User;
+}
 
 export interface ChecklistItem {
   id?: string;
@@ -41,6 +49,7 @@ export interface Task {
   currentMilestone?: string;
   nextMilestone?: string;
   delayRisk?: string;
+  linkedFiles?: string[];
   sortOrder?: number;
 
   // Relations
@@ -52,6 +61,7 @@ export interface Task {
   assignee?: User;
   createdById?: string;
   createdBy?: User;
+  assignees?: TaskAssignee[];
   labels?: Label[];
   checklist?: ChecklistItem[];
   dependencies?: TaskDependency[];

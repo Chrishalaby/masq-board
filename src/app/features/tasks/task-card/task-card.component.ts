@@ -27,15 +27,27 @@ import { User } from '../../../models/user.model';
         <p-tag [value]="task().priority" [severity]="prioritySeverity()" [rounded]="true" />
       </div>
 
-      <p
-        class="mb-2 text-xs text-gray-500 dark:text-gray-400"
-        [class.cursor-pointer]="task().assignee"
-        [class.hover:text-blue-600]="task().assignee"
-      >
-        @if (task().assignee) {
-          <span (click)="onAssigneeClick($event)" class="hover:underline">{{
-            task().assignee!.displayName
-          }}</span>
+      <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+        @if (task().assignees?.length) {
+          @for (ta of task().assignees; track ta.userId; let last = $last) {
+            <span
+              class="cursor-pointer hover:text-blue-600 hover:underline"
+              (click)="onAssigneeClick($event, ta.user)"
+              >{{ ta.user?.displayName }}
+              @if (ta.role) {
+                <span class="text-gray-400"> ({{ ta.role }})</span>
+              }
+            </span>
+            @if (!last) {
+              <span>, </span>
+            }
+          }
+        } @else if (task().assignee) {
+          <span
+            class="cursor-pointer hover:text-blue-600 hover:underline"
+            (click)="onAssigneeClick($event, task().assignee)"
+            >{{ task().assignee!.displayName }}</span
+          >
         } @else {
           {{ task().owner || 'Unassigned' }}
         }
@@ -63,6 +75,24 @@ import { User } from '../../../models/user.model';
             >
               {{ label.name }}
             </span>
+          }
+        </div>
+      }
+
+      @if (task().linkedFiles?.length) {
+        <div class="mb-2 flex flex-wrap gap-1">
+          @for (url of task().linkedFiles; track url) {
+            <a
+              [href]="url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs text-blue-600 hover:bg-blue-100 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
+              [title]="url"
+              (click)="$event.stopPropagation()"
+            >
+              <i class="pi pi-external-link mr-1"></i>
+              {{ urlLabel(url) }}
+            </a>
           }
         </div>
       }
@@ -115,10 +145,17 @@ export class TaskCardComponent {
     return { done, total: checklist.length, percent: Math.round((done / checklist.length) * 100) };
   });
 
-  protected onAssigneeClick(event: MouseEvent): void {
-    const assignee = this.task().assignee;
-    if (!assignee) return;
+  protected onAssigneeClick(event: MouseEvent, user?: User): void {
+    if (!user) return;
     event.stopPropagation();
-    this.assigneeClick.emit({ user: assignee, event });
+    this.assigneeClick.emit({ user, event });
+  }
+
+  protected urlLabel(url: string): string {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return 'Link';
+    }
   }
 }

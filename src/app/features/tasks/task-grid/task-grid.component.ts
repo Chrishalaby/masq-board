@@ -46,7 +46,21 @@ import { TaskService } from '../../../services/task.service';
         >
           <td class="font-medium">{{ task.title }}</td>
           <td>
-            @if (task.assignee) {
+            @if (task.assignees?.length) {
+              @for (ta of task.assignees; track ta.userId; let last = $last) {
+                <span
+                  class="cursor-pointer text-blue-600 hover:underline dark:text-blue-400"
+                  (click)="onAssigneeItemClick($event, ta.user)"
+                  >{{ ta.user?.displayName }}</span
+                >
+                @if (ta.role) {
+                  <span class="text-xs text-gray-400"> ({{ ta.role }})</span>
+                }
+                @if (!last) {
+                  <span>, </span>
+                }
+              }
+            } @else if (task.assignee) {
               <span
                 class="cursor-pointer text-blue-600 hover:underline dark:text-blue-400"
                 (click)="onAssigneeClick($event, task)"
@@ -133,5 +147,11 @@ export class TaskGridComponent {
     if (!task.assignee) return;
     event.stopPropagation();
     this.assigneeClick.emit({ user: task.assignee, event });
+  }
+
+  protected onAssigneeItemClick(event: MouseEvent, user?: User): void {
+    if (!user) return;
+    event.stopPropagation();
+    this.assigneeClick.emit({ user, event });
   }
 }

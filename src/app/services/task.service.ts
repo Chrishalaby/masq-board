@@ -156,9 +156,14 @@ export class TaskService {
       currentMilestone: task.currentMilestone || undefined,
       nextMilestone: task.nextMilestone || undefined,
       delayRisk: task.delayRisk || undefined,
+      linkedFiles: task.linkedFiles,
       projectId: task.projectId || undefined,
       initiativeId: task.initiativeId || undefined,
       assigneeId: task.assigneeId || undefined,
+      assignees: task.assignees?.map((a) => ({
+        userId: a.userId,
+        role: a.role ?? null,
+      })),
       labelIds: task.labels?.map((l) => l.id) || undefined,
       checklist: task.checklist?.map((c) => ({
         title: c.title,

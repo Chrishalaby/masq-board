@@ -21,7 +21,13 @@ import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
 import { of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
-import { Label, Task, TASK_PRIORITIES, TASK_STATUSES } from '../../../models/task.model';
+import {
+  Label,
+  Task,
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+  TaskAssigneeRole,
+} from '../../../models/task.model';
 import { UserAssignment } from '../../../models/user-assignment.model';
 import { LabelService } from '../../../services/label.service';
 import { ProjectService } from '../../../services/project.service';
@@ -59,39 +65,69 @@ import { UserService } from '../../../services/user.service';
           <input pInputText id="title" formControlName="title" placeholder="Task title" />
         </div>
 
-        <!-- Assignee + Project row -->
-        <div class="grid gap-3" [class]="initiativeId() ? 'grid-cols-1' : 'grid-cols-2'">
+        <!-- Assignees -->
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium">Assignees</label>
+          <div class="flex flex-col gap-2">
+            @for (assignee of assigneesArray.controls; track $index) {
+              <div class="flex items-center gap-2">
+                <p-select
+                  class="flex-1"
+                  [options]="assignableUsers()"
+                  optionLabel="displayName"
+                  optionValue="id"
+                  placeholder="Select user"
+                  [filter]="true"
+                  filterBy="displayName"
+                  [formControl]="getAssigneeUserId($index)"
+                  appendTo="body"
+                />
+                <p-select
+                  [options]="assigneeRoleOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="No role"
+                  [showClear]="true"
+                  [formControl]="getAssigneeRole($index)"
+                  appendTo="body"
+                  [style]="{ width: '10rem' }"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [text]="true"
+                  size="small"
+                  (onClick)="removeAssignee($index)"
+                  ariaLabel="Remove assignee"
+                />
+              </div>
+            }
+            <p-button
+              icon="pi pi-plus"
+              label="Add Assignee"
+              [text]="true"
+              size="small"
+              (onClick)="addAssignee()"
+            />
+          </div>
+        </div>
+
+        <!-- Project -->
+        @if (!initiativeId()) {
           <div class="flex flex-col gap-1">
-            <label for="assigneeId" class="text-sm font-medium">Assignee</label>
+            <label for="projectId" class="text-sm font-medium">Project</label>
             <p-select
-              id="assigneeId"
-              formControlName="assigneeId"
-              [options]="assignableUsers()"
-              optionLabel="displayName"
+              id="projectId"
+              formControlName="projectId"
+              [options]="projects()"
+              optionLabel="name"
               optionValue="id"
-              placeholder="Select assignee"
-              [filter]="true"
-              filterBy="displayName"
+              placeholder="Standalone (no project)"
               [showClear]="true"
               appendTo="body"
             />
           </div>
-          @if (!initiativeId()) {
-            <div class="flex flex-col gap-1">
-              <label for="projectId" class="text-sm font-medium">Project</label>
-              <p-select
-                id="projectId"
-                formControlName="projectId"
-                [options]="projects()"
-                optionLabel="name"
-                optionValue="id"
-                placeholder="Standalone (no project)"
-                [showClear]="true"
-                appendTo="body"
-              />
-            </div>
-          }
-        </div>
+        }
 
         <!-- Priority + Status row -->
         <div class="grid grid-cols-2 gap-3">
@@ -178,6 +214,42 @@ import { UserService } from '../../../services/user.service';
         <div class="flex flex-col gap-1">
           <label for="delayRisk" class="text-sm font-medium">Delay Risk</label>
           <input pInputText id="delayRisk" formControlName="delayRisk" />
+        </div>
+
+        <!-- Linked Files -->
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium">Linked Files</label>
+          <div class="flex flex-col gap-2">
+            @for (url of linkedFilesArray.controls; track $index) {
+              <div class="flex items-center gap-2">
+                <input pInputText class="flex-1" [formControl]="url" placeholder="https://..." />
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [text]="true"
+                  size="small"
+                  (onClick)="removeLinkedFile($index)"
+                  ariaLabel="Remove linked file"
+                />
+              </div>
+            }
+            <div class="flex items-center gap-1">
+              <input
+                pInputText
+                class="flex-1"
+                placeholder="Add a file URL..."
+                [formControl]="newLinkedFileControl"
+                (keydown.enter)="addLinkedFile(); $event.preventDefault()"
+              />
+              <p-button
+                icon="pi pi-plus"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                (onClick)="addLinkedFile()"
+              />
+            </div>
+          </div>
         </div>
 
         <!-- Labels -->
@@ -319,11 +391,16 @@ export class TaskEditorComponent implements OnInit {
 
   readonly priorities = TASK_PRIORITIES;
   readonly statuses = TASK_STATUSES;
+  readonly assigneeRoleOptions = [
+    { label: 'Leader', value: 'leader' as TaskAssigneeRole },
+    { label: 'Member', value: 'member' as TaskAssigneeRole },
+  ];
   readonly projects = this.projectService.projects;
   readonly availableLabels = this.labelService.labels;
 
   readonly newLabelSelect = new FormControl<string | null>(null);
   readonly newChecklistControl = new FormControl('');
+  readonly newLinkedFileControl = new FormControl('');
   readonly dependingTaskControl = new FormControl<string | null>(null);
 
   private selectedLabels: Label[] = [];
@@ -405,6 +482,10 @@ export class TaskEditorComponent implements OnInit {
     nextMilestone: new FormControl('', { nonNullable: true }),
     delayRisk: new FormControl('', { nonNullable: true }),
     labels: new FormArray<FormControl<string>>([]),
+    linkedFiles: new FormArray<FormControl<string>>([]),
+    assignees: new FormArray<
+      FormGroup<{ userId: FormControl<string>; role: FormControl<TaskAssigneeRole | null> }>
+    >([]),
     checklist: new FormArray<
       FormGroup<{ title: FormControl<string>; completed: FormControl<boolean> }>
     >([]),
@@ -414,10 +495,20 @@ export class TaskEditorComponent implements OnInit {
     return this.form.controls.labels;
   }
 
+  get assigneesArray(): FormArray<
+    FormGroup<{ userId: FormControl<string>; role: FormControl<TaskAssigneeRole | null> }>
+  > {
+    return this.form.controls.assignees;
+  }
+
   get checklistArray(): FormArray<
     FormGroup<{ title: FormControl<string>; completed: FormControl<boolean> }>
   > {
     return this.form.controls.checklist;
+  }
+
+  get linkedFilesArray(): FormArray<FormControl<string>> {
+    return this.form.controls.linkedFiles;
   }
 
   ngOnInit(): void {
@@ -494,6 +585,39 @@ export class TaskEditorComponent implements OnInit {
     this.checklistArray.removeAt(i);
   }
 
+  addLinkedFile(): void {
+    const value = this.newLinkedFileControl.value?.trim();
+    if (value) {
+      this.linkedFilesArray.push(new FormControl(value, { nonNullable: true }));
+      this.newLinkedFileControl.reset();
+    }
+  }
+
+  removeLinkedFile(i: number): void {
+    this.linkedFilesArray.removeAt(i);
+  }
+
+  addAssignee(): void {
+    this.assigneesArray.push(
+      new FormGroup({
+        userId: new FormControl('', { nonNullable: true }),
+        role: new FormControl<TaskAssigneeRole | null>(null),
+      }),
+    );
+  }
+
+  removeAssignee(i: number): void {
+    this.assigneesArray.removeAt(i);
+  }
+
+  getAssigneeUserId(i: number): FormControl<string> {
+    return this.assigneesArray.at(i).controls.userId;
+  }
+
+  getAssigneeRole(i: number): FormControl<TaskAssigneeRole | null> {
+    return this.assigneesArray.at(i).controls.role;
+  }
+
   getChecklistTitle(i: number): FormControl<string> {
     return this.checklistArray.at(i).controls.title;
   }
@@ -528,6 +652,10 @@ export class TaskEditorComponent implements OnInit {
       projectId: raw.projectId || this.projectId() || undefined,
       initiativeId: this.initiativeId() || this.task()?.initiativeId || undefined,
       labels: this.selectedLabels,
+      linkedFiles: raw.linkedFiles?.length ? raw.linkedFiles : undefined,
+      assignees: raw.assignees
+        ?.filter((a) => a.userId)
+        .map((a) => ({ userId: a.userId, role: a.role })),
       checklist: raw.checklist.length ? raw.checklist : undefined,
     };
 
@@ -590,6 +718,8 @@ export class TaskEditorComponent implements OnInit {
     const t = this.task();
     this.labelsArray.clear();
     this.checklistArray.clear();
+    this.linkedFilesArray.clear();
+    this.assigneesArray.clear();
     this.selectedLabels = [];
     this.dependingTaskControl.reset();
 
@@ -614,6 +744,17 @@ export class TaskEditorComponent implements OnInit {
           this.labelsArray.push(new FormControl(l.id, { nonNullable: true })),
         );
       }
+      t.linkedFiles?.forEach((url) =>
+        this.linkedFilesArray.push(new FormControl(url, { nonNullable: true })),
+      );
+      t.assignees?.forEach((a) =>
+        this.assigneesArray.push(
+          new FormGroup({
+            userId: new FormControl(a.userId, { nonNullable: true }),
+            role: new FormControl<TaskAssigneeRole | null>(a.role ?? null),
+          }),
+        ),
+      );
       t.checklist?.forEach((c) =>
         this.checklistArray.push(
           new FormGroup({

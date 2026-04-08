@@ -78,11 +78,11 @@ import { UserService } from '../../../services/user.service';
               class="flex cursor-pointer flex-col gap-2 rounded-lg border p-4 shadow-sm transition hover:shadow-md dark:border-gray-700"
               [style.background-color]="note.color || ''"
               [class.dark:bg-gray-800]="!note.color"
-              (click)="openEdit(note)"
-              (keydown.enter)="openEdit(note)"
+              (click)="note.isOwn ? openEdit(note) : openDetail(note)"
+              (keydown.enter)="note.isOwn ? openEdit(note) : openDetail(note)"
               tabindex="0"
               role="button"
-              [attr.aria-label]="'Edit note: ' + note.title"
+              [attr.aria-label]="(note.isOwn ? 'Edit' : 'View') + ' note: ' + note.title"
             >
               <div class="flex items-start justify-between">
                 <h3 class="font-semibold text-gray-900" [class.dark:text-white]="!note.color">
@@ -242,6 +242,42 @@ import { UserService } from '../../../services/user.service';
         </div>
       </form>
     </p-dialog>
+
+    <!-- Read-only detail dialog for public notes -->
+    <p-dialog
+      header="Note Details"
+      [visible]="detailVisible()"
+      (visibleChange)="detailVisible.set($event)"
+      [modal]="true"
+      [style]="{ width: '36rem' }"
+      [dismissableMask]="true"
+      [draggable]="false"
+    >
+      @if (detailNote(); as note) {
+        <div class="flex flex-col gap-4 pt-2">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ note.title }}</h2>
+          <p class="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">
+            {{ note.content || 'No content.' }}
+          </p>
+          @if (note.taggedUsers?.length) {
+            <div class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Tagged</span>
+              <div class="flex flex-wrap gap-1">
+                @for (user of note.taggedUsers; track user.id) {
+                  <p-chip [label]="user.displayName" styleClass="text-xs" />
+                }
+              </div>
+            </div>
+          }
+          <div
+            class="flex items-center justify-between border-t pt-3 text-xs text-gray-500 dark:text-gray-400"
+          >
+            <span>by {{ note.author?.displayName || 'Unknown' }}</span>
+            <span>{{ note.updatedAt | date: 'medium' }}</span>
+          </div>
+        </div>
+      }
+    </p-dialog>
   `,
 })
 export class NotesBoardComponent implements OnInit {
@@ -258,6 +294,8 @@ export class NotesBoardComponent implements OnInit {
 
   readonly dialogVisible = signal(false);
   readonly editingNote = signal<Note | null>(null);
+  readonly detailVisible = signal(false);
+  readonly detailNote = signal<Note | null>(null);
 
   readonly filterUser = new FormControl<string | null>(null);
   readonly viewMode = new FormControl<'all' | 'tagged'>('all', { nonNullable: true });
@@ -352,6 +390,11 @@ export class NotesBoardComponent implements OnInit {
       taggedUserIds: note.taggedUsers?.map((u) => u.id) ?? [],
     });
     this.dialogVisible.set(true);
+  }
+
+  openDetail(note: Note): void {
+    this.detailNote.set(note);
+    this.detailVisible.set(true);
   }
 
   onSave(): void {

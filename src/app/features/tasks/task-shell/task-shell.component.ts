@@ -15,6 +15,7 @@ import { User } from '../../../models/user.model';
 import { TaskService } from '../../../services/task.service';
 import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.component';
 import { TaskBoardComponent } from '../task-board/task-board.component';
+import { TaskCalendarComponent } from '../task-calendar/task-calendar.component';
 import { TaskEditorComponent } from '../task-editor/task-editor.component';
 import { TaskGridComponent } from '../task-grid/task-grid.component';
 
@@ -27,6 +28,7 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
     SelectButton,
     Button,
     TaskBoardComponent,
+    TaskCalendarComponent,
     TaskGridComponent,
     TaskEditorComponent,
     CallPopoverComponent,
@@ -72,6 +74,12 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
           (assigneeClick)="onAssigneeClick($event)"
         />
       }
+      @case ('calendar') {
+        <app-task-calendar
+          (taskClick)="openEditTask($event)"
+          (assigneeClick)="onAssigneeClick($event)"
+        />
+      }
     }
 
     <app-task-editor
@@ -90,9 +98,10 @@ export class TaskShellComponent implements OnInit {
   readonly viewOptions = [
     { label: 'Board', value: 'board' },
     { label: 'Table', value: 'grid' },
+    { label: 'Calendar', value: 'calendar' },
   ];
 
-  readonly activeView = signal<'board' | 'grid'>('board');
+  readonly activeView = signal<'board' | 'grid' | 'calendar'>('board');
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
   readonly callPopover = viewChild(CallPopoverComponent);
