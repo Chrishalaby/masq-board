@@ -27,6 +27,13 @@ export const routes: Routes = [
       import('./features/tasks/task-shell/task-shell.component').then((m) => m.TaskShellComponent),
   },
   {
+    path: 'personal-assistant',
+    loadComponent: () =>
+      import('./features/personal-assistant/personal-assistant.component').then(
+        (m) => m.PersonalAssistantComponent,
+      ),
+  },
+  {
     path: 'task-templates',
     loadComponent: () =>
       import('./features/tasks/task-templates/task-templates.component').then(
@@ -73,5 +80,12 @@ export const routes: Routes = [
         (m) => m.AdminPanelComponent,
       ),
     canActivate: [adminGuard],
+  },
+  {
+    path: 'exec-dashboard',
+    loadComponent: () =>
+      import('./features/exec-dashboard/exec-dashboard.component').then(
+        (m) => m.ExecDashboardComponent,
+      ),
   },
 ];

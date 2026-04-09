@@ -201,18 +201,11 @@ export class HomeComponent {
       bgClass: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300',
     },
     {
-      title: 'Tasks',
-      description: 'Track tasks on the board or in a table view.',
-      route: '/tasks',
-      icon: 'pi pi-check-square',
+      title: 'Personal Assistant',
+      description: 'Your tasks, notes, and M365 calendar in one place.',
+      route: '/personal-assistant',
+      icon: 'pi pi-user',
       bgClass: 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300',
-    },
-    {
-      title: 'Notes',
-      description: 'Private and shared notes for your team.',
-      route: '/notes',
-      icon: 'pi pi-file-edit',
-      bgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300',
     },
     {
       title: 'Departments',
@@ -220,6 +213,13 @@ export class HomeComponent {
       route: '/departments',
       icon: 'pi pi-building',
       bgClass: 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300',
+    },
+    {
+      title: 'Exec Dashboard',
+      description: 'High-level overview and executive insights.',
+      route: '/exec-dashboard',
+      icon: 'pi pi-chart-bar',
+      bgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300',
     },
   ];
 }

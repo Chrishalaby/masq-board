@@ -2,13 +2,14 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { AutoComplete, AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { Button } from 'primeng/button';
@@ -123,6 +124,16 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
                 size="small"
                 [loading]="spFolderLoading()"
                 (onClick)="createSharepointFolder()"
+              />
+            }
+            @if (isAdmin()) {
+              <p-button
+                label="Delete Project"
+                icon="pi pi-trash"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+                (onClick)="confirmDeleteVisible.set(true)"
               />
             }
             <p-selectbutton
@@ -501,11 +512,39 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
           />
         </ng-template>
       </p-dialog>
+
+      <!-- Delete Confirmation Dialog -->
+      <p-dialog
+        header="Delete Project"
+        [(visible)]="confirmDeleteVisible"
+        [modal]="true"
+        [style]="{ width: '24rem' }"
+      >
+        <p class="text-sm text-gray-700 dark:text-gray-300">
+          Are you sure you want to delete this project? This action cannot be undone.
+        </p>
+        <ng-template #footer>
+          <p-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            (onClick)="confirmDeleteVisible.set(false)"
+          />
+          <p-button
+            label="Delete"
+            severity="danger"
+            icon="pi pi-trash"
+            [loading]="deleteLoading()"
+            (onClick)="onDeleteProject()"
+          />
+        </ng-template>
+      </p-dialog>
     }
   `,
 })
 export class ProjectDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly projectService = inject(ProjectService);
   private readonly taskService = inject(TaskService);
   private readonly messageService = inject(MessageService);
@@ -517,6 +556,11 @@ export class ProjectDetailComponent implements OnInit {
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
   readonly callPopover = viewChild(CallPopoverComponent);
+
+  // Delete
+  readonly confirmDeleteVisible = signal(false);
+  readonly deleteLoading = signal(false);
+  readonly isAdmin = computed(() => this.userService.currentUser()?.isAdmin === true);
 
   // Kickoff
   readonly kickoffDialogVisible = signal(false);
@@ -553,6 +597,28 @@ export class ProjectDetailComponent implements OnInit {
       next: (p) => this.project.set(p),
     });
     this.taskService.loadTasks({ projectId: id });
+    this.userService.loadCurrentUser();
+  }
+
+  onDeleteProject(): void {
+    const p = this.project();
+    if (!p) return;
+    this.deleteLoading.set(true);
+    this.projectService.deleteProject(p.id).subscribe({
+      next: () => {
+        this.deleteLoading.set(false);
+        this.confirmDeleteVisible.set(false);
+        this.router.navigate(['/projects']);
+      },
+      error: (err) => {
+        this.deleteLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Delete Failed',
+          detail: err.error?.message || 'Could not delete project',
+        });
+      },
+    });
   }
 
   openNewTask(): void {

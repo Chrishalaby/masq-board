@@ -13,6 +13,11 @@ interface QueryTaskParams {
   standaloneOnly?: boolean;
 }
 
+interface ReorderItem {
+  id: string;
+  sortOrder: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TaskService {
   private readonly http = inject(HttpClient);
@@ -36,6 +41,10 @@ export class TaskService {
     };
     for (const task of tasks) {
       grouped[task.status].push(task);
+    }
+    // Sort each column by sortOrder ascending, then by createdAt descending as tiebreaker
+    for (const status of Object.keys(grouped) as TaskStatus[]) {
+      grouped[status].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
     }
     return grouped;
   });
@@ -144,6 +153,23 @@ export class TaskService {
     });
   }
 
+  reorderTasks(items: ReorderItem[]): void {
+    // Optimistic update
+    this.tasksSignal.update((tasks) =>
+      tasks.map((t) => {
+        const item = items.find((i) => i.id === t.id);
+        return item ? { ...t, sortOrder: item.sortOrder } : t;
+      }),
+    );
+
+    this.http.patch(`${this.baseUrl}/reorder`, { items }).subscribe({
+      error: (err) => {
+        this.errorSignal.set(err.message);
+        this.loadTasks();
+      },
+    });
+  }
+
   private toApiPayload(task: Partial<Task>): Record<string, unknown> {
     return {
       title: task.title,
@@ -152,6 +178,7 @@ export class TaskService {
       status: task.status,
       startDate: task.startDate || undefined,
       dueDate: task.dueDate || undefined,
+      isRecurring: task.isRecurring ?? undefined,
       milestoneAchieved: task.milestoneAchieved || undefined,
       currentMilestone: task.currentMilestone || undefined,
       nextMilestone: task.nextMilestone || undefined,

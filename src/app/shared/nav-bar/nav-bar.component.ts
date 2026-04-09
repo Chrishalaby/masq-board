@@ -29,6 +29,12 @@ import { UserService } from '../../services/user.service';
           >Tasks</a
         >
         <a
+          routerLink="/personal-assistant"
+          routerLinkActive="text-indigo-600 dark:text-indigo-400 font-semibold"
+          class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          >Personal Assistant</a
+        >
+        <a
           routerLink="/notes"
           routerLinkActive="text-indigo-600 dark:text-indigo-400 font-semibold"
           class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"

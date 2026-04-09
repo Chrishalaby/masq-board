@@ -51,6 +51,7 @@ export interface Task {
   delayRisk?: string;
   linkedFiles?: string[];
   sortOrder?: number;
+  isRecurring?: boolean;
 
   // Relations
   projectId?: string;

@@ -1,4 +1,4 @@
-import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { Task, TASK_STATUSES, TaskStatus } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
@@ -70,8 +70,22 @@ export class TaskBoardComponent {
   onDrop(event: CdkDragDrop<TaskStatus>): void {
     const task = event.item.data as Task;
     const newStatus = event.container.data;
-    if (task.status !== newStatus) {
+    const prevStatus = event.previousContainer.data;
+
+    if (prevStatus === newStatus) {
+      // Vertical reorder within same column
+      const columnTasks = [...this.tasksByStatus()[newStatus]];
+      moveItemInArray(columnTasks, event.previousIndex, event.currentIndex);
+      const items = columnTasks.map((t, i) => ({ id: t.id, sortOrder: i }));
+      this.taskService.reorderTasks(items);
+    } else {
+      // Horizontal move: change status, then reorder in destination column
       this.taskService.moveTask(task.id, newStatus);
+      // After moving, reorder in destination to place at drop index
+      const destTasks = [...this.tasksByStatus()[newStatus].filter((t) => t.id !== task.id)];
+      destTasks.splice(event.currentIndex, 0, task);
+      const items = destTasks.map((t, i) => ({ id: t.id, sortOrder: i }));
+      this.taskService.reorderTasks(items);
     }
   }
 }

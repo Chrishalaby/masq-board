@@ -5,6 +5,18 @@ import { environment } from '../../environments/environment';
 import { UserAssignment } from '../models/user-assignment.model';
 import { User } from '../models/user.model';
 
+export interface CalendarEvent {
+  id: string;
+  subject: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  webLink: string;
+  isOnlineMeeting: boolean;
+  joinUrl: string;
+  organizerName: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly http = inject(HttpClient);
@@ -74,5 +86,12 @@ export class UserService {
 
   deleteAssignment(id: string): Observable<void> {
     return this.http.delete<void>(`${this.assignmentsUrl}/${id}`);
+  }
+
+  getCalendarEvents(startDateTime: string, endDateTime: string): Observable<CalendarEvent[]> {
+    const params = new HttpParams()
+      .set('startDateTime', startDateTime)
+      .set('endDateTime', endDateTime);
+    return this.http.get<CalendarEvent[]>(`${this.baseUrl}/me/calendar`, { params });
   }
 }

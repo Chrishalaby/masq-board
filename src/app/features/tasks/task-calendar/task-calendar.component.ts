@@ -197,6 +197,27 @@ export class TaskCalendarComponent {
     // Build a map of due dates to tasks
     const taskMap = new Map<string, Task[]>();
     for (const task of tasks) {
+      if (task.isRecurring && task.startDate) {
+        // Recurring tasks appear on every day from startDate onward
+        const recStart = new Date(task.startDate.substring(0, 10));
+        recStart.setHours(0, 0, 0, 0);
+        const cursor = new Date(Math.max(recStart.getTime(), startDate.getTime()));
+        while (cursor <= endDate) {
+          const key = [
+            cursor.getFullYear(),
+            String(cursor.getMonth() + 1).padStart(2, '0'),
+            String(cursor.getDate()).padStart(2, '0'),
+          ].join('-');
+          const existing = taskMap.get(key);
+          if (existing) {
+            existing.push(task);
+          } else {
+            taskMap.set(key, [task]);
+          }
+          cursor.setDate(cursor.getDate() + 1);
+        }
+        continue;
+      }
       if (!task.dueDate) continue;
       const key = task.dueDate.substring(0, 10);
       const existing = taskMap.get(key);
@@ -248,7 +269,12 @@ export class TaskCalendarComponent {
       String(date.getMonth() + 1).padStart(2, '0'),
       String(date.getDate()).padStart(2, '0'),
     ].join('-');
-    return this.taskService.tasks().filter((t) => t.dueDate?.substring(0, 10) === key);
+    return this.taskService.tasks().filter((t) => {
+      if (t.isRecurring && t.startDate) {
+        return t.startDate.substring(0, 10) <= key;
+      }
+      return t.dueDate?.substring(0, 10) === key;
+    });
   }
 
   protected prioritySeverity(p: TaskPriority): 'danger' | 'warn' | 'info' | 'success' {

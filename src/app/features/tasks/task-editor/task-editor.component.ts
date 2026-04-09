@@ -19,6 +19,7 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
+import { ToggleSwitch } from 'primeng/toggleswitch';
 import { of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
 import {
@@ -47,6 +48,7 @@ import { UserService } from '../../../services/user.service';
     Button,
     Checkbox,
     Chip,
+    ToggleSwitch,
   ],
   template: `
     <p-dialog
@@ -92,23 +94,27 @@ import { UserService } from '../../../services/user.service';
                   appendTo="body"
                   [style]="{ width: '10rem' }"
                 />
-                <p-button
-                  icon="pi pi-trash"
-                  severity="danger"
-                  [text]="true"
-                  size="small"
-                  (onClick)="removeAssignee($index)"
-                  ariaLabel="Remove assignee"
-                />
+                @if (isAdmin() || !task()) {
+                  <p-button
+                    icon="pi pi-trash"
+                    severity="danger"
+                    [text]="true"
+                    size="small"
+                    (onClick)="removeAssignee($index)"
+                    ariaLabel="Remove assignee"
+                  />
+                }
               </div>
             }
-            <p-button
-              icon="pi pi-plus"
-              label="Add Assignee"
-              [text]="true"
-              size="small"
-              (onClick)="addAssignee()"
-            />
+            @if (isAdmin() || !task()) {
+              <p-button
+                icon="pi pi-plus"
+                label="Add Assignee"
+                [text]="true"
+                size="small"
+                (onClick)="addAssignee()"
+              />
+            }
           </div>
         </div>
 
@@ -184,6 +190,12 @@ import { UserService } from '../../../services/user.service';
               [baseZIndex]="12000"
             />
           </div>
+        </div>
+
+        <!-- Recurring -->
+        <div class="flex items-center gap-2">
+          <p-toggleswitch formControlName="isRecurring" inputId="isRecurring" />
+          <label for="isRecurring" class="text-sm font-medium">Recurring Every Day</label>
         </div>
 
         <!-- Description -->
@@ -278,21 +290,23 @@ import { UserService } from '../../../services/user.service';
         </div>
 
         <!-- Depending Task -->
-        <div class="flex flex-col gap-1">
-          <label for="dependingTask" class="text-sm font-medium">Depending Task</label>
-          <p-select
-            id="dependingTask"
-            [formControl]="dependingTaskControl"
-            [options]="availableTasks()"
-            optionLabel="title"
-            optionValue="id"
-            placeholder="Select a task this depends on"
-            [filter]="true"
-            filterBy="title"
-            [showClear]="true"
-            appendTo="body"
-          />
-        </div>
+        @if (isAdmin() || !task()) {
+          <div class="flex flex-col gap-1">
+            <label for="dependingTask" class="text-sm font-medium">Depending Task</label>
+            <p-select
+              id="dependingTask"
+              [formControl]="dependingTaskControl"
+              [options]="availableTasks()"
+              optionLabel="title"
+              optionValue="id"
+              placeholder="Select a task this depends on"
+              [filter]="true"
+              filterBy="title"
+              [showClear]="true"
+              appendTo="body"
+            />
+          </div>
+        }
 
         <!-- Dependencies -->
         @if (task()) {
@@ -305,14 +319,16 @@ import { UserService } from '../../../services/user.service';
                     class="flex items-center justify-between rounded bg-gray-50 px-2 py-1 text-sm dark:bg-gray-800"
                   >
                     <span>🔗 {{ dep.dependsOn?.title || dep.dependsOnTaskId }}</span>
-                    <p-button
-                      icon="pi pi-trash"
-                      severity="danger"
-                      [text]="true"
-                      size="small"
-                      (onClick)="onRemoveDependency(dep.id)"
-                      ariaLabel="Remove dependency"
-                    />
+                    @if (isAdmin()) {
+                      <p-button
+                        icon="pi pi-trash"
+                        severity="danger"
+                        [text]="true"
+                        size="small"
+                        (onClick)="onRemoveDependency(dep.id)"
+                        ariaLabel="Remove dependency"
+                      />
+                    }
                   </div>
                 }
               </div>
@@ -408,6 +424,9 @@ export class TaskEditorComponent implements OnInit {
   /** Assignments for the current user (populated in ngOnInit) */
   private readonly myAssignments = signal<UserAssignment[]>([]);
 
+  /** Whether the current user is an admin */
+  readonly isAdmin = computed(() => this.userService.currentUser()?.isAdmin === true);
+
   /**
    * Filtered list of users that the current user is allowed to assign tasks to.
    * Rules (evaluated in order):
@@ -476,6 +495,7 @@ export class TaskEditorComponent implements OnInit {
     ),
     startDate: new FormControl<Date | null>(null),
     dueDate: new FormControl<Date | null>(null),
+    isRecurring: new FormControl(false, { nonNullable: true }),
     description: new FormControl('', { nonNullable: true }),
     milestoneAchieved: new FormControl('', { nonNullable: true }),
     currentMilestone: new FormControl('', { nonNullable: true }),
@@ -644,6 +664,7 @@ export class TaskEditorComponent implements OnInit {
       status: raw.status,
       startDate: raw.startDate ? this.formatDate(raw.startDate) : undefined,
       dueDate: raw.dueDate ? this.formatDate(raw.dueDate) : undefined,
+      isRecurring: raw.isRecurring,
       milestoneAchieved: raw.milestoneAchieved || undefined,
       currentMilestone: raw.currentMilestone || undefined,
       nextMilestone: raw.nextMilestone || undefined,
@@ -732,6 +753,7 @@ export class TaskEditorComponent implements OnInit {
         status: t.status,
         startDate: t.startDate ? new Date(t.startDate) : null,
         dueDate: t.dueDate ? new Date(t.dueDate) : null,
+        isRecurring: t.isRecurring ?? false,
         description: t.description,
         milestoneAchieved: t.milestoneAchieved ?? '',
         currentMilestone: t.currentMilestone ?? '',
@@ -783,6 +805,45 @@ export class TaskEditorComponent implements OnInit {
         startDate: defaultStart,
         dueDate: defaultDue,
       });
+    }
+
+    // Apply field restrictions for non-admin users editing an existing task
+    this.applyFieldRestrictions();
+  }
+
+  /**
+   * Non-admin users editing an existing task cannot modify:
+   * assignees, start date, end date, dependencies, priority, status, project, milestones.
+   * They can freely edit: title, description, linked files, checklist, labels.
+   * Admins can edit all fields. New tasks have no restrictions.
+   */
+  private applyFieldRestrictions(): void {
+    const restrictedControls = [
+      this.form.controls.assigneeId,
+      this.form.controls.startDate,
+      this.form.controls.dueDate,
+      this.form.controls.priority,
+      this.form.controls.status,
+      this.form.controls.projectId,
+      this.form.controls.isRecurring,
+      this.form.controls.milestoneAchieved,
+      this.form.controls.currentMilestone,
+      this.form.controls.nextMilestone,
+      this.form.controls.delayRisk,
+    ];
+
+    if (this.task() && !this.isAdmin()) {
+      // Non-admin editing existing task: disable restricted fields
+      for (const c of restrictedControls) {
+        c.disable();
+      }
+      this.dependingTaskControl.disable();
+    } else {
+      // Admin or new task: enable all fields
+      for (const c of restrictedControls) {
+        c.enable();
+      }
+      this.dependingTaskControl.enable();
     }
   }
 

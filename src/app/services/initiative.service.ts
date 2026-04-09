@@ -57,4 +57,14 @@ export class InitiativeService {
       }),
     );
   }
+
+  setExclusions(id: string, userIds: string[]): Observable<Initiative> {
+    return this.http.patch<Initiative>(`${this.baseUrl}/${id}/exclusions`, { userIds }).pipe(
+      tap((updated) => {
+        this.initiativesSignal.update((list) =>
+          list.map((i) => (i.id === updated.id ? updated : i)),
+        );
+      }),
+    );
+  }
 }
