@@ -38,17 +38,17 @@
       "scopes": ["personal"]
     },
     {
-      "entityId": "tasks",
-      "name": "Tasks",
-      "contentUrl": "https://masq-board.netlify.app/tasks",
-      "websiteUrl": "https://masq-board.netlify.app/tasks",
+      "entityId": "personal-assistant",
+      "name": "Personal Assistant",
+      "contentUrl": "https://masq-board.netlify.app/personal-assistant",
+      "websiteUrl": "https://masq-board.netlify.app/personal-assistant",
       "scopes": ["personal"]
     },
     {
-      "entityId": "notes",
-      "name": "Notes",
-      "contentUrl": "https://masq-board.netlify.app/notes",
-      "websiteUrl": "https://masq-board.netlify.app/notes",
+      "entityId": "exec-dashboard",
+      "name": "Exec Dashboard",
+      "contentUrl": "https://masq-board.netlify.app/exec-dashboard",
+      "websiteUrl": "https://masq-board.netlify.app/exec-dashboard",
       "scopes": ["personal"]
     },
     {
