@@ -16,6 +16,8 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Textarea } from 'primeng/textarea';
 import { Toast } from 'primeng/toast';
+import { forkJoin } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { Department } from '../../../models/department.model';
 import { Initiative } from '../../../models/initiative.model';
 import { User } from '../../../models/user.model';
@@ -43,7 +45,7 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
 
     <div class="mx-auto max-w-6xl px-6 py-8">
       <div class="mb-4">
-        @if (selectedDepartment() && isGeneralSupervisor()) {
+        @if (selectedDepartment()) {
           <a
             routerLink="/departments"
             class="text-sm text-blue-600 hover:underline dark:text-blue-400"
@@ -60,11 +62,11 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
         <div class="mb-6">
           <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Departments</h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            General Supervisor view: all departments.
+            Select a department to view its initiatives.
           </p>
         </div>
 
-        @if (departments().length === 0) {
+        @if (displayedDepartments().length === 0) {
           <div
             class="rounded-lg border border-dashed border-gray-300 p-12 text-center dark:border-gray-600"
           >
@@ -73,7 +75,7 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
           </div>
         } @else {
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            @for (dept of departments(); track dept.id) {
+            @for (dept of displayedDepartments(); track dept.id) {
               <a
                 [routerLink]="['/departments', dept.id]"
                 class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-indigo-400 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-500"
@@ -324,10 +326,13 @@ export class DepartmentManagementComponent implements OnInit {
   private readonly initiativeService = inject(InitiativeService);
   private readonly messageService = inject(MessageService);
 
+  private readonly INTERDEPARTMENTAL_ID = environment.interdepartmentalDepartmentId;
+
   readonly currentUser = this.userService.currentUser;
   readonly isGeneralSupervisor = computed(() => this.currentUser()?.isGeneralSupervisor === true);
   readonly departments = this.departmentService.departments;
   readonly departmentUsers = this.userService.users;
+  readonly userDepartments = signal<Department[]>([]);
 
   readonly loading = signal(true);
   readonly routeDepartmentId = signal<string | null>(null);
@@ -340,7 +345,13 @@ export class DepartmentManagementComponent implements OnInit {
   readonly callPopover = viewChild(CallPopoverComponent);
 
   readonly showDepartmentsList = computed(
-    () => this.isGeneralSupervisor() && !this.routeDepartmentId(),
+    () =>
+      !this.routeDepartmentId() &&
+      (this.isGeneralSupervisor() || !!this.currentUser()?.departmentId),
+  );
+
+  readonly displayedDepartments = computed(() =>
+    this.isGeneralSupervisor() ? this.departments() : this.userDepartments(),
   );
 
   formName = '';
@@ -373,12 +384,25 @@ export class DepartmentManagementComponent implements OnInit {
         return;
       }
 
-      if (routeDepartmentId && routeDepartmentId !== user.departmentId) {
-        this.router.navigate(['/departments', user.departmentId]);
+      if (routeDepartmentId) {
+        if (
+          routeDepartmentId !== user.departmentId &&
+          routeDepartmentId !== this.INTERDEPARTMENTAL_ID
+        ) {
+          this.router.navigate(['/departments']);
+          return;
+        }
+        this.loadDepartmentDetail(routeDepartmentId);
         return;
       }
 
-      this.loadDepartmentDetail(user.departmentId);
+      this.selectedDepartment.set(null);
+      forkJoin([
+        this.departmentService.getDepartment(user.departmentId),
+        this.departmentService.getDepartment(this.INTERDEPARTMENTAL_ID),
+      ]).subscribe({
+        next: ([ownDept, interDept]) => this.userDepartments.set([ownDept, interDept]),
+      });
     });
   }
 

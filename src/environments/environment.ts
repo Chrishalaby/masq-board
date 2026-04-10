@@ -11,4 +11,5 @@ export const environment = {
     graphScopes: ['Calendars.Read', 'OnlineMeetings.ReadWrite', 'User.Read'],
   },
   teamsAppId: '7028812e-7502-40a0-9aac-4e860bf07bcf',
+  interdepartmentalDepartmentId: 'bebf30c0-5abc-4e87-ba31-d9995bd46d72',
 };
