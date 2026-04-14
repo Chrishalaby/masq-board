@@ -347,7 +347,9 @@ export class DepartmentManagementComponent implements OnInit {
   readonly showDepartmentsList = computed(
     () =>
       !this.routeDepartmentId() &&
-      (this.isGeneralSupervisor() || !!this.currentUser()?.departmentId),
+      (this.isGeneralSupervisor() ||
+        !!this.currentUser()?.departmentId ||
+        this.currentUser() !== null),
   );
 
   readonly displayedDepartments = computed(() =>
@@ -380,7 +382,18 @@ export class DepartmentManagementComponent implements OnInit {
       }
 
       if (!user.departmentId) {
+        if (routeDepartmentId) {
+          if (routeDepartmentId !== this.INTERDEPARTMENTAL_ID) {
+            this.router.navigate(['/departments']);
+            return;
+          }
+          this.loadDepartmentDetail(routeDepartmentId);
+          return;
+        }
         this.selectedDepartment.set(null);
+        this.departmentService.getDepartment(this.INTERDEPARTMENTAL_ID).subscribe({
+          next: (interDept) => this.userDepartments.set([interDept]),
+        });
         return;
       }
 
