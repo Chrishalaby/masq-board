@@ -24,7 +24,7 @@ import { Note, NOTE_COLORS } from '../../models/note.model';
 import { Task, TaskPriority } from '../../models/task.model';
 import { NoteService } from '../../services/note.service';
 import { TaskService } from '../../services/task.service';
-import { CalendarEvent, UserService } from '../../services/user.service';
+import { CalendarEvent, MailMessage, UserService } from '../../services/user.service';
 import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component';
 
 @Component({
@@ -226,6 +226,75 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
             </div>
           </section>
 
+          <!-- Emails -->
+          <section>
+            <div class="mb-3 flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                <i class="pi pi-envelope mr-2 text-red-500"></i>Emails
+              </h2>
+              <p-button
+                icon="pi pi-refresh"
+                [text]="true"
+                size="small"
+                (onClick)="refreshEmails()"
+                ariaLabel="Refresh emails"
+              />
+            </div>
+            <div
+              class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+            >
+              @if (emails().length === 0) {
+                <p class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                  No recent emails.
+                </p>
+              }
+              <div class="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
+                @for (email of emails(); track email.id) {
+                  <a
+                    [href]="email.webLink"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-start gap-3 p-3 transition hover:bg-gray-50 dark:hover:bg-gray-750"
+                  >
+                    <div
+                      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                      [class.bg-red-100]="!email.isRead"
+                      [class.text-red-600]="!email.isRead"
+                      [class.dark:bg-red-900]="!email.isRead"
+                      [class.dark:text-red-300]="!email.isRead"
+                      [class.bg-gray-100]="email.isRead"
+                      [class.text-gray-400]="email.isRead"
+                      [class.dark:bg-gray-700]="email.isRead"
+                      [class.dark:text-gray-500]="email.isRead"
+                    >
+                      <i [class]="email.isRead ? 'pi pi-envelope-open' : 'pi pi-envelope'"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p
+                        class="truncate text-sm text-gray-900 dark:text-gray-100"
+                        [class.font-semibold]="!email.isRead"
+                      >
+                        {{ email.subject }}
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ email.from }}
+                        @if (email.hasAttachments) {
+                          <i class="pi pi-paperclip ml-1"></i>
+                        }
+                      </p>
+                      <p class="truncate text-xs text-gray-400">
+                        {{ email.bodyPreview }}
+                      </p>
+                      <p class="mt-0.5 text-xs text-gray-400">
+                        {{ email.receivedDateTime | date: 'EEE, MMM d · h:mm a' }}
+                      </p>
+                    </div>
+                  </a>
+                }
+              </div>
+            </div>
+          </section>
+
           <!-- Notes -->
           <section>
             <div class="mb-3 flex items-center justify-between">
@@ -387,6 +456,9 @@ export class PersonalAssistantComponent implements OnInit {
   readonly calendarWeekStart = signal(this.getWeekStart(new Date()));
   readonly calendarEvents = signal<CalendarEvent[]>([]);
 
+  // Email state
+  readonly emails = signal<MailMessage[]>([]);
+
   readonly currentUserId = computed(() => {
     const teamsOid = this.authService.teamsOid();
     if (teamsOid) {
@@ -472,6 +544,7 @@ export class PersonalAssistantComponent implements OnInit {
     this.taskService.loadTasks();
     this.noteService.loadNotes();
     this.loadCalendarEvents();
+    this.loadEmails();
   }
 
   // --- Tasks ---
@@ -576,6 +649,17 @@ export class PersonalAssistantComponent implements OnInit {
       next: (events) => this.calendarEvents.set(events),
       error: () => this.calendarEvents.set([]),
     });
+  }
+
+  private loadEmails(): void {
+    this.userService.getEmails(20).subscribe({
+      next: (messages) => this.emails.set(messages),
+      error: () => this.emails.set([]),
+    });
+  }
+
+  refreshEmails(): void {
+    this.loadEmails();
   }
 
   private getWeekStart(date: Date): Date {

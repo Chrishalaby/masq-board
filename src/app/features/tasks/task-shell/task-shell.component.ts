@@ -16,8 +16,10 @@ import { TaskService } from '../../../services/task.service';
 import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.component';
 import { TaskBoardComponent } from '../task-board/task-board.component';
 import { TaskCalendarComponent } from '../task-calendar/task-calendar.component';
+import { TaskDetailViewComponent } from '../task-detail-view/task-detail-view.component';
 import { TaskEditorComponent } from '../task-editor/task-editor.component';
 import { TaskGridComponent } from '../task-grid/task-grid.component';
+import { TaskLinksDialogComponent } from '../task-links-dialog/task-links-dialog.component';
 
 @Component({
   selector: 'app-task-shell',
@@ -31,6 +33,8 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
     TaskCalendarComponent,
     TaskGridComponent,
     TaskEditorComponent,
+    TaskDetailViewComponent,
+    TaskLinksDialogComponent,
     CallPopoverComponent,
   ],
   template: `
@@ -65,6 +69,8 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
       @case ('board') {
         <app-task-board
           (taskClick)="openEditTask($event)"
+          (setupClick)="openSetupView($event)"
+          (linksClick)="openLinksDialog($event)"
           (assigneeClick)="onAssigneeClick($event)"
         />
       }
@@ -89,6 +95,19 @@ import { TaskGridComponent } from '../task-grid/task-grid.component';
       (saved)="onSaved()"
     />
 
+    <app-task-detail-view
+      [task]="detailTask()"
+      [visible]="detailVisible()"
+      (visibleChange)="detailVisible.set($event)"
+    />
+
+    <app-task-links-dialog
+      [task]="linksTask()"
+      [visible]="linksVisible()"
+      (visibleChange)="linksVisible.set($event)"
+      (linkAdded)="onSaved()"
+    />
+
     <app-call-popover />
   `,
 })
@@ -104,6 +123,10 @@ export class TaskShellComponent implements OnInit {
   readonly activeView = signal<'board' | 'grid' | 'calendar'>('board');
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
+  readonly detailVisible = signal(false);
+  readonly detailTask = signal<Task | null>(null);
+  readonly linksVisible = signal(false);
+  readonly linksTask = signal<Task | null>(null);
   readonly callPopover = viewChild(CallPopoverComponent);
 
   ngOnInit(): void {
@@ -118,6 +141,16 @@ export class TaskShellComponent implements OnInit {
   openEditTask(task: Task): void {
     this.selectedTask.set(task);
     this.editorVisible.set(true);
+  }
+
+  openSetupView(task: Task): void {
+    this.detailTask.set(task);
+    this.detailVisible.set(true);
+  }
+
+  openLinksDialog(task: Task): void {
+    this.linksTask.set(task);
+    this.linksVisible.set(true);
   }
 
   onSaved(): void {

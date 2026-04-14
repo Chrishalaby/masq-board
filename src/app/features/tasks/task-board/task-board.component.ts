@@ -38,6 +38,8 @@ import { TaskCardComponent } from '../task-card/task-card.component';
                 <app-task-card
                   [task]="task"
                   (cardClick)="taskClick.emit($event)"
+                  (setupClick)="setupClick.emit($event)"
+                  (linksClick)="linksClick.emit($event)"
                   (assigneeClick)="assigneeClick.emit($event)"
                 />
               </div>
@@ -52,6 +54,8 @@ export class TaskBoardComponent {
   private readonly taskService = inject(TaskService);
 
   readonly taskClick = output<Task>();
+  readonly setupClick = output<Task>();
+  readonly linksClick = output<Task>();
   readonly assigneeClick = output<{ user: User; event: MouseEvent }>();
   readonly tasksByStatus = this.taskService.tasksByStatus;
   readonly columns = TASK_STATUSES;

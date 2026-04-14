@@ -170,6 +170,19 @@ export class TaskService {
     });
   }
 
+  uploadFile(taskId: string, file: File): Observable<{ url: string; name: string }> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http
+      .post<{ url: string; name: string }>(`${this.baseUrl}/${taskId}/upload`, formData)
+      .pipe(
+        tap({
+          next: () => this.loadTasks(),
+          error: (err) => this.errorSignal.set(err.message),
+        }),
+      );
+  }
+
   private toApiPayload(task: Partial<Task>): Record<string, unknown> {
     return {
       title: task.title,

@@ -17,6 +17,18 @@ export interface CalendarEvent {
   organizerName: string;
 }
 
+export interface MailMessage {
+  id: string;
+  subject: string;
+  from: string;
+  fromEmail: string;
+  receivedDateTime: string;
+  bodyPreview: string;
+  webLink: string;
+  isRead: boolean;
+  hasAttachments: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly http = inject(HttpClient);
@@ -93,5 +105,10 @@ export class UserService {
       .set('startDateTime', startDateTime)
       .set('endDateTime', endDateTime);
     return this.http.get<CalendarEvent[]>(`${this.baseUrl}/me/calendar`, { params });
+  }
+
+  getEmails(top = 20): Observable<MailMessage[]> {
+    const params = new HttpParams().set('top', top.toString());
+    return this.http.get<MailMessage[]>(`${this.baseUrl}/me/emails`, { params });
   }
 }

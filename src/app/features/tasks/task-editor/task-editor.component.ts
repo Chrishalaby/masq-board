@@ -261,6 +261,22 @@ import { UserService } from '../../../services/user.service';
                 (onClick)="addLinkedFile()"
               />
             </div>
+            @if (task()) {
+              <div class="flex items-center gap-2">
+                <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)" />
+                <p-button
+                  icon="pi pi-upload"
+                  label="Upload to SharePoint"
+                  [outlined]="true"
+                  size="small"
+                  (onClick)="fileInput.click()"
+                  [loading]="uploading()"
+                />
+                @if (uploadError()) {
+                  <span class="text-xs text-red-500">{{ uploadError() }}</span>
+                }
+              </div>
+            }
           </div>
         </div>
 
@@ -418,6 +434,8 @@ export class TaskEditorComponent implements OnInit {
   readonly newChecklistControl = new FormControl('');
   readonly newLinkedFileControl = new FormControl('');
   readonly dependingTaskControl = new FormControl<string | null>(null);
+  readonly uploading = signal(false);
+  readonly uploadError = signal<string | null>(null);
 
   private selectedLabels: Label[] = [];
 
@@ -615,6 +633,31 @@ export class TaskEditorComponent implements OnInit {
 
   removeLinkedFile(i: number): void {
     this.linkedFilesArray.removeAt(i);
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.task()) return;
+
+    this.uploading.set(true);
+    this.uploadError.set(null);
+
+    this.taskService
+      .uploadFile(this.task()!.id, file)
+      .pipe(take(1))
+      .subscribe({
+        next: (result) => {
+          this.linkedFilesArray.push(new FormControl(result.url, { nonNullable: true }));
+          this.uploading.set(false);
+          input.value = '';
+        },
+        error: (err) => {
+          this.uploadError.set(err?.error?.message || 'Upload failed');
+          this.uploading.set(false);
+          input.value = '';
+        },
+      });
   }
 
   addAssignee(): void {
