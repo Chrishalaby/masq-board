@@ -16,6 +16,7 @@ import { MultiSelect } from 'primeng/multiselect';
 import { SelectButton } from 'primeng/selectbutton';
 import { Toast } from 'primeng/toast';
 import { take } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 import { Initiative } from '../../../models/initiative.model';
 import { Task } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
@@ -191,13 +192,19 @@ export class InitiativeDetailComponent implements OnInit {
     { label: 'Table', value: 'grid' },
   ];
 
+  private readonly INTERDEPARTMENTAL_ID = environment.interdepartmentalDepartmentId;
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.initiativeService.getInitiative(id).subscribe({
       next: (ini) => {
         this.initiative.set(ini);
-        // Load department users for exclusion management
-        this.userService.loadUsers(ini.departmentId);
+        // Interdepartmental dept: load all users; otherwise filter to department
+        if (ini.departmentId === this.INTERDEPARTMENTAL_ID) {
+          this.userService.loadUsers();
+        } else {
+          this.userService.loadUsers(ini.departmentId);
+        }
       },
     });
     this.taskService.loadTasks({ initiativeId: id });

@@ -22,6 +22,7 @@ import { Textarea } from 'primeng/textarea';
 import { ToggleSwitch } from 'primeng/toggleswitch';
 import { of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 import {
   Label,
   Task,
@@ -464,6 +465,10 @@ export class TaskEditorComponent implements OnInit {
 
     if (me.isGeneralSupervisor) {
       if (this.departmentId()) {
+        // Interdepartmental dept: show all users
+        if (this.departmentId() === environment.interdepartmentalDepartmentId) {
+          return allUsers;
+        }
         // Inside an initiative: filter to the initiative's department
         const deptUsers = allUsers.filter((u) => u.departmentId === this.departmentId());
         return deptUsers.some((u) => u.id === me.id) ? deptUsers : [...selfArr, ...deptUsers];
