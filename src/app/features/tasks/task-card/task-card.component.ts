@@ -1,3 +1,4 @@
+import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { ProgressBar } from 'primeng/progressbar';
@@ -8,7 +9,7 @@ import { User } from '../../../models/user.model';
 @Component({
   selector: 'app-task-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, Tag, ProgressBar],
+  imports: [CdkDragHandle, DatePipe, Tag, ProgressBar],
   template: `
     <div
       class="task-card rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
@@ -58,16 +59,8 @@ import { User } from '../../../models/user.model';
         </button>
       </div>
 
-      <!-- Card Body -->
-      <div
-        class="cursor-pointer p-3"
-        (click)="cardClick.emit(task())"
-        role="button"
-        [attr.aria-label]="'Open task: ' + task().title"
-        tabindex="0"
-        (keydown.enter)="cardClick.emit(task())"
-        (keydown.space)="cardClick.emit(task()); $event.preventDefault()"
-      >
+      <!-- Card Body (drag handle only — no click action) -->
+      <div class="cursor-grab p-3" cdkDragHandle>
         <div class="mb-2 flex items-start justify-between gap-2">
           <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ task().title }}</h4>
           <p-tag [value]="task().priority" [severity]="prioritySeverity()" [rounded]="true" />
