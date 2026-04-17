@@ -50,6 +50,7 @@ export interface Task {
   nextMilestone?: string;
   delayRisk?: string;
   linkedFiles?: string[];
+  linkedFileNames?: string[];
   sortOrder?: number;
   isRecurring?: boolean;
 

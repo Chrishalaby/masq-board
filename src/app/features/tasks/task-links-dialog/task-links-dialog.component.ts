@@ -13,7 +13,7 @@ import { TaskService } from '../../../services/task.service';
   imports: [ReactiveFormsModule, Dialog, InputText, Button],
   template: `
     <p-dialog
-      header="Linked Files & URLs"
+      header="Files"
       [visible]="visible()"
       (visibleChange)="visibleChange.emit($event)"
       [modal]="true"
@@ -23,14 +23,14 @@ import { TaskService } from '../../../services/task.service';
     >
       @if (task(); as t) {
         <div class="flex flex-col gap-4 pt-2">
-          <!-- Existing links -->
+          <!-- Existing files -->
           @if (t.linkedFiles?.length) {
             <div class="flex flex-col gap-2">
-              @for (url of t.linkedFiles; track url) {
+              @for (url of t.linkedFiles; track url; let i = $index) {
                 <div
                   class="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
                 >
-                  <i class="pi pi-link text-gray-400"></i>
+                  <i class="pi pi-file text-gray-400"></i>
                   <a
                     [href]="url"
                     target="_blank"
@@ -38,20 +38,20 @@ import { TaskService } from '../../../services/task.service';
                     class="flex-1 truncate text-sm text-blue-600 hover:underline dark:text-blue-400"
                     [title]="url"
                   >
-                    {{ urlLabel(url) }}
+                    {{ fileNameAt(t, i) }}
                   </a>
                   <p-button
                     icon="pi pi-external-link"
                     [text]="true"
                     size="small"
                     (onClick)="openLink(url)"
-                    ariaLabel="Open link"
+                    ariaLabel="Open file"
                   />
                 </div>
               }
             </div>
           } @else {
-            <p class="text-center text-sm text-gray-500 dark:text-gray-400">No linked files yet.</p>
+            <p class="text-center text-sm text-gray-500 dark:text-gray-400">No files yet.</p>
           }
 
           <!-- Add URL -->
@@ -169,6 +169,12 @@ export class TaskLinksDialogComponent {
 
   openLink(url: string): void {
     window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  fileNameAt(task: Task, index: number): string {
+    const names = task.linkedFileNames;
+    if (names?.[index]) return names[index];
+    return this.urlLabel(task.linkedFiles?.[index] ?? '');
   }
 
   urlLabel(url: string): string {

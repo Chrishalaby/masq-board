@@ -197,6 +197,7 @@ export class TaskService {
       nextMilestone: task.nextMilestone || undefined,
       delayRisk: task.delayRisk || undefined,
       linkedFiles: task.linkedFiles,
+      linkedFileNames: task.linkedFileNames,
       projectId: task.projectId || undefined,
       initiativeId: task.initiativeId || undefined,
       assigneeId: task.assigneeId || undefined,

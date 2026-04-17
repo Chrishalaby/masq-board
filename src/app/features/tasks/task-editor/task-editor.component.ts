@@ -392,7 +392,7 @@ import { UserService } from '../../../services/user.service';
 
         <!-- Actions -->
         <div class="flex justify-end gap-2 border-t pt-3">
-          @if (task()) {
+          @if (task() && canDelete()) {
             <p-button label="Delete" severity="danger" [outlined]="true" (onClick)="onDelete()" />
           }
           <p-button
@@ -445,6 +445,12 @@ export class TaskEditorComponent implements OnInit {
 
   /** Whether the current user is an admin */
   readonly isAdmin = computed(() => this.userService.currentUser()?.isAdmin === true);
+
+  /** Whether the current user can delete tasks (admin or general supervisor) */
+  readonly canDelete = computed(() => {
+    const user = this.userService.currentUser();
+    return user?.isAdmin === true || user?.isGeneralSupervisor === true;
+  });
 
   /**
    * Filtered list of users that the current user is allowed to assign tasks to.

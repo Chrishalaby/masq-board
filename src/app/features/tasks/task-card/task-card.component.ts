@@ -44,11 +44,11 @@ import { User } from '../../../models/user.model';
         <button
           class="flex flex-1 items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-purple-400"
           role="tab"
-          aria-label="View linked files"
+          aria-label="View task files"
           (click)="linksClick.emit(task()); $event.stopPropagation()"
         >
-          <i class="pi pi-link text-xs"></i>
-          Links
+          <i class="pi pi-file text-xs"></i>
+          Files
           @if (task().linkedFiles?.length) {
             <span
               class="flex h-4 min-w-4 items-center justify-center rounded-full bg-purple-100 px-1 text-xs text-purple-700 dark:bg-purple-800 dark:text-purple-300"
@@ -120,7 +120,7 @@ import { User } from '../../../models/user.model';
 
         @if (task().linkedFiles?.length) {
           <div class="mb-2 flex flex-wrap gap-1">
-            @for (url of task().linkedFiles; track url) {
+            @for (url of task().linkedFiles; track url; let i = $index) {
               <a
                 [href]="url"
                 target="_blank"
@@ -129,8 +129,8 @@ import { User } from '../../../models/user.model';
                 [title]="url"
                 (click)="$event.stopPropagation()"
               >
-                <i class="pi pi-external-link mr-1"></i>
-                {{ urlLabel(url) }}
+                <i class="pi pi-file mr-1"></i>
+                {{ fileNameAt(i) }}
               </a>
             }
           </div>
@@ -191,6 +191,12 @@ export class TaskCardComponent {
     if (!user) return;
     event.stopPropagation();
     this.assigneeClick.emit({ user, event });
+  }
+
+  protected fileNameAt(index: number): string {
+    const names = this.task().linkedFileNames;
+    if (names?.[index]) return names[index];
+    return this.urlLabel(this.task().linkedFiles?.[index] ?? '');
   }
 
   protected urlLabel(url: string): string {

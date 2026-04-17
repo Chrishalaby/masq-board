@@ -227,17 +227,17 @@ import { Task, TaskPriority } from '../../../models/task.model';
           <!-- Linked Files -->
           @if (t.linkedFiles?.length) {
             <div class="flex flex-col gap-1">
-              <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Linked Files</span>
+              <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Files</span>
               <div class="flex flex-col gap-1">
-                @for (url of t.linkedFiles; track url) {
+                @for (url of t.linkedFiles; track url; let i = $index) {
                   <a
                     [href]="url"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400"
                   >
-                    <i class="pi pi-external-link"></i>
-                    {{ urlLabel(url) }}
+                    <i class="pi pi-file"></i>
+                    {{ fileNameAt(t, i) }}
                   </a>
                 }
               </div>
@@ -288,5 +288,11 @@ export class TaskDetailViewComponent {
     } catch {
       return url;
     }
+  }
+
+  protected fileNameAt(task: Task, index: number): string {
+    const names = task.linkedFileNames;
+    if (names?.[index]) return names[index];
+    return this.urlLabel(task.linkedFiles?.[index] ?? '');
   }
 }
