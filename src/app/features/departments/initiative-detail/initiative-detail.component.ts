@@ -26,8 +26,10 @@ import { UserService } from '../../../services/user.service';
 import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.component';
 import { CpmChartComponent } from '../../projects/cpm-chart/cpm-chart.component';
 import { TaskBoardComponent } from '../../tasks/task-board/task-board.component';
+import { TaskDetailViewComponent } from '../../tasks/task-detail-view/task-detail-view.component';
 import { TaskEditorComponent } from '../../tasks/task-editor/task-editor.component';
 import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
+import { TaskLinksDialogComponent } from '../../tasks/task-links-dialog/task-links-dialog.component';
 
 @Component({
   selector: 'app-initiative-detail',
@@ -45,6 +47,8 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
     TaskBoardComponent,
     TaskGridComponent,
     TaskEditorComponent,
+    TaskDetailViewComponent,
+    TaskLinksDialogComponent,
     CpmChartComponent,
     CallPopoverComponent,
   ],
@@ -103,6 +107,8 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         @case ('board') {
           <app-task-board
             (taskClick)="openEditTask($event)"
+            (setupClick)="openSetupView($event)"
+            (linksClick)="openLinksDialog($event)"
             (assigneeClick)="onAssigneeClick($event)"
           />
         }
@@ -123,6 +129,19 @@ import { TaskGridComponent } from '../../tasks/task-grid/task-grid.component';
         [departmentId]="ini.departmentId"
         (visibleChange)="editorVisible.set($event)"
         (saved)="onTaskSaved()"
+      />
+
+      <app-task-detail-view
+        [task]="detailTask()"
+        [visible]="detailVisible()"
+        (visibleChange)="detailVisible.set($event)"
+      />
+
+      <app-task-links-dialog
+        [task]="linksTask()"
+        [visible]="linksVisible()"
+        (visibleChange)="linksVisible.set($event)"
+        (linkAdded)="onTaskSaved()"
       />
 
       <app-call-popover />
@@ -178,6 +197,10 @@ export class InitiativeDetailComponent implements OnInit {
   readonly activeView = signal<'board' | 'grid'>('board');
   readonly editorVisible = signal(false);
   readonly selectedTask = signal<Task | null>(null);
+  readonly detailVisible = signal(false);
+  readonly detailTask = signal<Task | null>(null);
+  readonly linksVisible = signal(false);
+  readonly linksTask = signal<Task | null>(null);
   readonly callPopover = viewChild(CallPopoverComponent);
 
   // Access exclusions
@@ -256,6 +279,16 @@ export class InitiativeDetailComponent implements OnInit {
   openEditTask(task: Task): void {
     this.selectedTask.set(task);
     this.editorVisible.set(true);
+  }
+
+  openSetupView(task: Task): void {
+    this.detailTask.set(task);
+    this.detailVisible.set(true);
+  }
+
+  openLinksDialog(task: Task): void {
+    this.linksTask.set(task);
+    this.linksVisible.set(true);
   }
 
   onTaskSaved(): void {
