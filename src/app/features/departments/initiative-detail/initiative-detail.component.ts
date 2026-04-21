@@ -65,7 +65,17 @@ import { TaskLinksDialogComponent } from '../../tasks/task-links-dialog/task-lin
           >
         </div>
         <div class="flex items-center justify-between">
-          <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ ini.name }}</h1>
+          <div class="flex items-center gap-3">
+            <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ ini.name }}</h1>
+            @if (hasCriticalOnHold()) {
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-bold text-red-700 dark:bg-red-900 dark:text-red-300"
+                role="alert"
+              >
+                <i class="pi pi-exclamation-circle"></i> Critical Task On Hold — Initiative Blocked
+              </span>
+            }
+          </div>
           <div class="flex items-center gap-2">
             @if (isAdmin()) {
               <p-button
@@ -209,6 +219,10 @@ export class InitiativeDetailComponent implements OnInit {
   readonly departmentUsers = this.userService.users;
   readonly excludedUserIdsControl = new FormControl<string[]>([], { nonNullable: true });
   readonly isAdmin = computed(() => this.userService.currentUser()?.isAdmin === true);
+
+  readonly hasCriticalOnHold = computed(() =>
+    this.initiativeTasks().some((t) => t.isCritical && t.status === 'on-hold'),
+  );
 
   readonly viewOptions = [
     { label: 'Board', value: 'board' },

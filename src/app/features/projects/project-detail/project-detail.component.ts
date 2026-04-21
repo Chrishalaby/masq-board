@@ -76,6 +76,14 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
               <span title="Hot project">🔥</span>
             }
             <p-tag [value]="p.status" [severity]="statusSeverity(p.status)" [rounded]="true" />
+            @if (hasCriticalOnHold()) {
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-bold text-red-700 dark:bg-red-900 dark:text-red-300"
+                role="alert"
+              >
+                <i class="pi pi-exclamation-circle"></i> Critical Task On Hold — Project Blocked
+              </span>
+            }
           </div>
           <div class="flex items-center gap-2">
             <!-- <p-button
@@ -561,6 +569,10 @@ export class ProjectDetailComponent implements OnInit {
   readonly confirmDeleteVisible = signal(false);
   readonly deleteLoading = signal(false);
   readonly isAdmin = computed(() => this.userService.currentUser()?.isAdmin === true);
+
+  readonly hasCriticalOnHold = computed(() =>
+    this.projectTasks().some((t) => t.isCritical && t.status === 'on-hold'),
+  );
 
   // Kickoff
   readonly kickoffDialogVisible = signal(false);

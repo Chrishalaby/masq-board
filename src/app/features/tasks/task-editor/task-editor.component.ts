@@ -11,6 +11,7 @@ import {
   untracked,
 } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MessageService } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Checkbox } from 'primeng/checkbox';
 import { Chip } from 'primeng/chip';
@@ -19,6 +20,7 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
+import { Toast } from 'primeng/toast';
 import { ToggleSwitch } from 'primeng/toggleswitch';
 import { of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
@@ -39,6 +41,7 @@ import { UserService } from '../../../services/user.service';
 @Component({
   selector: 'app-task-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [MessageService],
   imports: [
     ReactiveFormsModule,
     Dialog,
@@ -49,6 +52,7 @@ import { UserService } from '../../../services/user.service';
     Button,
     Checkbox,
     Chip,
+    Toast,
     ToggleSwitch,
   ],
   template: `
@@ -61,6 +65,7 @@ import { UserService } from '../../../services/user.service';
       [dismissableMask]="true"
       [draggable]="false"
     >
+      <p-toast />
       <form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col gap-4 pt-2">
         <!-- Title -->
         <div class="flex flex-col gap-1">
@@ -197,6 +202,12 @@ import { UserService } from '../../../services/user.service';
         <div class="flex items-center gap-2">
           <p-toggleswitch formControlName="isRecurring" inputId="isRecurring" />
           <label for="isRecurring" class="text-sm font-medium">Recurring Every Day</label>
+        </div>
+
+        <!-- Critical -->
+        <div class="flex items-center gap-2">
+          <p-toggleswitch formControlName="isCritical" inputId="isCritical" />
+          <label for="isCritical" class="text-sm font-medium">Critical Task</label>
         </div>
 
         <!-- Description -->
@@ -412,6 +423,7 @@ export class TaskEditorComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly projectService = inject(ProjectService);
   private readonly labelService = inject(LabelService);
+  private readonly messageService = inject(MessageService);
 
   readonly task = input<Task | null>(null);
   readonly visible = input(false);
@@ -525,6 +537,7 @@ export class TaskEditorComponent implements OnInit {
     startDate: new FormControl<Date | null>(null),
     dueDate: new FormControl<Date | null>(null),
     isRecurring: new FormControl(false, { nonNullable: true }),
+    isCritical: new FormControl(false, { nonNullable: true }),
     description: new FormControl('', { nonNullable: true }),
     milestoneAchieved: new FormControl('', { nonNullable: true }),
     currentMilestone: new FormControl('', { nonNullable: true }),
@@ -711,6 +724,17 @@ export class TaskEditorComponent implements OnInit {
     if (this.form.invalid) return;
     const raw = this.form.getRawValue();
 
+    // Validate: moving to "In Progress" requires a start date
+    if (raw.status === 'in-progress' && !raw.startDate) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Start Date Required',
+        detail: 'Please set a start date before moving this task to In Progress.',
+        life: 5000,
+      });
+      return;
+    }
+
     const taskData: Partial<Task> = {
       title: raw.title,
       description: raw.description,
@@ -719,6 +743,7 @@ export class TaskEditorComponent implements OnInit {
       startDate: raw.startDate ? this.formatDate(raw.startDate) : undefined,
       dueDate: raw.dueDate ? this.formatDate(raw.dueDate) : undefined,
       isRecurring: raw.isRecurring,
+      isCritical: raw.isCritical,
       milestoneAchieved: raw.milestoneAchieved || undefined,
       currentMilestone: raw.currentMilestone || undefined,
       nextMilestone: raw.nextMilestone || undefined,
@@ -808,6 +833,7 @@ export class TaskEditorComponent implements OnInit {
         startDate: t.startDate ? new Date(t.startDate) : null,
         dueDate: t.dueDate ? new Date(t.dueDate) : null,
         isRecurring: t.isRecurring ?? false,
+        isCritical: t.isCritical ?? false,
         description: t.description,
         milestoneAchieved: t.milestoneAchieved ?? '',
         currentMilestone: t.currentMilestone ?? '',
@@ -880,6 +906,7 @@ export class TaskEditorComponent implements OnInit {
       this.form.controls.status,
       this.form.controls.projectId,
       this.form.controls.isRecurring,
+      this.form.controls.isCritical,
       this.form.controls.milestoneAchieved,
       this.form.controls.currentMilestone,
       this.form.controls.nextMilestone,

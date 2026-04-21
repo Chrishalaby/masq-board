@@ -1,5 +1,7 @@
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
+import { MessageService } from 'primeng/api';
+import { Toast } from 'primeng/toast';
 import { Task, TASK_STATUSES, TaskStatus } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
 import { TaskService } from '../../../services/task.service';
@@ -8,8 +10,10 @@ import { TaskCardComponent } from '../task-card/task-card.component';
 @Component({
   selector: 'app-task-board',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DragDropModule, TaskCardComponent],
+  providers: [MessageService],
+  imports: [DragDropModule, TaskCardComponent, Toast],
   template: `
+    <p-toast />
     <div class="flex gap-4 overflow-x-auto p-4" role="region" aria-label="Task board">
       @for (col of columns; track col.value) {
         <div class="flex w-72 min-w-72 flex-col rounded-lg bg-gray-50 dark:bg-gray-900">
@@ -52,6 +56,7 @@ import { TaskCardComponent } from '../task-card/task-card.component';
 })
 export class TaskBoardComponent {
   private readonly taskService = inject(TaskService);
+  private readonly messageService = inject(MessageService);
 
   readonly taskClick = output<Task>();
   readonly setupClick = output<Task>();
@@ -83,6 +88,17 @@ export class TaskBoardComponent {
       const items = columnTasks.map((t, i) => ({ id: t.id, sortOrder: i }));
       this.taskService.reorderTasks(items);
     } else {
+      // Validate: moving to "In Progress" requires a start date
+      if (newStatus === 'in-progress' && !task.startDate) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Start Date Required',
+          detail: 'Please set a start date before moving this task to In Progress.',
+          life: 5000,
+        });
+        return;
+      }
+
       // Horizontal move: change status, then reorder in destination column
       this.taskService.moveTask(task.id, newStatus);
       // After moving, reorder in destination to place at drop index

@@ -53,6 +53,7 @@ export interface Task {
   linkedFileNames?: string[];
   sortOrder?: number;
   isRecurring?: boolean;
+  isCritical?: boolean;
 
   // Relations
   projectId?: string;

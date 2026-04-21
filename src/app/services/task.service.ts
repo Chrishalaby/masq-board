@@ -44,7 +44,17 @@ export class TaskService {
     }
     // Sort each column by sortOrder ascending, then by createdAt descending as tiebreaker
     for (const status of Object.keys(grouped) as TaskStatus[]) {
-      grouped[status].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      if (status === 'in-progress') {
+        // In Progress column: always sort by due date ascending (no due date goes last)
+        grouped[status].sort((a, b) => {
+          if (!a.dueDate && !b.dueDate) return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        });
+      } else {
+        grouped[status].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      }
     }
     return grouped;
   });
@@ -192,6 +202,7 @@ export class TaskService {
       startDate: task.startDate || undefined,
       dueDate: task.dueDate || undefined,
       isRecurring: task.isRecurring ?? undefined,
+      isCritical: task.isCritical ?? undefined,
       milestoneAchieved: task.milestoneAchieved || undefined,
       currentMilestone: task.currentMilestone || undefined,
       nextMilestone: task.nextMilestone || undefined,

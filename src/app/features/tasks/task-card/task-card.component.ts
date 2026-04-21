@@ -1,6 +1,16 @@
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  OnInit,
+  output,
+  signal,
+} from '@angular/core';
 import { ProgressBar } from 'primeng/progressbar';
 import { Tag } from 'primeng/tag';
 import { Task, TaskPriority } from '../../../models/task.model';
@@ -62,7 +72,30 @@ import { User } from '../../../models/user.model';
       <!-- Card Body (drag handle only — no click action) -->
       <div class="cursor-grab p-3" cdkDragHandle>
         <div class="mb-2 flex items-start justify-between gap-2">
-          <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ task().title }}</h4>
+          <div class="flex items-center gap-2">
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {{ task().title }}
+            </h4>
+            @if (isOverdueStart()) {
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+                title="This task should have started"
+                role="status"
+              >
+                <i class="pi pi-exclamation-triangle text-xs"></i>
+                Overdue Start
+              </span>
+            }
+            @if (task().isCritical) {
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 dark:bg-red-900 dark:text-red-300"
+                title="Critical task"
+                role="status"
+              >
+                <i class="pi pi-bolt text-xs"></i> Critical
+              </span>
+            }
+          </div>
           <p-tag [value]="task().priority" [severity]="prioritySeverity()" [rounded]="true" />
         </div>
 
@@ -102,6 +135,23 @@ import { User } from '../../../models/user.model';
           <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
             Due: {{ task().dueDate | date: 'mediumDate' }}
           </p>
+          @if (countdownText(); as cd) {
+            <p
+              class="mb-2 text-xs font-medium"
+              [class.text-red-600]="cd.overdue"
+              [class.dark:text-red-400]="cd.overdue"
+              [class.text-blue-600]="!cd.overdue && task().status !== 'on-hold'"
+              [class.dark:text-blue-400]="!cd.overdue && task().status !== 'on-hold'"
+              [class.text-amber-600]="task().status === 'on-hold'"
+              [class.dark:text-amber-400]="task().status === 'on-hold'"
+            >
+              @if (task().status === 'on-hold') {
+                <i class="pi pi-pause mr-1 text-xs"></i>{{ cd.text }} (paused)
+              } @else {
+                <i class="pi pi-clock mr-1 text-xs"></i>{{ cd.text }}
+              }
+            </p>
+          }
         }
 
         @if (task().labels?.length) {
@@ -163,12 +213,44 @@ import { User } from '../../../models/user.model';
     </div>
   `,
 })
-export class TaskCardComponent {
+export class TaskCardComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly task = input.required<Task>();
   readonly cardClick = output<Task>();
   readonly setupClick = output<Task>();
   readonly linksClick = output<Task>();
   readonly assigneeClick = output<{ user: User; event: MouseEvent }>();
+
+  private readonly now = signal(Date.now());
+
+  ngOnInit(): void {
+    const interval = setInterval(() => this.now.set(Date.now()), 60_000);
+    this.destroyRef.onDestroy(() => clearInterval(interval));
+  }
+
+  protected readonly countdownText = computed(() => {
+    const task = this.task();
+    if (!task.dueDate || task.status === 'completed') return null;
+    // Use the ticking now for live updates, unless on-hold (frozen)
+    const currentTime = task.status === 'on-hold' ? this.now() : this.now();
+    const due = new Date(task.dueDate + 'T23:59:59').getTime();
+    const diff = due - currentTime;
+
+    if (diff <= 0) {
+      const overdueDays = Math.ceil(Math.abs(diff) / (1000 * 60 * 60 * 24));
+      return { text: `${overdueDays}d overdue`, overdue: true };
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) {
+      return { text: `${days}d ${hours}h remaining`, overdue: false };
+    }
+    return { text: `${hours}h ${minutes}m remaining`, overdue: false };
+  });
 
   protected readonly prioritySeverity = computed(() => {
     const map: Record<TaskPriority, 'danger' | 'warn' | 'info' | 'success'> = {
@@ -178,6 +260,15 @@ export class TaskCardComponent {
       low: 'success',
     };
     return map[this.task().priority];
+  });
+
+  protected readonly isOverdueStart = computed(() => {
+    const task = this.task();
+    if (task.status !== 'not-started' || !task.startDate) return false;
+    const start = new Date(task.startDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return start < today;
   });
 
   protected readonly checklistProgress = computed(() => {

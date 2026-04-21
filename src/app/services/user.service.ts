@@ -111,4 +111,12 @@ export class UserService {
     const params = new HttpParams().set('top', top.toString());
     return this.http.get<MailMessage[]>(`${this.baseUrl}/me/emails`, { params });
   }
+
+  createCalendarEvent(data: {
+    subject: string;
+    startDateTime: string;
+    endDateTime: string;
+  }): Observable<CalendarEvent> {
+    return this.http.post<CalendarEvent>(`${this.baseUrl}/me/calendar`, data);
+  }
 }

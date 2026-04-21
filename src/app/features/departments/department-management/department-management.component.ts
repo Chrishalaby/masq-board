@@ -156,11 +156,23 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
                 Department Users
               </h2>
 
-              @if (departmentUsers().length === 0) {
-                <p class="text-sm text-gray-400 dark:text-gray-500">No users in this department.</p>
+              <div class="mb-3">
+                <input
+                  pInputText
+                  type="text"
+                  placeholder="Search users..."
+                  class="w-full"
+                  [ngModel]="userSearchTerm()"
+                  (ngModelChange)="userSearchTerm.set($event)"
+                  aria-label="Search department users"
+                />
+              </div>
+
+              @if (filteredDepartmentUsers().length === 0) {
+                <p class="text-sm text-gray-400 dark:text-gray-500">No users found.</p>
               } @else {
-                <div class="flex flex-col gap-2">
-                  @for (user of departmentUsers(); track user.id) {
+                <div class="flex max-h-[280px] flex-col gap-2 overflow-y-auto">
+                  @for (user of filteredDepartmentUsers(); track user.id) {
                     <div
                       class="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 dark:border-gray-700"
                     >
@@ -332,6 +344,13 @@ export class DepartmentManagementComponent implements OnInit {
   readonly isGeneralSupervisor = computed(() => this.currentUser()?.isGeneralSupervisor === true);
   readonly departments = this.departmentService.departments;
   readonly departmentUsers = this.userService.users;
+  readonly userSearchTerm = signal('');
+  readonly filteredDepartmentUsers = computed(() => {
+    const search = this.userSearchTerm().toLowerCase().trim();
+    const users = this.departmentUsers();
+    if (!search) return users;
+    return users.filter((u) => u.displayName.toLowerCase().includes(search));
+  });
   readonly userDepartments = signal<Department[]>([]);
 
   readonly loading = signal(true);
@@ -506,7 +525,12 @@ export class DepartmentManagementComponent implements OnInit {
       next: (dept) => {
         this.selectedDepartment.set(dept);
         this.initiativeService.loadInitiatives(dept.id);
-        this.userService.loadUsers(dept.id);
+        // Interdepartmental: load all users; otherwise filter to department
+        if (departmentId === this.INTERDEPARTMENTAL_ID) {
+          this.userService.loadUsers();
+        } else {
+          this.userService.loadUsers(dept.id);
+        }
       },
       error: () => {
         this.selectedDepartment.set(null);
