@@ -12,4 +12,5 @@ export const environment = {
   },
   teamsAppId: '7028812e-7502-40a0-9aac-4e860bf07bcf',
   interdepartmentalDepartmentId: 'bebf30c0-5abc-4e87-ba31-d9995bd46d72',
+  ceoOfficeDepartmentId: '95299587-0751-45c9-af4f-81104a8b3e0d',
 };

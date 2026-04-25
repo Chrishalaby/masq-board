@@ -13,9 +13,10 @@ export class InitiativeService {
 
   readonly initiatives = this.initiativesSignal.asReadonly();
 
-  loadInitiatives(departmentId?: string): void {
+  loadInitiatives(departmentId?: string, assignedUserId?: string): void {
     let params = new HttpParams();
     if (departmentId) params = params.set('departmentId', departmentId);
+    if (assignedUserId) params = params.set('assignedUserId', assignedUserId);
     this.http.get<Initiative[]>(this.baseUrl, { params }).subscribe({
       next: (list) => this.initiativesSignal.set(list),
     });

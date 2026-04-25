@@ -339,6 +339,7 @@ export class DepartmentManagementComponent implements OnInit {
   private readonly messageService = inject(MessageService);
 
   private readonly INTERDEPARTMENTAL_ID = environment.interdepartmentalDepartmentId;
+  private readonly CEO_OFFICE_ID = environment.ceoOfficeDepartmentId;
 
   readonly currentUser = this.userService.currentUser;
   readonly isGeneralSupervisor = computed(() => this.currentUser()?.isGeneralSupervisor === true);
@@ -402,7 +403,10 @@ export class DepartmentManagementComponent implements OnInit {
 
       if (!user.departmentId) {
         if (routeDepartmentId) {
-          if (routeDepartmentId !== this.INTERDEPARTMENTAL_ID) {
+          if (
+            routeDepartmentId !== this.INTERDEPARTMENTAL_ID &&
+            routeDepartmentId !== this.CEO_OFFICE_ID
+          ) {
             this.router.navigate(['/departments']);
             return;
           }
@@ -410,8 +414,11 @@ export class DepartmentManagementComponent implements OnInit {
           return;
         }
         this.selectedDepartment.set(null);
-        this.departmentService.getDepartment(this.INTERDEPARTMENTAL_ID).subscribe({
-          next: (interDept) => this.userDepartments.set([interDept]),
+        forkJoin([
+          this.departmentService.getDepartment(this.INTERDEPARTMENTAL_ID),
+          this.departmentService.getDepartment(this.CEO_OFFICE_ID),
+        ]).subscribe({
+          next: ([interDept, ceoDept]) => this.userDepartments.set([interDept, ceoDept]),
         });
         return;
       }
@@ -419,7 +426,8 @@ export class DepartmentManagementComponent implements OnInit {
       if (routeDepartmentId) {
         if (
           routeDepartmentId !== user.departmentId &&
-          routeDepartmentId !== this.INTERDEPARTMENTAL_ID
+          routeDepartmentId !== this.INTERDEPARTMENTAL_ID &&
+          routeDepartmentId !== this.CEO_OFFICE_ID
         ) {
           this.router.navigate(['/departments']);
           return;
@@ -432,8 +440,10 @@ export class DepartmentManagementComponent implements OnInit {
       forkJoin([
         this.departmentService.getDepartment(user.departmentId),
         this.departmentService.getDepartment(this.INTERDEPARTMENTAL_ID),
+        this.departmentService.getDepartment(this.CEO_OFFICE_ID),
       ]).subscribe({
-        next: ([ownDept, interDept]) => this.userDepartments.set([ownDept, interDept]),
+        next: ([ownDept, interDept, ceoDept]) =>
+          this.userDepartments.set([ownDept, interDept, ceoDept]),
       });
     });
   }
@@ -524,9 +534,17 @@ export class DepartmentManagementComponent implements OnInit {
     this.departmentService.getDepartment(departmentId).subscribe({
       next: (dept) => {
         this.selectedDepartment.set(dept);
-        this.initiativeService.loadInitiatives(dept.id);
-        // Interdepartmental: load all users; otherwise filter to department
-        if (departmentId === this.INTERDEPARTMENTAL_ID) {
+
+        // CEO Office: filter initiatives to those assigned to current user
+        if (departmentId === this.CEO_OFFICE_ID) {
+          const userId = this.currentUser()?.id;
+          this.initiativeService.loadInitiatives(dept.id, userId);
+        } else {
+          this.initiativeService.loadInitiatives(dept.id);
+        }
+
+        // CEO Office & Interdepartmental: load all users; otherwise filter to department
+        if (departmentId === this.INTERDEPARTMENTAL_ID || departmentId === this.CEO_OFFICE_ID) {
           this.userService.loadUsers();
         } else {
           this.userService.loadUsers(dept.id);
