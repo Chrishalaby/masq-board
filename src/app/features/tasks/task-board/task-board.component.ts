@@ -1,6 +1,7 @@
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmDialog } from 'primeng/confirmdialog';
 import { Toast } from 'primeng/toast';
 import { Task, TASK_STATUSES, TaskStatus } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
@@ -10,10 +11,11 @@ import { TaskCardComponent } from '../task-card/task-card.component';
 @Component({
   selector: 'app-task-board',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [MessageService],
-  imports: [DragDropModule, TaskCardComponent, Toast],
+  providers: [MessageService, ConfirmationService],
+  imports: [DragDropModule, TaskCardComponent, Toast, ConfirmDialog],
   template: `
     <p-toast />
+    <p-confirmdialog />
     <div class="flex gap-4 overflow-x-auto p-4" role="region" aria-label="Task board">
       @for (col of columns; track col.value) {
         <div class="flex w-72 min-w-72 flex-col rounded-lg bg-gray-50 dark:bg-gray-900">
@@ -57,6 +59,7 @@ import { TaskCardComponent } from '../task-card/task-card.component';
 export class TaskBoardComponent {
   private readonly taskService = inject(TaskService);
   private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   readonly taskClick = output<Task>();
   readonly setupClick = output<Task>();
@@ -99,13 +102,43 @@ export class TaskBoardComponent {
         return;
       }
 
-      // Horizontal move: change status, then reorder in destination column
-      this.taskService.moveTask(task.id, newStatus);
-      // After moving, reorder in destination to place at drop index
-      const destTasks = [...this.tasksByStatus()[newStatus].filter((t) => t.id !== task.id)];
-      destTasks.splice(event.currentIndex, 0, task);
-      const items = destTasks.map((t, i) => ({ id: t.id, sortOrder: i }));
-      this.taskService.reorderTasks(items);
+      // Validate: moving to "Completed" requires all checklist items checked
+      if (newStatus === 'completed' && task.checklist?.length) {
+        const unchecked = task.checklist.filter((c) => !c.completed);
+        if (unchecked.length > 0) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Checklist Incomplete',
+            detail: `${unchecked.length} checklist item(s) must be checked before completing this task.`,
+            life: 5000,
+          });
+          return;
+        }
+      }
+
+      // Confirm: moving FROM "Completed" to another status
+      if (prevStatus === 'completed') {
+        const statusLabel = this.columns.find((c) => c.value === newStatus)?.label ?? newStatus;
+        this.confirmationService.confirm({
+          message: `Are you sure you want to move this task from Completed to ${statusLabel}?`,
+          header: 'Move from Completed',
+          icon: 'pi pi-exclamation-triangle',
+          acceptLabel: 'Yes, move it',
+          rejectLabel: 'Cancel',
+          accept: () => this.executeMove(task, newStatus, event.currentIndex),
+        });
+        return;
+      }
+
+      this.executeMove(task, newStatus, event.currentIndex);
     }
+  }
+
+  private executeMove(task: Task, newStatus: TaskStatus, dropIndex: number): void {
+    this.taskService.moveTask(task.id, newStatus);
+    const destTasks = [...this.tasksByStatus()[newStatus].filter((t) => t.id !== task.id)];
+    destTasks.splice(dropIndex, 0, task);
+    const items = destTasks.map((t, i) => ({ id: t.id, sortOrder: i }));
+    this.taskService.reorderTasks(items);
   }
 }

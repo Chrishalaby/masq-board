@@ -1,4 +1,9 @@
-import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+  transferArrayItem,
+} from '@angular/cdk/drag-drop';
 import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -15,6 +20,11 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { FullCalendarModule } from '@fullcalendar/angular';
+import { CalendarOptions } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import { Button } from 'primeng/button';
 import { Checkbox } from 'primeng/checkbox';
 import { Chip } from 'primeng/chip';
@@ -23,7 +33,6 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { MultiSelect } from 'primeng/multiselect';
 import { Select } from 'primeng/select';
-import { SelectButton } from 'primeng/selectbutton';
 import { Tag } from 'primeng/tag';
 import { Textarea } from 'primeng/textarea';
 import { ToggleSwitch } from 'primeng/toggleswitch';
@@ -46,6 +55,7 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
     DragDropModule,
     FormsModule,
     ReactiveFormsModule,
+    FullCalendarModule,
     Button,
     Checkbox,
     Chip,
@@ -54,24 +64,27 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
     InputText,
     MultiSelect,
     Select,
-    SelectButton,
     Tag,
     Textarea,
     ToggleSwitch,
     TaskEditorComponent,
   ],
   template: `
-    <div class="mx-auto max-w-7xl px-6 py-6">
-      <h1 class="mb-1 text-2xl font-bold text-gray-900 dark:text-gray-100">Personal Assistant</h1>
-      <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">Your Home out of Home</p>
+    <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
+      <h1 class="mb-1 text-xl font-bold text-gray-900 sm:text-2xl dark:text-gray-100">
+        Personal Assistant
+      </h1>
+      <p class="mb-4 text-sm text-gray-500 sm:mb-6 dark:text-gray-400">Your Home away from Home</p>
 
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3" cdkDropListGroup>
         <!-- Left column: Draggable sections -->
         <div
-          class="flex flex-col gap-6 lg:col-span-2"
+          class="flex flex-col gap-4 sm:gap-6 lg:col-span-2"
           cdkDropList
+          #leftList="cdkDropList"
           [cdkDropListData]="leftSections()"
-          (cdkDropListDropped)="onSectionDrop($event, 'left')"
+          [cdkDropListConnectedTo]="[rightList]"
+          (cdkDropListDropped)="onSectionDrop($event)"
         >
           @for (section of leftSections(); track section) {
             @switch (section) {
@@ -324,10 +337,12 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
 
         <!-- Right column: Calendar + Emails + Notes (draggable) -->
         <div
-          class="flex flex-col gap-6"
+          class="flex flex-col gap-4 sm:gap-6"
           cdkDropList
+          #rightList="cdkDropList"
           [cdkDropListData]="rightSections()"
-          (cdkDropListDropped)="onSectionDrop($event, 'right')"
+          [cdkDropListConnectedTo]="[leftList]"
+          (cdkDropListDropped)="onSectionDrop($event)"
         >
           @for (section of rightSections(); track section) {
             @switch (section) {
@@ -351,81 +366,10 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
                       (onClick)="eventDialogVisible.set(true)"
                     />
                   </div>
-                  <div class="mb-2 flex items-center justify-between">
-                    <p-selectbutton
-                      [options]="calendarViewOptions"
-                      [ngModel]="calendarView()"
-                      (ngModelChange)="onCalendarViewChange($event)"
-                      optionLabel="label"
-                      optionValue="value"
-                      [allowEmpty]="false"
-                      size="small"
-                    />
-                    <div class="flex items-center gap-1">
-                      <p-button
-                        icon="pi pi-chevron-left"
-                        [text]="true"
-                        size="small"
-                        (onClick)="calendarPrev()"
-                        ariaLabel="Previous"
-                      />
-                      <p-button label="Today" [text]="true" size="small" (onClick)="goToday()" />
-                      <p-button
-                        icon="pi pi-chevron-right"
-                        [text]="true"
-                        size="small"
-                        (onClick)="calendarNext()"
-                        ariaLabel="Next"
-                      />
-                    </div>
-                  </div>
-                  <p class="mb-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {{ calendarRangeLabel() }}
-                  </p>
                   <div
-                    class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+                    class="rounded-xl border border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800"
                   >
-                    @if (calendarEvents().length === 0) {
-                      <p class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                        No events.
-                      </p>
-                    }
-                    <div class="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
-                      @for (event of calendarEvents(); track event.id) {
-                        <div class="flex items-start gap-3 p-3">
-                          <div
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
-                          >
-                            <i
-                              [class]="event.isOnlineMeeting ? 'pi pi-video' : 'pi pi-calendar'"
-                            ></i>
-                          </div>
-                          <div class="min-w-0 flex-1">
-                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {{ event.subject }}
-                            </p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
-                              {{ event.startTime | date: 'EEE, MMM d · h:mm a' }} –
-                              {{ event.endTime | date: 'h:mm a' }}
-                            </p>
-                            @if (event.location) {
-                              <p class="text-xs text-gray-400">
-                                <i class="pi pi-map-marker mr-1"></i>{{ event.location }}
-                              </p>
-                            }
-                            @if (event.joinUrl) {
-                              <a
-                                [href]="event.joinUrl"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="mt-1 inline-block text-xs text-blue-600 hover:underline dark:text-blue-400"
-                                >Join Meeting</a
-                              >
-                            }
-                          </div>
-                        </div>
-                      }
-                    </div>
+                    <full-calendar [options]="calendarOptions()" />
                   </div>
                 </section>
               }
@@ -529,7 +473,7 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
                   <div class="flex flex-col gap-2">
                     @for (note of myNotes(); track note.id) {
                       <div
-                        class="cursor-pointer rounded-lg border p-3 shadow-sm transition hover:shadow-md dark:border-gray-700"
+                        class="group relative cursor-pointer rounded-lg border p-3 shadow-sm transition hover:shadow-md dark:border-gray-700"
                         [style.background-color]="note.color || ''"
                         [class.dark:bg-gray-800]="!note.color"
                         (click)="openEditNote(note)"
@@ -538,6 +482,15 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
                         role="button"
                         [attr.aria-label]="'Edit note: ' + note.title"
                       >
+                        <p-button
+                          icon="pi pi-trash"
+                          [text]="true"
+                          severity="danger"
+                          size="small"
+                          class="absolute right-1 top-1 opacity-0 transition group-hover:opacity-100"
+                          (onClick)="onQuickDeleteNote(note, $event)"
+                          ariaLabel="Delete note"
+                        />
                         <h3
                           class="text-sm font-semibold text-gray-900"
                           [class.dark:text-white]="!note.color"
@@ -793,16 +746,50 @@ export class PersonalAssistantComponent implements OnInit {
   readonly reminderDialogVisible = signal(false);
 
   // Calendar state
-  readonly calendarView = signal<'day' | 'week' | 'month'>('week');
-  readonly calendarAnchor = signal(new Date());
   readonly calendarEvents = signal<CalendarEvent[]>([]);
-  readonly calendarViewOptions = [
-    { label: 'Day', value: 'day' },
-    { label: 'Week', value: 'week' },
-    { label: 'Month', value: 'month' },
-  ];
   readonly eventDialogVisible = signal(false);
   readonly eventSaving = signal(false);
+
+  readonly calendarOptions = computed((): CalendarOptions => {
+    const events = this.calendarEvents().map((e) => ({
+      id: e.id,
+      title: e.subject,
+      start: e.startTime,
+      end: e.endTime,
+      url: e.joinUrl || undefined,
+      extendedProps: {
+        location: e.location,
+        isOnlineMeeting: e.isOnlineMeeting,
+        joinUrl: e.joinUrl,
+      },
+    }));
+    return {
+      plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+      initialView: 'timeGridWeek',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'timeGridDay,timeGridWeek,dayGridMonth',
+      },
+      height: 500,
+      events,
+      nowIndicator: true,
+      editable: false,
+      selectable: false,
+      weekends: true,
+      slotMinTime: '07:00:00',
+      slotMaxTime: '20:00:00',
+      eventClick: (info) => {
+        if (info.event.extendedProps['joinUrl']) {
+          info.jsEvent.preventDefault();
+          window.open(info.event.extendedProps['joinUrl'], '_blank', 'noopener,noreferrer');
+        }
+      },
+      datesSet: (dateInfo) => {
+        this.loadCalendarEventsForRange(dateInfo.startStr, dateInfo.endStr);
+      },
+    };
+  });
 
   // Email state
   readonly emails = signal<MailMessage[]>([]);
@@ -886,22 +873,6 @@ export class PersonalAssistantComponent implements OnInit {
       .filter((n) => n.authorId === uid || (!!teamsOid && n.author?.teamsId === teamsOid));
   });
 
-  readonly calendarRangeLabel = computed(() => {
-    const anchor = this.calendarAnchor();
-    const view = this.calendarView();
-    const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-    if (view === 'day') {
-      return anchor.toLocaleDateString('en-US', { weekday: 'long', ...opts });
-    }
-    if (view === 'week') {
-      const start = this.getWeekStart(anchor);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 6);
-      return `${start.toLocaleDateString('en-US', opts)} – ${end.toLocaleDateString('en-US', opts)}`;
-    }
-    return anchor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  });
-
   readonly noteForm = new FormGroup({
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     content: new FormControl('', { nonNullable: true }),
@@ -928,18 +899,35 @@ export class PersonalAssistantComponent implements OnInit {
     this.noteService.loadNotes();
     this.reminderService.loadReminders();
     this.todoService.loadTodos();
-    this.loadCalendarEvents();
     this.loadEmails();
     this.restoreSectionOrder();
   }
 
   // --- Draggable Sections ---
 
-  onSectionDrop(event: CdkDragDrop<string[]>, column: 'left' | 'right'): void {
-    const sig = column === 'left' ? this.leftSections : this.rightSections;
-    const arr = [...sig()];
-    moveItemInArray(arr, event.previousIndex, event.currentIndex);
-    sig.set(arr);
+  onSectionDrop(event: CdkDragDrop<string[]>): void {
+    if (event.previousContainer === event.container) {
+      // Reorder within same column
+      const isLeft = event.container.data === this.leftSections();
+      const sig = isLeft ? this.leftSections : this.rightSections;
+      const arr = [...sig()];
+      moveItemInArray(arr, event.previousIndex, event.currentIndex);
+      sig.set(arr);
+    } else {
+      // Transfer between columns
+      const prevArr = [...event.previousContainer.data];
+      const currArr = [...event.container.data];
+      transferArrayItem(prevArr, currArr, event.previousIndex, event.currentIndex);
+
+      const isPrevLeft = event.previousContainer.data === this.leftSections();
+      if (isPrevLeft) {
+        this.leftSections.set(prevArr);
+        this.rightSections.set(currArr);
+      } else {
+        this.rightSections.set(prevArr);
+        this.leftSections.set(currArr);
+      }
+    }
     this.saveSectionOrder();
   }
 
@@ -1070,37 +1058,12 @@ export class PersonalAssistantComponent implements OnInit {
     }
   }
 
+  onQuickDeleteNote(note: Note, event: Event): void {
+    event.stopPropagation();
+    this.noteService.deleteNote(note.id).pipe(take(1)).subscribe();
+  }
+
   // --- Calendar ---
-
-  onCalendarViewChange(view: 'day' | 'week' | 'month'): void {
-    this.calendarView.set(view);
-    this.loadCalendarEvents();
-  }
-
-  calendarPrev(): void {
-    const d = new Date(this.calendarAnchor());
-    const view = this.calendarView();
-    if (view === 'day') d.setDate(d.getDate() - 1);
-    else if (view === 'week') d.setDate(d.getDate() - 7);
-    else d.setMonth(d.getMonth() - 1);
-    this.calendarAnchor.set(d);
-    this.loadCalendarEvents();
-  }
-
-  calendarNext(): void {
-    const d = new Date(this.calendarAnchor());
-    const view = this.calendarView();
-    if (view === 'day') d.setDate(d.getDate() + 1);
-    else if (view === 'week') d.setDate(d.getDate() + 7);
-    else d.setMonth(d.getMonth() + 1);
-    this.calendarAnchor.set(d);
-    this.loadCalendarEvents();
-  }
-
-  goToday(): void {
-    this.calendarAnchor.set(new Date());
-    this.loadCalendarEvents();
-  }
 
   onSaveEvent(): void {
     if (this.eventForm.invalid) return;
@@ -1118,40 +1081,21 @@ export class PersonalAssistantComponent implements OnInit {
           this.eventSaving.set(false);
           this.eventDialogVisible.set(false);
           this.eventForm.reset();
-          this.loadCalendarEvents();
+          // Reload calendar events for current range
+          const now = new Date();
+          const start = new Date(now.getFullYear(), now.getMonth(), 1);
+          const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          this.loadCalendarEventsForRange(start.toISOString(), end.toISOString());
         },
         error: () => this.eventSaving.set(false),
       });
   }
 
-  private loadCalendarEvents(): void {
-    const { start, end } = this.getCalendarRange();
-    this.userService.getCalendarEvents(start.toISOString(), end.toISOString()).subscribe({
+  private loadCalendarEventsForRange(startStr: string, endStr: string): void {
+    this.userService.getCalendarEvents(startStr, endStr).subscribe({
       next: (events) => this.calendarEvents.set(events),
       error: () => this.calendarEvents.set([]),
     });
-  }
-
-  private getCalendarRange(): { start: Date; end: Date } {
-    const anchor = this.calendarAnchor();
-    const view = this.calendarView();
-    if (view === 'day') {
-      const start = new Date(anchor);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 1);
-      return { start, end };
-    }
-    if (view === 'week') {
-      const start = this.getWeekStart(anchor);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 7);
-      return { start, end };
-    }
-    // month
-    const start = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
-    const end = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1);
-    return { start, end };
   }
 
   private loadEmails(): void {
@@ -1163,13 +1107,6 @@ export class PersonalAssistantComponent implements OnInit {
 
   refreshEmails(): void {
     this.loadEmails();
-  }
-
-  private getWeekStart(date: Date): Date {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - d.getDay());
-    return d;
   }
 
   protected prioritySeverity(p: TaskPriority): 'danger' | 'warn' | 'info' | 'success' {

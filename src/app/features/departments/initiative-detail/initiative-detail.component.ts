@@ -59,9 +59,9 @@ import { TaskLinksDialogComponent } from '../../tasks/task-links-dialog/task-lin
       <header class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
         <div class="mb-3 flex items-center gap-2">
           <a
-            routerLink="/departments"
+            [routerLink]="['/departments', initiative()?.departmentId]"
             class="text-sm text-blue-600 hover:underline dark:text-blue-400"
-            >← Department Management</a
+            >← {{ initiative()?.department?.name || 'Department Management' }}</a
           >
         </div>
         <div class="flex items-center justify-between">
@@ -230,14 +230,18 @@ export class InitiativeDetailComponent implements OnInit {
   ];
 
   private readonly INTERDEPARTMENTAL_ID = environment.interdepartmentalDepartmentId;
+  private readonly CEO_OFFICE_ID = environment.ceoOfficeDepartmentId;
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.initiativeService.getInitiative(id).subscribe({
       next: (ini) => {
         this.initiative.set(ini);
-        // Interdepartmental dept: load all users; otherwise filter to department
-        if (ini.departmentId === this.INTERDEPARTMENTAL_ID) {
+        // Interdepartmental & CEO Office: load all users; otherwise filter to department
+        if (
+          ini.departmentId === this.INTERDEPARTMENTAL_ID ||
+          ini.departmentId === this.CEO_OFFICE_ID
+        ) {
           this.userService.loadUsers();
         } else {
           this.userService.loadUsers(ini.departmentId);

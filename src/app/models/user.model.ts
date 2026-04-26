@@ -8,6 +8,7 @@ export interface User {
   isActive: boolean;
   isAdmin: boolean;
   isGeneralSupervisor: boolean;
+  canAccessExecDashboard: boolean;
   departmentId?: string;
   createdAt: string;
   updatedAt: string;

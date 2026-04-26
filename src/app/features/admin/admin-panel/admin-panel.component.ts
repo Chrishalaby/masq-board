@@ -114,6 +114,9 @@ type AdminTab = 'users' | 'departments' | 'assignments';
                             @if (user.isGeneralSupervisor) {
                               <p-tag value="General Supervisor" severity="warn" />
                             }
+                            @if (user.canAccessExecDashboard) {
+                              <p-tag value="Exec Dashboard" severity="info" />
+                            }
                           </div>
                         </td>
                         <td class="px-4 py-3">
@@ -330,6 +333,14 @@ type AdminTab = 'users' | 'departments' | 'assignments';
               />
               <label for="uIsGS" class="text-sm">General Supervisor</label>
             </div>
+            <div class="flex items-center gap-2">
+              <p-checkbox
+                [(ngModel)]="userForm.canAccessExecDashboard"
+                [binary]="true"
+                inputId="uExecDash"
+              />
+              <label for="uExecDash" class="text-sm">Executive Dashboard Access</label>
+            </div>
           </div>
         </div>
         <ng-template #footer>
@@ -490,6 +501,7 @@ export class AdminPanelComponent implements OnInit {
     departmentId: undefined as string | undefined,
     isAdmin: false,
     isGeneralSupervisor: false,
+    canAccessExecDashboard: false,
   };
 
   // Department edit
@@ -539,6 +551,7 @@ export class AdminPanelComponent implements OnInit {
       departmentId: user.departmentId,
       isAdmin: user.isAdmin,
       isGeneralSupervisor: user.isGeneralSupervisor,
+      canAccessExecDashboard: user.canAccessExecDashboard,
     };
     this.userDialogVisible.set(true);
   }
@@ -554,6 +567,7 @@ export class AdminPanelComponent implements OnInit {
         departmentId: this.userForm.departmentId,
         isAdmin: this.userForm.isAdmin,
         isGeneralSupervisor: this.userForm.isGeneralSupervisor,
+        canAccessExecDashboard: this.userForm.canAccessExecDashboard,
       })
       .subscribe({
         next: () => {

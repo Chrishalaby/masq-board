@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Button } from 'primeng/button';
 import { AuthService } from '../../auth/auth.service';
@@ -54,6 +54,14 @@ import { UserService } from '../../services/user.service';
             >Admin</a
           >
         }
+        @if (showExecDashboard()) {
+          <a
+            routerLink="/exec-dashboard"
+            routerLinkActive="text-indigo-600 dark:text-indigo-400 font-semibold"
+            class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            >Dashboard</a
+          >
+        }
       </div>
       <div class="flex items-center gap-3">
         @if (auth.isAuthenticated()) {
@@ -80,4 +88,9 @@ import { UserService } from '../../services/user.service';
 export class NavBarComponent {
   protected readonly auth = inject(AuthService);
   protected readonly userService = inject(UserService);
+
+  protected readonly showExecDashboard = computed(() => {
+    const user = this.userService.currentUser();
+    return user?.isGeneralSupervisor || user?.canAccessExecDashboard || user?.isAdmin;
+  });
 }

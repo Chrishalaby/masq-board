@@ -65,7 +65,13 @@ export class UserService {
     data: Partial<
       Pick<
         User,
-        'displayName' | 'departmentId' | 'isAdmin' | 'isGeneralSupervisor' | 'isActive' | 'jobTitle'
+        | 'displayName'
+        | 'departmentId'
+        | 'isAdmin'
+        | 'isGeneralSupervisor'
+        | 'canAccessExecDashboard'
+        | 'isActive'
+        | 'jobTitle'
       >
     >,
   ): Observable<User> {

@@ -210,12 +210,41 @@ import { UserService } from '../../../services/user.service';
           <label for="isCritical" class="text-sm font-medium">Critical Task</label>
         </div>
 
-        <!-- Description -->
+        <!-- Checklist -->
         <div class="flex flex-col gap-1">
-          <label for="description" class="text-sm font-medium"
-            >Description (List All Milestones)</label
-          >
-          <textarea pTextarea id="description" formControlName="description" rows="3"></textarea>
+          <label class="text-sm font-medium">Checklist</label>
+          <div class="flex flex-col gap-2">
+            @for (item of checklistArray.controls; track $index) {
+              <div class="flex items-center gap-2">
+                <p-checkbox [formControl]="getChecklistCompleted($index)" [binary]="true" />
+                <input pInputText class="flex-1" [formControl]="getChecklistTitle($index)" />
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [text]="true"
+                  size="small"
+                  (onClick)="removeChecklist($index)"
+                  ariaLabel="Remove checklist item"
+                />
+              </div>
+            }
+            <div class="flex items-center gap-1">
+              <input
+                pInputText
+                class="flex-1"
+                placeholder="New checklist item"
+                [formControl]="newChecklistControl"
+                (keydown.enter)="addChecklist(); $event.preventDefault()"
+              />
+              <p-button
+                icon="pi pi-plus"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                (onClick)="addChecklist()"
+              />
+            </div>
+          </div>
         </div>
 
         <!-- Milestones -->
@@ -364,41 +393,16 @@ import { UserService } from '../../../services/user.service';
           </div>
         }
 
-        <!-- Checklist -->
+        <!-- Description (optional) -->
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Checklist</label>
-          <div class="flex flex-col gap-2">
-            @for (item of checklistArray.controls; track $index) {
-              <div class="flex items-center gap-2">
-                <p-checkbox [formControl]="getChecklistCompleted($index)" [binary]="true" />
-                <input pInputText class="flex-1" [formControl]="getChecklistTitle($index)" />
-                <p-button
-                  icon="pi pi-trash"
-                  severity="danger"
-                  [text]="true"
-                  size="small"
-                  (onClick)="removeChecklist($index)"
-                  ariaLabel="Remove checklist item"
-                />
-              </div>
-            }
-            <div class="flex items-center gap-1">
-              <input
-                pInputText
-                class="flex-1"
-                placeholder="New checklist item"
-                [formControl]="newChecklistControl"
-                (keydown.enter)="addChecklist(); $event.preventDefault()"
-              />
-              <p-button
-                icon="pi pi-plus"
-                [rounded]="true"
-                [text]="true"
-                size="small"
-                (onClick)="addChecklist()"
-              />
-            </div>
-          </div>
+          <label for="description" class="text-sm font-medium">Description</label>
+          <textarea
+            pTextarea
+            id="description"
+            formControlName="description"
+            rows="3"
+            placeholder="Optional description..."
+          ></textarea>
         </div>
 
         <!-- Actions -->
@@ -483,8 +487,11 @@ export class TaskEditorComponent implements OnInit {
 
     if (me.isGeneralSupervisor) {
       if (this.departmentId()) {
-        // Interdepartmental dept: show all users
-        if (this.departmentId() === environment.interdepartmentalDepartmentId) {
+        // Interdepartmental & CEO Office dept: show all users
+        if (
+          this.departmentId() === environment.interdepartmentalDepartmentId ||
+          this.departmentId() === environment.ceoOfficeDepartmentId
+        ) {
           return allUsers;
         }
         // Inside an initiative: filter to the initiative's department
@@ -733,6 +740,20 @@ export class TaskEditorComponent implements OnInit {
         life: 5000,
       });
       return;
+    }
+
+    // Validate: moving to "Completed" requires all checklist items checked
+    if (raw.status === 'completed' && raw.checklist.length > 0) {
+      const unchecked = raw.checklist.filter((c) => !c.completed);
+      if (unchecked.length > 0) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Checklist Incomplete',
+          detail: `${unchecked.length} checklist item(s) must be checked before completing this task.`,
+          life: 5000,
+        });
+        return;
+      }
     }
 
     const taskData: Partial<Task> = {
