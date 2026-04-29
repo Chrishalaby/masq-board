@@ -30,6 +30,7 @@ import { TaskService } from '../../../services/task.service';
           <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
           <th pSortableColumn="startDate">Start Date <p-sortIcon field="startDate" /></th>
           <th pSortableColumn="dueDate">Due Date <p-sortIcon field="dueDate" /></th>
+          <th>Milestone Achieved</th>
           <th>Current Milestone</th>
           <th>Next Milestone</th>
           <th>Deps</th>
@@ -89,6 +90,7 @@ import { TaskService } from '../../../services/task.service';
           </td>
           <td>{{ task.startDate | date: 'mediumDate' }}</td>
           <td>{{ task.dueDate | date: 'mediumDate' }}</td>
+          <td>{{ task.milestoneAchieved }}</td>
           <td>{{ task.currentMilestone }}</td>
           <td>{{ task.nextMilestone }}</td>
           <td>

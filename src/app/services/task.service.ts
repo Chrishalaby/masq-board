@@ -203,9 +203,6 @@ export class TaskService {
       dueDate: task.dueDate || undefined,
       isRecurring: task.isRecurring ?? undefined,
       isCritical: task.isCritical ?? undefined,
-      milestoneAchieved: task.milestoneAchieved || undefined,
-      currentMilestone: task.currentMilestone || undefined,
-      nextMilestone: task.nextMilestone || undefined,
       delayRisk: task.delayRisk || undefined,
       linkedFiles: task.linkedFiles,
       linkedFileNames: task.linkedFileNames,
@@ -217,9 +214,12 @@ export class TaskService {
         role: a.role ?? null,
       })),
       labelIds: task.labels?.map((l) => l.id) || undefined,
-      checklist: task.checklist?.map((c) => ({
+      checklist: task.checklist?.map((c, i) => ({
         title: c.title,
         completed: c.completed,
+        sortOrder: c.sortOrder ?? i,
+        assigneeId: c.assigneeId || undefined,
+        deadline: c.deadline || undefined,
       })),
     };
   }

@@ -210,29 +210,71 @@ import { UserService } from '../../../services/user.service';
           <label for="isCritical" class="text-sm font-medium">Critical Task</label>
         </div>
 
-        <!-- Checklist -->
+        <!-- Milestones -->
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Checklist</label>
+          <label class="text-sm font-medium">Milestones</label>
           <div class="flex flex-col gap-2">
             @for (item of checklistArray.controls; track $index) {
-              <div class="flex items-center gap-2">
-                <p-checkbox [formControl]="getChecklistCompleted($index)" [binary]="true" />
-                <input pInputText class="flex-1" [formControl]="getChecklistTitle($index)" />
-                <p-button
-                  icon="pi pi-trash"
-                  severity="danger"
-                  [text]="true"
-                  size="small"
-                  (onClick)="removeChecklist($index)"
-                  ariaLabel="Remove checklist item"
-                />
+              <div
+                class="flex flex-col gap-1 rounded border border-gray-200 p-2 dark:border-gray-700"
+              >
+                <div class="flex items-center gap-2">
+                  <p-checkbox [formControl]="getChecklistCompleted($index)" [binary]="true" />
+                  <input pInputText class="flex-1" [formControl]="getChecklistTitle($index)" />
+                  <p-button
+                    icon="pi pi-arrow-up"
+                    [text]="true"
+                    size="small"
+                    [disabled]="$index === 0"
+                    (onClick)="moveMilestone($index, -1)"
+                    ariaLabel="Move milestone up"
+                  />
+                  <p-button
+                    icon="pi pi-arrow-down"
+                    [text]="true"
+                    size="small"
+                    [disabled]="$index === checklistArray.length - 1"
+                    (onClick)="moveMilestone($index, 1)"
+                    ariaLabel="Move milestone down"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    severity="danger"
+                    [text]="true"
+                    size="small"
+                    (onClick)="removeChecklist($index)"
+                    ariaLabel="Remove milestone"
+                  />
+                </div>
+                <div class="flex items-center gap-2 pl-8">
+                  <p-select
+                    class="flex-1"
+                    [options]="milestoneAssigneeOptions()"
+                    optionLabel="displayName"
+                    optionValue="id"
+                    placeholder="Assignee"
+                    [showClear]="true"
+                    [formControl]="getChecklistAssigneeId($index)"
+                    appendTo="body"
+                  />
+                  <p-datepicker
+                    class="flex-1"
+                    [formControl]="getChecklistDeadline($index)"
+                    dateFormat="yy-mm-dd"
+                    placeholder="Deadline"
+                    [showIcon]="true"
+                    appendTo="body"
+                    [autoZIndex]="true"
+                    [baseZIndex]="12000"
+                  />
+                </div>
               </div>
             }
             <div class="flex items-center gap-1">
               <input
                 pInputText
                 class="flex-1"
-                placeholder="New checklist item"
+                placeholder="New milestone"
                 [formControl]="newChecklistControl"
                 (keydown.enter)="addChecklist(); $event.preventDefault()"
               />
@@ -247,19 +289,34 @@ import { UserService } from '../../../services/user.service';
           </div>
         </div>
 
-        <!-- Milestones -->
+        <!-- Milestone Status (read-only) -->
         <div class="grid grid-cols-3 gap-3">
           <div class="flex flex-col gap-1">
-            <label for="milestoneAchieved" class="text-sm font-medium">Milestone Achieved</label>
-            <input pInputText id="milestoneAchieved" formControlName="milestoneAchieved" />
+            <label class="text-sm font-medium">Milestone Achieved</label>
+            <input
+              pInputText
+              [value]="computedMilestoneAchieved()"
+              [readonly]="true"
+              class="bg-gray-50 dark:bg-gray-900"
+            />
           </div>
           <div class="flex flex-col gap-1">
-            <label for="currentMilestone" class="text-sm font-medium">Current Milestone</label>
-            <input pInputText id="currentMilestone" formControlName="currentMilestone" />
+            <label class="text-sm font-medium">Current Milestone</label>
+            <input
+              pInputText
+              [value]="computedCurrentMilestone()"
+              [readonly]="true"
+              class="bg-gray-50 dark:bg-gray-900"
+            />
           </div>
           <div class="flex flex-col gap-1">
-            <label for="nextMilestone" class="text-sm font-medium">Next Milestone</label>
-            <input pInputText id="nextMilestone" formControlName="nextMilestone" />
+            <label class="text-sm font-medium">Next Milestone</label>
+            <input
+              pInputText
+              [value]="computedNextMilestone()"
+              [readonly]="true"
+              class="bg-gray-50 dark:bg-gray-900"
+            />
           </div>
         </div>
 
@@ -454,6 +511,51 @@ export class TaskEditorComponent implements OnInit {
   readonly uploading = signal(false);
   readonly uploadError = signal<string | null>(null);
 
+  /** Users who are currently assigned to this task — used for milestone assignee picker */
+  readonly milestoneAssigneeOptions = computed(() => {
+    const assignees = this.assigneesArray.controls;
+    const allUsers = this.userService.users();
+    const userIds = assignees.map((a) => a.controls.userId.value).filter(Boolean);
+    return allUsers.filter((u) => userIds.includes(u.id));
+  });
+
+  /** Computed milestone status fields based on checklist items */
+  readonly computedMilestoneAchieved = computed(() => {
+    const items = this.checklistArray.controls;
+    let achieved = '';
+    for (const item of items) {
+      if (item.controls.completed.value) {
+        achieved = item.controls.title.value;
+      }
+    }
+    return achieved;
+  });
+
+  readonly computedCurrentMilestone = computed(() => {
+    const items = this.checklistArray.controls;
+    for (const item of items) {
+      if (!item.controls.completed.value) {
+        return item.controls.title.value;
+      }
+    }
+    return '';
+  });
+
+  readonly computedNextMilestone = computed(() => {
+    const items = this.checklistArray.controls;
+    let foundCurrent = false;
+    for (const item of items) {
+      if (!item.controls.completed.value) {
+        if (!foundCurrent) {
+          foundCurrent = true;
+        } else {
+          return item.controls.title.value;
+        }
+      }
+    }
+    return '';
+  });
+
   private selectedLabels: Label[] = [];
 
   /** Assignments for the current user (populated in ngOnInit) */
@@ -546,9 +648,6 @@ export class TaskEditorComponent implements OnInit {
     isRecurring: new FormControl(false, { nonNullable: true }),
     isCritical: new FormControl(false, { nonNullable: true }),
     description: new FormControl('', { nonNullable: true }),
-    milestoneAchieved: new FormControl('', { nonNullable: true }),
-    currentMilestone: new FormControl('', { nonNullable: true }),
-    nextMilestone: new FormControl('', { nonNullable: true }),
     delayRisk: new FormControl('', { nonNullable: true }),
     labels: new FormArray<FormControl<string>>([]),
     linkedFiles: new FormArray<FormControl<string>>([]),
@@ -556,7 +655,12 @@ export class TaskEditorComponent implements OnInit {
       FormGroup<{ userId: FormControl<string>; role: FormControl<TaskAssigneeRole | null> }>
     >([]),
     checklist: new FormArray<
-      FormGroup<{ title: FormControl<string>; completed: FormControl<boolean> }>
+      FormGroup<{
+        title: FormControl<string>;
+        completed: FormControl<boolean>;
+        assigneeId: FormControl<string | null>;
+        deadline: FormControl<Date | null>;
+      }>
     >([]),
   });
 
@@ -571,7 +675,12 @@ export class TaskEditorComponent implements OnInit {
   }
 
   get checklistArray(): FormArray<
-    FormGroup<{ title: FormControl<string>; completed: FormControl<boolean> }>
+    FormGroup<{
+      title: FormControl<string>;
+      completed: FormControl<boolean>;
+      assigneeId: FormControl<string | null>;
+      deadline: FormControl<Date | null>;
+    }>
   > {
     return this.form.controls.checklist;
   }
@@ -644,6 +753,8 @@ export class TaskEditorComponent implements OnInit {
         new FormGroup({
           title: new FormControl(value, { nonNullable: true }),
           completed: new FormControl(false, { nonNullable: true }),
+          assigneeId: new FormControl<string | null>(null),
+          deadline: new FormControl<Date | null>(null),
         }),
       );
       this.newChecklistControl.reset();
@@ -720,6 +831,23 @@ export class TaskEditorComponent implements OnInit {
     return this.checklistArray.at(i).controls.completed;
   }
 
+  getChecklistAssigneeId(i: number): FormControl<string | null> {
+    return this.checklistArray.at(i).controls.assigneeId;
+  }
+
+  getChecklistDeadline(i: number): FormControl<Date | null> {
+    return this.checklistArray.at(i).controls.deadline;
+  }
+
+  moveMilestone(index: number, direction: -1 | 1): void {
+    const target = index + direction;
+    if (target < 0 || target >= this.checklistArray.length) return;
+    const items = this.checklistArray.controls;
+    const current = items[index];
+    this.checklistArray.removeAt(index);
+    this.checklistArray.insert(target, current);
+  }
+
   onRemoveDependency(depId: string): void {
     const t = this.task();
     if (t) {
@@ -742,14 +870,14 @@ export class TaskEditorComponent implements OnInit {
       return;
     }
 
-    // Validate: moving to "Completed" requires all checklist items checked
+    // Validate: moving to "Completed" requires all milestones checked
     if (raw.status === 'completed' && raw.checklist.length > 0) {
       const unchecked = raw.checklist.filter((c) => !c.completed);
       if (unchecked.length > 0) {
         this.messageService.add({
           severity: 'error',
-          summary: 'Checklist Incomplete',
-          detail: `${unchecked.length} checklist item(s) must be checked before completing this task.`,
+          summary: 'Milestones Incomplete',
+          detail: `${unchecked.length} milestone(s) must be checked before completing this task.`,
           life: 5000,
         });
         return;
@@ -765,9 +893,6 @@ export class TaskEditorComponent implements OnInit {
       dueDate: raw.dueDate ? this.formatDate(raw.dueDate) : undefined,
       isRecurring: raw.isRecurring,
       isCritical: raw.isCritical,
-      milestoneAchieved: raw.milestoneAchieved || undefined,
-      currentMilestone: raw.currentMilestone || undefined,
-      nextMilestone: raw.nextMilestone || undefined,
       delayRisk: raw.delayRisk || undefined,
       assigneeId: raw.assigneeId || undefined,
       projectId: raw.projectId || this.projectId() || undefined,
@@ -777,7 +902,15 @@ export class TaskEditorComponent implements OnInit {
       assignees: raw.assignees
         ?.filter((a) => a.userId)
         .map((a) => ({ userId: a.userId, role: a.role })),
-      checklist: raw.checklist.length ? raw.checklist : undefined,
+      checklist: raw.checklist.length
+        ? raw.checklist.map((c, i) => ({
+            title: c.title,
+            completed: c.completed,
+            sortOrder: i,
+            assigneeId: c.assigneeId || undefined,
+            deadline: c.deadline ? this.formatDate(c.deadline) : undefined,
+          }))
+        : undefined,
     };
 
     const existingTask = this.task();
@@ -856,9 +989,6 @@ export class TaskEditorComponent implements OnInit {
         isRecurring: t.isRecurring ?? false,
         isCritical: t.isCritical ?? false,
         description: t.description,
-        milestoneAchieved: t.milestoneAchieved ?? '',
-        currentMilestone: t.currentMilestone ?? '',
-        nextMilestone: t.nextMilestone ?? '',
         delayRisk: t.delayRisk ?? '',
       });
       if (t.labels) {
@@ -878,11 +1008,16 @@ export class TaskEditorComponent implements OnInit {
           }),
         ),
       );
-      t.checklist?.forEach((c) =>
+      const sortedChecklist = [...(t.checklist ?? [])].sort(
+        (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+      );
+      sortedChecklist.forEach((c) =>
         this.checklistArray.push(
           new FormGroup({
             title: new FormControl(c.title, { nonNullable: true }),
             completed: new FormControl(c.completed, { nonNullable: true }),
+            assigneeId: new FormControl<string | null>(c.assigneeId ?? null),
+            deadline: new FormControl<Date | null>(c.deadline ? new Date(c.deadline) : null),
           }),
         ),
       );
@@ -914,8 +1049,8 @@ export class TaskEditorComponent implements OnInit {
 
   /**
    * Non-admin users editing an existing task cannot modify:
-   * assignees, start date, end date, dependencies, priority, status, project, milestones.
-   * They can freely edit: title, description, linked files, checklist, labels.
+   * assignees, start date, end date, dependencies, priority, status, project, delay risk.
+   * They can freely edit: title, description, linked files, milestones, labels.
    * Admins can edit all fields. New tasks have no restrictions.
    */
   private applyFieldRestrictions(): void {
@@ -928,9 +1063,6 @@ export class TaskEditorComponent implements OnInit {
       this.form.controls.projectId,
       this.form.controls.isRecurring,
       this.form.controls.isCritical,
-      this.form.controls.milestoneAchieved,
-      this.form.controls.currentMilestone,
-      this.form.controls.nextMilestone,
       this.form.controls.delayRisk,
     ];
 

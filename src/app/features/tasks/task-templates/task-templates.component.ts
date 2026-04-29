@@ -79,9 +79,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
                 }
                 @if (tpl.checklist?.length) {
                   <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                    {{ tpl.checklist!.length }} checklist item{{
-                      tpl.checklist!.length > 1 ? 's' : ''
-                    }}
+                    {{ tpl.checklist!.length }} milestone{{ tpl.checklist!.length > 1 ? 's' : '' }}
                   </p>
                 }
               </div>
@@ -164,9 +162,9 @@ import { TaskTemplateService } from '../../../services/task-template.service';
           <label class="text-sm font-medium">Active</label>
         </div>
 
-        <!-- Checklist -->
+        <!-- Milestones -->
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Checklist</label>
+          <label class="text-sm font-medium">Milestones</label>
           <div class="flex flex-col gap-2">
             @for (item of checklistArray.controls; track $index) {
               <div class="flex items-center gap-2">
@@ -177,7 +175,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
                   [text]="true"
                   size="small"
                   (onClick)="removeChecklist($index)"
-                  ariaLabel="Remove checklist item"
+                  ariaLabel="Remove milestone"
                 />
               </div>
             }
@@ -185,7 +183,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
               <input
                 pInputText
                 class="flex-1"
-                placeholder="New checklist item"
+                placeholder="New milestone"
                 [formControl]="newChecklistControl"
                 (keydown.enter)="addChecklist(); $event.preventDefault()"
               />

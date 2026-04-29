@@ -198,7 +198,7 @@ import { User } from '../../../models/user.model';
           @if (checklistProgress(); as progress) {
             <div class="flex-1">
               <div class="mb-1 flex justify-between text-xs text-gray-500">
-                <span>Checklist</span>
+                <span>Milestones</span>
                 <span>{{ progress.done }}/{{ progress.total }}</span>
               </div>
               <p-progressBar

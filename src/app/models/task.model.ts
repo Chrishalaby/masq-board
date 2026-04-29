@@ -21,6 +21,8 @@ export interface ChecklistItem {
   title: string;
   completed: boolean;
   sortOrder?: number;
+  assigneeId?: string;
+  deadline?: string;
 }
 
 export interface TaskDependency {
