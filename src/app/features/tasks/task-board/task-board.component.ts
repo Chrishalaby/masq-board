@@ -102,14 +102,14 @@ export class TaskBoardComponent {
         return;
       }
 
-      // Validate: moving to "Completed" requires all checklist items checked
+      // Validate: moving to "Completed" requires all milestones checked
       if (newStatus === 'completed' && task.checklist?.length) {
         const unchecked = task.checklist.filter((c) => !c.completed);
         if (unchecked.length > 0) {
           this.messageService.add({
             severity: 'error',
-            summary: 'Checklist Incomplete',
-            detail: `${unchecked.length} checklist item(s) must be checked before completing this task.`,
+            summary: 'Milestones Incomplete',
+            detail: `${unchecked.length} Milestone(s) must be completed before this task can be moved to Completed.`,
             life: 5000,
           });
           return;

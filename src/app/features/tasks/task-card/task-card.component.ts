@@ -15,6 +15,7 @@ import { ProgressBar } from 'primeng/progressbar';
 import { Tag } from 'primeng/tag';
 import { Task, TaskPriority } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
+import { TaskService } from '../../../services/task.service';
 
 @Component({
   selector: 'app-task-card',
@@ -73,6 +74,31 @@ import { User } from '../../../models/user.model';
       <div class="cursor-grab p-3" cdkDragHandle>
         <div class="mb-2 flex items-start justify-between gap-2">
           <div class="flex items-center gap-2">
+            @if (task().status === 'in-progress') {
+              <button
+                class="flex h-6 w-6 items-center justify-center rounded-full transition-colors"
+                [class]="
+                  task().isPrioritized
+                    ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300'
+                    : 'text-gray-400 hover:text-yellow-500 dark:text-gray-500'
+                "
+                [attr.aria-label]="task().isPrioritized ? 'Remove priority' : 'Prioritize task'"
+                [attr.aria-pressed]="task().isPrioritized"
+                (click)="onTogglePriority(); $event.stopPropagation()"
+              >
+                <i
+                  class="pi text-xs"
+                  [class]="task().isPrioritized ? 'pi-star-fill' : 'pi-star'"
+                ></i>
+              </button>
+              @if (task().isPrioritized && task().priorityOrder) {
+                <span
+                  class="flex h-5 min-w-5 items-center justify-center rounded-full bg-yellow-100 px-1 text-xs font-bold text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                >
+                  #{{ task().priorityOrder }}
+                </span>
+              }
+            }
             <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
               {{ task().title }}
             </h4>
@@ -154,6 +180,25 @@ import { User } from '../../../models/user.model';
           }
         }
 
+        @if (activeTimeText(); as at) {
+          <p
+            class="mb-2 text-xs font-medium"
+            [class.text-green-600]="task().status === 'in-progress'"
+            [class.dark:text-green-400]="task().status === 'in-progress'"
+            [class.text-amber-600]="task().status === 'on-hold'"
+            [class.dark:text-amber-400]="task().status === 'on-hold'"
+            [class.text-gray-500]="task().status !== 'in-progress' && task().status !== 'on-hold'"
+          >
+            @if (task().status === 'on-hold') {
+              <i class="pi pi-pause mr-1 text-xs"></i>{{ at }} active (paused)
+            } @else if (task().status === 'in-progress') {
+              <i class="pi pi-stopwatch mr-1 text-xs"></i>{{ at }} active
+            } @else {
+              <i class="pi pi-stopwatch mr-1 text-xs"></i>{{ at }} active
+            }
+          </p>
+        }
+
         @if (task().labels?.length) {
           <div class="mb-2 flex flex-wrap gap-1">
             @for (label of task().labels; track label.id || label.name) {
@@ -215,6 +260,7 @@ import { User } from '../../../models/user.model';
 })
 export class TaskCardComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly taskService = inject(TaskService);
 
   readonly task = input.required<Task>();
   readonly cardClick = output<Task>();
@@ -262,6 +308,27 @@ export class TaskCardComponent implements OnInit {
     return map[this.task().priority];
   });
 
+  protected readonly activeTimeText = computed(() => {
+    const task = this.task();
+    const elapsed = Number(task.timerElapsedMs || 0);
+    if (!elapsed && !task.timerStartedAt) return null;
+
+    let totalMs = elapsed;
+    if (task.status === 'in-progress' && task.timerStartedAt) {
+      totalMs += this.now() - new Date(task.timerStartedAt).getTime();
+    }
+    if (totalMs <= 0) return null;
+
+    const totalMinutes = Math.floor(totalMs / 60_000);
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const mins = totalMinutes % 60;
+
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  });
+
   protected readonly isOverdueStart = computed(() => {
     const task = this.task();
     if (task.status !== 'not-started' || !task.startDate) return false;
@@ -282,6 +349,11 @@ export class TaskCardComponent implements OnInit {
     if (!user) return;
     event.stopPropagation();
     this.assigneeClick.emit({ user, event });
+  }
+
+  protected onTogglePriority(): void {
+    const task = this.task();
+    this.taskService.togglePriority(task.id, !task.isPrioritized);
   }
 
   protected fileNameAt(index: number): string {

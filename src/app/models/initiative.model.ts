@@ -1,7 +1,7 @@
 import { Department } from './department.model';
 import { User } from './user.model';
 
-export interface InitiativeExclusion {
+export interface InitiativeInclusion {
   id: string;
   initiativeId: string;
   userId: string;
@@ -15,7 +15,7 @@ export interface Initiative {
   departmentId: string;
   department?: Department;
   sharepointFolderLink?: string;
-  exclusions?: InitiativeExclusion[];
+  inclusions?: InitiativeInclusion[];
   createdAt: string;
   updatedAt: string;
 }

@@ -54,6 +54,10 @@ export interface Task {
   linkedFiles?: string[];
   linkedFileNames?: string[];
   sortOrder?: number;
+  isPrioritized?: boolean;
+  priorityOrder?: number;
+  timerElapsedMs?: number;
+  timerStartedAt?: string;
   isRecurring?: boolean;
   isCritical?: boolean;
 

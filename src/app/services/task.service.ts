@@ -45,8 +45,13 @@ export class TaskService {
     // Sort each column by sortOrder ascending, then by createdAt descending as tiebreaker
     for (const status of Object.keys(grouped) as TaskStatus[]) {
       if (status === 'in-progress') {
-        // In Progress column: always sort by due date ascending (no due date goes last)
+        // In Progress: prioritized tasks first (by priorityOrder), then non-prioritized by due date
         grouped[status].sort((a, b) => {
+          const aPri = a.isPrioritized ? 1 : 0;
+          const bPri = b.isPrioritized ? 1 : 0;
+          if (aPri !== bPri) return bPri - aPri; // prioritized first
+          if (aPri && bPri) return (a.priorityOrder ?? 0) - (b.priorityOrder ?? 0);
+          // Non-prioritized: sort by due date ascending
           if (!a.dueDate && !b.dueDate) return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
           if (!a.dueDate) return 1;
           if (!b.dueDate) return -1;
@@ -180,6 +185,33 @@ export class TaskService {
     });
   }
 
+  togglePriority(taskId: string, isPrioritized: boolean): void {
+    // Compute next priority order from current in-progress prioritized tasks
+    let priorityOrder = 0;
+    if (isPrioritized) {
+      const inProgress = this.tasksSignal().filter(
+        (t) => t.status === 'in-progress' && t.isPrioritized,
+      );
+      priorityOrder =
+        inProgress.length > 0 ? Math.max(...inProgress.map((t) => t.priorityOrder ?? 0)) + 1 : 1;
+    }
+
+    // Optimistic update
+    this.tasksSignal.update((tasks) =>
+      tasks.map((t) => (t.id === taskId ? { ...t, isPrioritized, priorityOrder } : t)),
+    );
+
+    this.http.patch<Task>(`${this.baseUrl}/${taskId}`, { isPrioritized, priorityOrder }).subscribe({
+      next: (updated) => {
+        this.tasksSignal.update((tasks) => tasks.map((t) => (t.id === updated.id ? updated : t)));
+      },
+      error: (err) => {
+        this.errorSignal.set(err.message);
+        this.loadTasks();
+      },
+    });
+  }
+
   uploadFile(taskId: string, file: File): Observable<{ url: string; name: string }> {
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -203,6 +235,8 @@ export class TaskService {
       dueDate: task.dueDate || undefined,
       isRecurring: task.isRecurring ?? undefined,
       isCritical: task.isCritical ?? undefined,
+      isPrioritized: task.isPrioritized ?? undefined,
+      priorityOrder: task.priorityOrder ?? undefined,
       delayRisk: task.delayRisk || undefined,
       linkedFiles: task.linkedFiles,
       linkedFileNames: task.linkedFileNames,

@@ -84,7 +84,7 @@ import { TaskLinksDialogComponent } from '../../tasks/task-links-dialog/task-lin
                 severity="secondary"
                 [outlined]="true"
                 size="small"
-                (onClick)="openExclusionsDialog()"
+                (onClick)="openInclusionsDialog()"
               />
             }
             <p-selectbutton
@@ -157,28 +157,29 @@ import { TaskLinksDialogComponent } from '../../tasks/task-links-dialog/task-lin
       <app-call-popover />
     }
 
-    <!-- Manage Access Exclusions Dialog -->
+    <!-- Manage Access Inclusions Dialog -->
     <p-dialog
       header="Manage Initiative Access"
-      [visible]="exclusionsDialogVisible()"
-      (visibleChange)="exclusionsDialogVisible.set($event)"
+      [visible]="inclusionsDialogVisible()"
+      (visibleChange)="inclusionsDialogVisible.set($event)"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"
     >
       <div class="flex flex-col gap-4 pt-2">
         <p class="text-sm text-gray-500 dark:text-gray-400">
-          Select department members to <strong>exclude</strong> from accessing this initiative.
+          Select department members to <strong>include</strong> in this initiative. Leaving the list
+          empty gives all department members access.
         </p>
         <p-multiselect
           [options]="departmentUsers()"
           optionLabel="displayName"
           optionValue="id"
-          placeholder="Select users to exclude"
+          placeholder="Select users to include"
           [filter]="true"
           filterBy="displayName"
           display="chip"
-          [formControl]="excludedUserIdsControl"
+          [formControl]="includedUserIdsControl"
           appendTo="body"
           [style]="{ width: '100%' }"
         />
@@ -188,9 +189,9 @@ import { TaskLinksDialogComponent } from '../../tasks/task-links-dialog/task-lin
           label="Cancel"
           severity="secondary"
           [text]="true"
-          (onClick)="exclusionsDialogVisible.set(false)"
+          (onClick)="inclusionsDialogVisible.set(false)"
         />
-        <p-button label="Save" [loading]="exclusionsSaving()" (onClick)="onSaveExclusions()" />
+        <p-button label="Save" [loading]="inclusionsSaving()" (onClick)="onSaveInclusions()" />
       </ng-template>
     </p-dialog>
   `,
@@ -213,11 +214,11 @@ export class InitiativeDetailComponent implements OnInit {
   readonly linksTask = signal<Task | null>(null);
   readonly callPopover = viewChild(CallPopoverComponent);
 
-  // Access exclusions
-  readonly exclusionsDialogVisible = signal(false);
-  readonly exclusionsSaving = signal(false);
+  // Access inclusions
+  readonly inclusionsDialogVisible = signal(false);
+  readonly inclusionsSaving = signal(false);
   readonly departmentUsers = this.userService.users;
-  readonly excludedUserIdsControl = new FormControl<string[]>([], { nonNullable: true });
+  readonly includedUserIdsControl = new FormControl<string[]>([], { nonNullable: true });
   readonly isAdmin = computed(() => this.userService.currentUser()?.isAdmin === true);
 
   readonly hasCriticalOnHold = computed(() =>
@@ -253,33 +254,33 @@ export class InitiativeDetailComponent implements OnInit {
     this.userService.loadCurrentUser();
   }
 
-  openExclusionsDialog(): void {
+  openInclusionsDialog(): void {
     const ini = this.initiative();
     if (!ini) return;
-    const currentExcluded = ini.exclusions?.map((e) => e.userId) ?? [];
-    this.excludedUserIdsControl.setValue(currentExcluded);
-    this.exclusionsDialogVisible.set(true);
+    const currentIncluded = ini.inclusions?.map((e) => e.userId) ?? [];
+    this.includedUserIdsControl.setValue(currentIncluded);
+    this.inclusionsDialogVisible.set(true);
   }
 
-  onSaveExclusions(): void {
+  onSaveInclusions(): void {
     const ini = this.initiative();
     if (!ini) return;
-    this.exclusionsSaving.set(true);
+    this.inclusionsSaving.set(true);
     this.initiativeService
-      .setExclusions(ini.id, this.excludedUserIdsControl.value)
+      .setInclusions(ini.id, this.includedUserIdsControl.value)
       .pipe(take(1))
       .subscribe({
         next: (updated) => {
           this.initiative.set(updated);
-          this.exclusionsSaving.set(false);
-          this.exclusionsDialogVisible.set(false);
+          this.inclusionsSaving.set(false);
+          this.inclusionsDialogVisible.set(false);
           this.messageService.add({
             severity: 'success',
             summary: 'Access updated',
           });
         },
         error: () => {
-          this.exclusionsSaving.set(false);
+          this.inclusionsSaving.set(false);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
