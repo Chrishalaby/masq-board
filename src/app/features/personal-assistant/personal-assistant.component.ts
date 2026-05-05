@@ -403,11 +403,10 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
                     }
                     <div class="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
                       @for (email of emails(); track email.id) {
-                        <a
-                          [href]="email.webLink"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="flex items-start gap-3 p-3 transition hover:bg-gray-50 dark:hover:bg-gray-750"
+                        <button
+                          type="button"
+                          class="flex w-full items-start gap-3 p-3 text-left transition hover:bg-gray-50 dark:hover:bg-gray-750"
+                          (click)="openEmail(email)"
                         >
                           <div
                             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
@@ -442,7 +441,7 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
                               {{ email.receivedDateTime | date: 'EEE, MMM d · h:mm a' }}
                             </p>
                           </div>
-                        </a>
+                        </button>
                       }
                     </div>
                   </div>
@@ -717,6 +716,77 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
         </div>
       </form>
     </p-dialog>
+
+    <!-- Email Viewer Dialog -->
+    <p-dialog
+      [header]="viewingEmail()?.subject || 'Email'"
+      [visible]="emailDialogVisible()"
+      (visibleChange)="emailDialogVisible.set($event)"
+      [modal]="true"
+      [style]="{ width: '48rem', 'max-height': '80vh' }"
+      [dismissableMask]="true"
+      [draggable]="false"
+    >
+      @if (viewingEmail(); as email) {
+        <div class="flex flex-col gap-4 pt-2">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {{ email.from }}
+                <span class="font-normal text-gray-500">&lt;{{ email.fromEmail }}&gt;</span>
+              </p>
+              <p class="text-xs text-gray-400">
+                {{ email.receivedDateTime | date: 'EEEE, MMMM d, y · h:mm a' }}
+                @if (email.hasAttachments) {
+                  <i class="pi pi-paperclip ml-1"></i>
+                }
+              </p>
+            </div>
+            <a
+              [href]="email.webLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-xs text-blue-600 hover:underline dark:text-blue-400"
+              >Open in Outlook</a
+            >
+          </div>
+          @if (emailLoading()) {
+            <div class="flex items-center justify-center py-8">
+              <i class="pi pi-spinner pi-spin mr-2"></i> Loading...
+            </div>
+          } @else {
+            <div
+              class="max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+              [innerHTML]="emailBody()"
+            ></div>
+          }
+
+          <!-- Reply Section -->
+          <div class="border-t border-gray-200 pt-3 dark:border-gray-700">
+            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Reply</label
+            >
+            <textarea
+              pTextarea
+              class="w-full"
+              rows="4"
+              placeholder="Type your reply..."
+              [formControl]="emailReplyControl"
+            ></textarea>
+            <div class="mt-2 flex justify-end gap-2">
+              <p-button
+                label="Send Reply"
+                icon="pi pi-send"
+                size="small"
+                [disabled]="!emailReplyControl.value.trim()"
+                [loading]="emailReplying()"
+                (onClick)="onReplyEmail()"
+              />
+            </div>
+          </div>
+        </div>
+      }
+    </p-dialog>
   `,
 })
 export class PersonalAssistantComponent implements OnInit {
@@ -793,6 +863,12 @@ export class PersonalAssistantComponent implements OnInit {
 
   // Email state
   readonly emails = signal<MailMessage[]>([]);
+  readonly emailDialogVisible = signal(false);
+  readonly viewingEmail = signal<MailMessage | null>(null);
+  readonly emailBody = signal('');
+  readonly emailLoading = signal(false);
+  readonly emailReplying = signal(false);
+  readonly emailReplyControl = new FormControl('', { nonNullable: true });
 
   // Draggable section order
   readonly leftSections = signal<string[]>([
@@ -1069,11 +1145,17 @@ export class PersonalAssistantComponent implements OnInit {
     if (this.eventForm.invalid) return;
     const raw = this.eventForm.getRawValue();
     this.eventSaving.set(true);
+    // Format as local datetime string (yyyy-MM-ddTHH:mm:ss) without UTC conversion
+    const formatLocal = (d: Date): string => {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
     this.userService
       .createCalendarEvent({
         subject: raw.subject,
-        startDateTime: raw.start!.toISOString(),
-        endDateTime: raw.end!.toISOString(),
+        startDateTime: formatLocal(raw.start!),
+        endDateTime: formatLocal(raw.end!),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       })
       .pipe(take(1))
       .subscribe({
@@ -1107,6 +1189,53 @@ export class PersonalAssistantComponent implements OnInit {
 
   refreshEmails(): void {
     this.loadEmails();
+  }
+
+  openEmail(email: MailMessage): void {
+    this.viewingEmail.set(email);
+    this.emailBody.set('');
+    this.emailReplyControl.reset();
+    this.emailDialogVisible.set(true);
+    this.emailLoading.set(true);
+
+    this.userService
+      .getEmail(email.id)
+      .pipe(take(1))
+      .subscribe({
+        next: (full) => {
+          this.viewingEmail.set(full);
+          this.emailBody.set(full.body ?? full.bodyPreview);
+          this.emailLoading.set(false);
+          // Mark as read in the email list
+          this.emails.update((list) =>
+            list.map((e) => (e.id === email.id ? { ...e, isRead: true } : e)),
+          );
+        },
+        error: () => {
+          this.emailBody.set(email.bodyPreview);
+          this.emailLoading.set(false);
+        },
+      });
+  }
+
+  onReplyEmail(): void {
+    const email = this.viewingEmail();
+    const comment = this.emailReplyControl.value?.trim();
+    if (!email || !comment) return;
+
+    this.emailReplying.set(true);
+    this.userService
+      .replyToEmail(email.id, comment)
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.emailReplying.set(false);
+          this.emailReplyControl.reset();
+          this.emailDialogVisible.set(false);
+          this.loadEmails();
+        },
+        error: () => this.emailReplying.set(false),
+      });
   }
 
   protected prioritySeverity(p: TaskPriority): 'danger' | 'warn' | 'info' | 'success' {

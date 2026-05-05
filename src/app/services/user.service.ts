@@ -24,6 +24,7 @@ export interface MailMessage {
   fromEmail: string;
   receivedDateTime: string;
   bodyPreview: string;
+  body?: string;
   webLink: string;
   isRead: boolean;
   hasAttachments: boolean;
@@ -118,10 +119,21 @@ export class UserService {
     return this.http.get<MailMessage[]>(`${this.baseUrl}/me/emails`, { params });
   }
 
+  getEmail(messageId: string): Observable<MailMessage> {
+    return this.http.get<MailMessage>(`${this.baseUrl}/me/emails/${messageId}`);
+  }
+
+  replyToEmail(messageId: string, comment: string): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(`${this.baseUrl}/me/emails/${messageId}/reply`, {
+      comment,
+    });
+  }
+
   createCalendarEvent(data: {
     subject: string;
     startDateTime: string;
     endDateTime: string;
+    timeZone?: string;
   }): Observable<CalendarEvent> {
     return this.http.post<CalendarEvent>(`${this.baseUrl}/me/calendar`, data);
   }

@@ -219,7 +219,16 @@ export class TaskService {
       .post<{ url: string; name: string }>(`${this.baseUrl}/${taskId}/upload`, formData)
       .pipe(
         tap({
-          next: () => this.loadTasks(),
+          error: (err) => this.errorSignal.set(err.message),
+        }),
+      );
+  }
+
+  deleteFile(taskId: string, fileIndex: number): Observable<{ success: boolean }> {
+    return this.http
+      .delete<{ success: boolean }>(`${this.baseUrl}/${taskId}/files/${fileIndex}`)
+      .pipe(
+        tap({
           error: (err) => this.errorSignal.set(err.message),
         }),
       );

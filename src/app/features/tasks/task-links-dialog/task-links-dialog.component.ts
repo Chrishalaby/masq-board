@@ -47,6 +47,15 @@ import { TaskService } from '../../../services/task.service';
                     (onClick)="openLink(url)"
                     ariaLabel="Open file"
                   />
+                  <p-button
+                    icon="pi pi-trash"
+                    [text]="true"
+                    severity="danger"
+                    size="small"
+                    (onClick)="deleteFile(i)"
+                    [loading]="deletingIndex() === i"
+                    ariaLabel="Delete file"
+                  />
                 </div>
               }
             </div>
@@ -120,6 +129,7 @@ export class TaskLinksDialogComponent {
   readonly uploading = signal(false);
   readonly uploadStatus = signal<string | null>(null);
   readonly uploadError = signal(false);
+  readonly deletingIndex = signal<number | null>(null);
 
   addUrl(): void {
     const url = this.newUrlControl.value?.trim();
@@ -169,6 +179,24 @@ export class TaskLinksDialogComponent {
 
   openLink(url: string): void {
     window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  deleteFile(index: number): void {
+    const t = this.task();
+    if (!t) return;
+    this.deletingIndex.set(index);
+    this.taskService
+      .deleteFile(t.id, index)
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.deletingIndex.set(null);
+          this.linkAdded.emit();
+        },
+        error: () => {
+          this.deletingIndex.set(null);
+        },
+      });
   }
 
   fileNameAt(task: Task, index: number): string {

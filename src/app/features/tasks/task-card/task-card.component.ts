@@ -99,9 +99,15 @@ import { TaskService } from '../../../services/task.service';
                 </span>
               }
             }
-            <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <h4 class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
               {{ task().title }}
             </h4>
+          </div>
+          <p-tag [value]="task().priority" [severity]="prioritySeverity()" [rounded]="true" />
+        </div>
+
+        @if (isOverdueStart() || task().isCritical) {
+          <div class="mb-2 flex flex-wrap gap-1">
             @if (isOverdueStart()) {
               <span
                 class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700 dark:bg-orange-900 dark:text-orange-300"
@@ -122,8 +128,7 @@ import { TaskService } from '../../../services/task.service';
               </span>
             }
           </div>
-          <p-tag [value]="task().priority" [severity]="prioritySeverity()" [rounded]="true" />
-        </div>
+        }
 
         <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
           @if (task().assignees?.length) {
