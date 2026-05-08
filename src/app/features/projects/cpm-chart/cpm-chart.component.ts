@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
-import { Task } from '../../../models/task.model';
+import { DependencyType, Task } from '../../../models/task.model';
 
 interface GanttTask {
   id: string;
@@ -11,6 +11,12 @@ interface GanttTask {
   isCritical: boolean;
   isDependent: boolean;
   status: string;
+}
+
+interface DepEdge {
+  type: DependencyType;
+  lagDays: number;
+  fromId: string;
 }
 
 const ROW_HEIGHT = 36;
@@ -324,13 +330,13 @@ export class CpmChartComponent {
       return { tasks: [], days: [], totalDays: 0, startDate: null };
     }
 
-    // Build dependency maps for CPM
+    // Build dependency maps for CPM (with typed edges)
     const participatingIds = new Set<string>();
-    const predecessors = new Map<string, string[]>();
+    const predecessorEdges = new Map<string, DepEdge[]>();
     const successors = new Map<string, string[]>();
 
     for (const t of datedTasks) {
-      predecessors.set(t.id, []);
+      predecessorEdges.set(t.id, []);
       successors.set(t.id, []);
     }
 
@@ -342,7 +348,11 @@ export class CpmChartComponent {
         if (taskIds.has(dep.dependsOnTaskId)) {
           participatingIds.add(t.id);
           participatingIds.add(dep.dependsOnTaskId);
-          predecessors.get(t.id)?.push(dep.dependsOnTaskId);
+          predecessorEdges.get(t.id)?.push({
+            type: dep.type,
+            lagDays: dep.lagDays ?? 0,
+            fromId: dep.dependsOnTaskId,
+          });
           successors.get(dep.dependsOnTaskId)?.push(t.id);
         }
       }
@@ -358,44 +368,102 @@ export class CpmChartComponent {
       return 1;
     };
 
+    const taskMap = new Map(datedTasks.map((t) => [t.id, t]));
+
     // Topological sort for CPM
     const sorted: string[] = [];
     const visited = new Set<string>();
     const visit = (id: string) => {
       if (visited.has(id) || !taskIds.has(id)) return;
       visited.add(id);
-      for (const pred of predecessors.get(id) ?? []) {
-        visit(pred);
+      for (const edge of predecessorEdges.get(id) ?? []) {
+        visit(edge.fromId);
       }
       sorted.push(id);
     };
     for (const t of datedTasks) visit(t.id);
 
-    // Forward pass
+    // Forward pass — computes early start (ES) and early finish (EF) per dependency type:
+    // finish-to-start: ES(successor) >= EF(predecessor)
+    // finish-to-finish: EF(successor) >= EF(predecessor) + lag → ES = EF(pred) + lag - dur
+    // start-to-start: ES(successor) >= ES(predecessor) + lag
+    // corequisite: ES(successor) >= ES(predecessor) (same as start-to-start with 0 lag)
     const esMap = new Map<string, number>();
     const efMap = new Map<string, number>();
     for (const id of sorted) {
-      const task = datedTasks.find((t) => t.id === id)!;
+      const task = taskMap.get(id)!;
       const dur = durationOf(task);
-      const preds = predecessors.get(id) ?? [];
-      const es = preds.length ? Math.max(...preds.map((p) => efMap.get(p) ?? 0)) : 0;
+      const edges = predecessorEdges.get(id) ?? [];
+      let es = 0;
+      for (const edge of edges) {
+        const predEs = esMap.get(edge.fromId) ?? 0;
+        const predEf = efMap.get(edge.fromId) ?? 0;
+        let constraint = 0;
+        switch (edge.type) {
+          case 'finish-to-start':
+            constraint = predEf;
+            break;
+          case 'finish-to-finish':
+            // EF(this) >= EF(pred) + lag → ES(this) >= EF(pred) + lag - dur
+            constraint = predEf + edge.lagDays - dur;
+            break;
+          case 'start-to-start':
+            constraint = predEs + edge.lagDays;
+            break;
+          case 'corequisite':
+            constraint = predEs;
+            break;
+        }
+        es = Math.max(es, constraint);
+      }
       esMap.set(id, es);
       efMap.set(id, es + dur);
     }
 
     const projectEnd = Math.max(...[...efMap.values()], 0);
 
-    // Backward pass
+    // Backward pass — computes late finish (LF) and late start (LS)
+    // For each successor of a task, the constraint on the predecessor's LF depends on the type:
+    // finish-to-start: LF(pred) <= LS(successor)
+    // finish-to-finish: LF(pred) <= LF(successor) - lag
+    // start-to-start: LS(pred) <= LS(successor) - lag → LF(pred) <= LS(succ) - lag + dur(pred)
+    // corequisite: LS(pred) <= LS(successor) → LF(pred) <= LS(succ) + dur(pred)
     const lsMap = new Map<string, number>();
     const lfMap = new Map<string, number>();
     for (let i = sorted.length - 1; i >= 0; i--) {
       const id = sorted[i];
-      const task = datedTasks.find((t) => t.id === id)!;
+      const task = taskMap.get(id)!;
       const dur = durationOf(task);
       const succs = successors.get(id) ?? [];
-      const lf = succs.length
-        ? Math.min(...succs.map((s) => lsMap.get(s) ?? projectEnd))
-        : projectEnd;
+      let lf = projectEnd;
+      for (const succId of succs) {
+        const succTask = taskMap.get(succId)!;
+        const succDur = durationOf(succTask);
+        const succLs = lsMap.get(succId) ?? projectEnd - succDur;
+        const succLf = lfMap.get(succId) ?? projectEnd;
+        // Find the edge from this predecessor to the successor
+        const edge = (predecessorEdges.get(succId) ?? []).find((e) => e.fromId === id);
+        if (!edge) {
+          lf = Math.min(lf, succLs);
+          continue;
+        }
+        let constraint = projectEnd;
+        switch (edge.type) {
+          case 'finish-to-start':
+            constraint = succLs;
+            break;
+          case 'finish-to-finish':
+            constraint = succLf - edge.lagDays;
+            break;
+          case 'start-to-start':
+            constraint = succLs - edge.lagDays + dur;
+            break;
+          case 'corequisite':
+            constraint = succLs + dur;
+            break;
+        }
+        lf = Math.min(lf, constraint);
+      }
       lfMap.set(id, lf);
       lsMap.set(id, lf - dur);
     }

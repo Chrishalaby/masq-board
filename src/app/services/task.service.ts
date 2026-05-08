@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Task, TaskStatus } from '../models/task.model';
+import { DependencyType, Task, TaskStatus } from '../models/task.model';
 
 interface QueryTaskParams {
   status?: TaskStatus;
@@ -152,8 +152,20 @@ export class TaskService {
     });
   }
 
-  addDependency(taskId: string, dependsOnTaskId: string): Observable<unknown> {
-    return this.http.post(`${this.baseUrl}/${taskId}/dependencies`, { dependsOnTaskId }).pipe(
+  addDependency(
+    taskId: string,
+    dependsOnTaskId: string,
+    type: DependencyType = 'finish-to-start',
+    lagDays?: number,
+  ): Observable<unknown> {
+    const body: { dependsOnTaskId: string; type: DependencyType; lagDays?: number } = {
+      dependsOnTaskId,
+      type,
+    };
+    if (lagDays != null && lagDays > 0) {
+      body.lagDays = lagDays;
+    }
+    return this.http.post(`${this.baseUrl}/${taskId}/dependencies`, body).pipe(
       tap({
         next: () => this.loadTasks(),
         error: (err) => this.errorSignal.set(err.message),

@@ -6,7 +6,7 @@ export type DependencyType =
   | 'finish-to-start'
   | 'start-to-start'
   | 'finish-to-finish'
-  | 'start-to-finish';
+  | 'corequisite';
 export type TaskAssigneeRole = 'leader' | 'member';
 
 export interface TaskAssignee {
@@ -30,6 +30,7 @@ export interface TaskDependency {
   taskId: string;
   dependsOnTaskId: string;
   type: DependencyType;
+  lagDays?: number;
   dependsOn?: Task;
 }
 

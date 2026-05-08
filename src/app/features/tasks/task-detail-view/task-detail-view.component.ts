@@ -217,7 +217,10 @@ import { Task, TaskPriority } from '../../../models/task.model';
                     <span class="text-gray-700 dark:text-gray-300">
                       {{ dep.dependsOn?.title || dep.dependsOnTaskId }}
                     </span>
-                    <span class="text-xs text-gray-400">({{ dep.type }})</span>
+                    <span class="text-xs text-gray-400"
+                      >({{ depTypeLabel(dep.type)
+                      }}{{ dep.lagDays ? ' +' + dep.lagDays + 'd' : '' }})</span
+                    >
                   </div>
                 }
               </div>
@@ -294,5 +297,15 @@ export class TaskDetailViewComponent {
     const names = task.linkedFileNames;
     if (names?.[index]) return names[index];
     return this.urlLabel(task.linkedFiles?.[index] ?? '');
+  }
+
+  protected depTypeLabel(type: string): string {
+    const map: Record<string, string> = {
+      'finish-to-start': 'Prerequisite',
+      'finish-to-finish': 'Finish-to-Finish',
+      'start-to-start': 'Start-to-Start',
+      corequisite: 'Corequisite',
+    };
+    return map[type] ?? type;
   }
 }

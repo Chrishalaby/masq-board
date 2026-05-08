@@ -23,7 +23,7 @@ import { TaskService } from '../../../services/task.service';
   imports: [CdkDragHandle, DatePipe, Tag, ProgressBar],
   template: `
     <div
-      class="task-card rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+      class="task-card overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
       [class.border-l-red-500]="task().priority === 'urgent'"
       [class.border-l-4]="task().priority === 'urgent' || task().priority === 'high'"
       [class.border-l-orange-400]="task().priority === 'high'"
@@ -73,7 +73,7 @@ import { TaskService } from '../../../services/task.service';
       <!-- Card Body (drag handle only — no click action) -->
       <div class="cursor-grab p-3" cdkDragHandle>
         <div class="mb-2 flex items-start justify-between gap-2">
-          <div class="flex items-center gap-2">
+          <div class="flex min-w-0 items-center gap-2">
             @if (task().status === 'in-progress') {
               <button
                 class="flex h-6 w-6 items-center justify-center rounded-full transition-colors"
@@ -99,7 +99,9 @@ import { TaskService } from '../../../services/task.service';
                 </span>
               }
             }
-            <h4 class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <h4
+              class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-gray-100"
+            >
               {{ task().title }}
             </h4>
           </div>

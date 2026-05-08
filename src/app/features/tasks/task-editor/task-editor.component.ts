@@ -26,6 +26,7 @@ import { of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import {
+  DependencyType,
   Label,
   Task,
   TASK_PRIORITIES,
@@ -419,6 +420,35 @@ import { UserService } from '../../../services/user.service';
               [showClear]="true"
               appendTo="body"
             />
+            <div class="mt-2 grid grid-cols-2 gap-2">
+              <div class="flex flex-col gap-1">
+                <label for="depType" class="text-xs text-gray-500">Dependency Type</label>
+                <p-select
+                  id="depType"
+                  [formControl]="dependencyTypeControl"
+                  [options]="dependencyTypeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  appendTo="body"
+                />
+              </div>
+              @if (
+                dependencyTypeControl.value === 'start-to-start' ||
+                dependencyTypeControl.value === 'finish-to-finish'
+              ) {
+                <div class="flex flex-col gap-1">
+                  <label for="lagDays" class="text-xs text-gray-500">Lag (days)</label>
+                  <input
+                    pInputText
+                    id="lagDays"
+                    type="number"
+                    min="0"
+                    [formControl]="lagDaysControl"
+                    placeholder="0"
+                  />
+                </div>
+              }
+            </div>
           </div>
         }
 
@@ -432,7 +462,13 @@ import { UserService } from '../../../services/user.service';
                   <div
                     class="flex items-center justify-between rounded bg-gray-50 px-2 py-1 text-sm dark:bg-gray-800"
                   >
-                    <span>🔗 {{ dep.dependsOn?.title || dep.dependsOnTaskId }}</span>
+                    <span>
+                      🔗 {{ dep.dependsOn?.title || dep.dependsOnTaskId }}
+                      <span class="ml-1 text-xs text-gray-400"
+                        >({{ depTypeLabel(dep.type)
+                        }}{{ dep.lagDays ? ' +' + dep.lagDays + 'd' : '' }})</span
+                      >
+                    </span>
                     @if (isAdmin()) {
                       <p-button
                         icon="pi pi-trash"
@@ -508,6 +544,16 @@ export class TaskEditorComponent implements OnInit {
   readonly newChecklistControl = new FormControl('');
   readonly newLinkedFileControl = new FormControl('');
   readonly dependingTaskControl = new FormControl<string | null>(null);
+  readonly dependencyTypeControl = new FormControl<DependencyType>('finish-to-start', {
+    nonNullable: true,
+  });
+  readonly lagDaysControl = new FormControl<number | null>(null);
+  readonly dependencyTypeOptions: { label: string; value: DependencyType }[] = [
+    { label: 'Prerequisite (Finish-to-Start)', value: 'finish-to-start' },
+    { label: 'Finish-to-Finish', value: 'finish-to-finish' },
+    { label: 'Start-to-Start', value: 'start-to-start' },
+    { label: 'Corequisite', value: 'corequisite' },
+  ];
   readonly uploading = signal(false);
   readonly uploadError = signal<string | null>(null);
 
@@ -855,6 +901,16 @@ export class TaskEditorComponent implements OnInit {
     }
   }
 
+  depTypeLabel(type: DependencyType): string {
+    const map: Record<DependencyType, string> = {
+      'finish-to-start': 'Prerequisite',
+      'finish-to-finish': 'Finish-to-Finish',
+      'start-to-start': 'Start-to-Start',
+      corequisite: 'Corequisite',
+    };
+    return map[type] ?? type;
+  }
+
   onSave(): void {
     if (this.form.invalid) return;
     const raw = this.form.getRawValue();
@@ -915,6 +971,8 @@ export class TaskEditorComponent implements OnInit {
 
     const existingTask = this.task();
     const depId = this.dependingTaskControl.value;
+    const depType = this.dependencyTypeControl.value;
+    const lagDays = this.lagDaysControl.value ?? undefined;
 
     if (existingTask) {
       this.taskService
@@ -922,7 +980,7 @@ export class TaskEditorComponent implements OnInit {
         .pipe(
           switchMap((updated) => {
             if (depId) {
-              return this.taskService.addDependency(updated.id, depId);
+              return this.taskService.addDependency(updated.id, depId, depType, lagDays);
             }
             return of(null);
           }),
@@ -940,7 +998,7 @@ export class TaskEditorComponent implements OnInit {
         .pipe(
           switchMap((created) => {
             if (depId) {
-              return this.taskService.addDependency(created.id, depId);
+              return this.taskService.addDependency(created.id, depId, depType, lagDays);
             }
             return of(null);
           }),
@@ -976,6 +1034,8 @@ export class TaskEditorComponent implements OnInit {
     this.assigneesArray.clear();
     this.selectedLabels = [];
     this.dependingTaskControl.reset();
+    this.dependencyTypeControl.setValue('finish-to-start');
+    this.lagDaysControl.reset();
 
     if (t) {
       this.form.patchValue({
