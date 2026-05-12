@@ -48,6 +48,10 @@ export interface Task {
   status: TaskStatus;
   startDate?: string;
   dueDate?: string;
+  /** Auto-calculated start date that respects dependency order (original startDate is preserved). */
+  depAdjustedStartDate?: string;
+  /** Auto-calculated end date that respects dependency order (original dueDate is preserved). */
+  depAdjustedEndDate?: string;
   milestoneAchieved?: string;
   currentMilestone?: string;
   nextMilestone?: string;

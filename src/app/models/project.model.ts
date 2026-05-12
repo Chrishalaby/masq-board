@@ -28,6 +28,12 @@ export interface Project {
   readonly endDate?: string;
   readonly isHot: boolean;
   readonly apolloProjectId?: string;
+  /**
+   * When `true`, this project was imported from Apollo but has not yet been accepted.
+   * It is shown in the Notification Center for review; only an explicit acceptance creates it
+   * as a full project in the system.
+   */
+  readonly isPendingApproval?: boolean;
   readonly dynamicsNo?: string;
   readonly branch?: string;
   readonly dynamicsCompanyId?: string;

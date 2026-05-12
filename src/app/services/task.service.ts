@@ -254,6 +254,8 @@ export class TaskService {
       status: task.status,
       startDate: task.startDate || undefined,
       dueDate: task.dueDate || undefined,
+      depAdjustedStartDate: task.depAdjustedStartDate || undefined,
+      depAdjustedEndDate: task.depAdjustedEndDate || undefined,
       isRecurring: task.isRecurring ?? undefined,
       isCritical: task.isCritical ?? undefined,
       isPrioritized: task.isPrioritized ?? undefined,

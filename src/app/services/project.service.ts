@@ -21,6 +21,10 @@ export class ProjectService {
     this.projectsSignal().filter((p) => p.status === 'active'),
   );
 
+  readonly pendingApolloProjects = computed(() =>
+    this.projectsSignal().filter((p) => p.isPendingApproval),
+  );
+
   loadProjects(query?: { status?: ProjectStatus; memberId?: string }): void {
     this.loadingSignal.set(true);
     let params = new HttpParams();
@@ -156,5 +160,36 @@ export class ProjectService {
 
   createSharepointFolder(projectId: string): Observable<Project> {
     return this.http.post<Project>(`${this.baseUrl}/${projectId}/create-sharepoint-folder`, {});
+  }
+
+  /**
+   * Accepts a pending Apollo project, promoting it to a full project in the system.
+   * Removes it from the pending list on success.
+   */
+  acceptApolloProject(projectId: string): Observable<Project> {
+    return this.http.post<Project>(`${this.baseUrl}/${projectId}/accept-apollo`, {}).pipe(
+      tap({
+        next: (accepted) => {
+          this.projectsSignal.update((projects) =>
+            projects.map((p) => (p.id === accepted.id ? accepted : p)),
+          );
+        },
+        error: (err) => this.errorSignal.set(err.message),
+      }),
+    );
+  }
+
+  /**
+   * Dismisses a pending Apollo project without creating it as a full project.
+   */
+  dismissApolloProject(projectId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${projectId}/dismiss-apollo`).pipe(
+      tap({
+        next: () => {
+          this.projectsSignal.update((projects) => projects.filter((p) => p.id !== projectId));
+        },
+        error: (err) => this.errorSignal.set(err.message),
+      }),
+    );
   }
 }

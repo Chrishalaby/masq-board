@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
@@ -10,6 +11,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { Button } from 'primeng/button';
@@ -58,7 +60,7 @@ import { UserService } from '../../../services/user.service';
   ],
   template: `
     <p-dialog
-      [header]="task() ? 'Edit Task' : 'New Task'"
+      [header]="task() ? 'Edit Task — ' + task()!.title : 'New Task'"
       [visible]="visible()"
       (visibleChange)="onVisibleChange($event)"
       [modal]="true"
@@ -521,6 +523,10 @@ export class TaskEditorComponent implements OnInit {
   private readonly projectService = inject(ProjectService);
   private readonly labelService = inject(LabelService);
   private readonly messageService = inject(MessageService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** Tracks current assignee user IDs reactively for milestone options */
+  private readonly _assigneeIds = signal<string[]>([]);
 
   readonly task = input<Task | null>(null);
   readonly visible = input(false);
@@ -559,9 +565,8 @@ export class TaskEditorComponent implements OnInit {
 
   /** Users who are currently assigned to this task — used for milestone assignee picker */
   readonly milestoneAssigneeOptions = computed(() => {
-    const assignees = this.assigneesArray.controls;
+    const userIds = this._assigneeIds();
     const allUsers = this.userService.users();
-    const userIds = assignees.map((a) => a.controls.userId.value).filter(Boolean);
     return allUsers.filter((u) => userIds.includes(u.id));
   });
 
@@ -762,6 +767,14 @@ export class TaskEditorComponent implements OnInit {
       },
       { allowSignalWrites: true },
     );
+
+    // Keep _assigneeIds in sync whenever the assignees form array changes
+    this.assigneesArray.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((values) => {
+        const ids = values.map((a) => a.userId).filter((id): id is string => !!id);
+        this._assigneeIds.set(ids);
+      });
   }
 
   onVisibleChange(val: boolean): void {
@@ -974,6 +987,49 @@ export class TaskEditorComponent implements OnInit {
     const depType = this.dependencyTypeControl.value;
     const lagDays = this.lagDaysControl.value ?? undefined;
 
+    // Compute dependency-adjusted dates when the new dependency conflicts with the task's start date
+    if (depId && taskData.startDate) {
+      const depTask = this.taskService.tasks().find((t) => t.id === depId);
+      if (depTask?.startDate) {
+        const currentStart = new Date(taskData.startDate);
+        const depStart = new Date(depTask.startDate);
+        const lagMs = (lagDays ?? 0) * 24 * 60 * 60 * 1000;
+
+        let adjustedStart: Date | null = null;
+
+        if (depType === 'finish-to-start') {
+          const depEnd = depTask.dueDate ? new Date(depTask.dueDate) : depStart;
+          if (currentStart < depEnd) {
+            adjustedStart = new Date(depEnd.getTime() + lagMs);
+          }
+        } else if (depType === 'start-to-start') {
+          if (currentStart < depStart) {
+            adjustedStart = new Date(depStart.getTime() + lagMs);
+          }
+        } else if (depType === 'corequisite') {
+          if (currentStart < depStart) {
+            adjustedStart = new Date(depStart.getTime());
+          }
+        } else if (depType === 'finish-to-finish') {
+          const depEnd = depTask.dueDate ? new Date(depTask.dueDate) : depStart;
+          if (currentStart < depEnd) {
+            // For FF: align end dates — shift start forward by the same offset
+            adjustedStart = new Date(depEnd.getTime() + lagMs);
+          }
+        }
+
+        if (adjustedStart) {
+          taskData.depAdjustedStartDate = this.formatDate(adjustedStart);
+          if (taskData.dueDate) {
+            const taskDurationMs = new Date(taskData.dueDate).getTime() - currentStart.getTime();
+            taskData.depAdjustedEndDate = this.formatDate(
+              new Date(adjustedStart.getTime() + taskDurationMs),
+            );
+          }
+        }
+      }
+    }
+
     if (existingTask) {
       this.taskService
         .updateTask({ ...taskData, id: existingTask.id } as Task)
@@ -1068,6 +1124,8 @@ export class TaskEditorComponent implements OnInit {
           }),
         ),
       );
+      // Sync reactive assignee IDs signal after patching
+      this._assigneeIds.set((t.assignees ?? []).map((a) => a.userId).filter(Boolean));
       const sortedChecklist = [...(t.checklist ?? [])].sort(
         (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
       );
@@ -1101,6 +1159,7 @@ export class TaskEditorComponent implements OnInit {
         startDate: defaultStart,
         dueDate: defaultDue,
       });
+      this._assigneeIds.set([]);
     }
 
     // Apply field restrictions for non-admin users editing an existing task

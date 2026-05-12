@@ -1,13 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Badge } from 'primeng/badge';
 import { Button } from 'primeng/button';
 import { AuthService } from '../../auth/auth.service';
+import { NotificationService } from '../../services/notification.service';
 import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-nav-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, Button],
+  imports: [RouterLink, RouterLinkActive, Button, Badge],
   template: `
     <nav
       class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-2 dark:border-gray-700 dark:bg-gray-900"
@@ -62,6 +64,17 @@ import { UserService } from '../../services/user.service';
             >Dashboard</a
           >
         }
+        <a
+          routerLink="/notifications"
+          routerLinkActive="text-indigo-600 dark:text-indigo-400 font-semibold"
+          class="relative text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          aria-label="Notification Center"
+        >
+          <span>Notifications</span>
+          @if (notificationService.unreadCount() > 0) {
+            <p-badge [value]="notificationService.unreadCount()" severity="danger" class="ml-1" />
+          }
+        </a>
       </div>
       <div class="flex items-center gap-3">
         @if (auth.isAuthenticated()) {
@@ -85,12 +98,17 @@ import { UserService } from '../../services/user.service';
     </nav>
   `,
 })
-export class NavBarComponent {
+export class NavBarComponent implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly userService = inject(UserService);
+  protected readonly notificationService = inject(NotificationService);
 
   protected readonly showExecDashboard = computed(() => {
     const user = this.userService.currentUser();
     return user?.isGeneralSupervisor || user?.canAccessExecDashboard || user?.isAdmin;
   });
+
+  ngOnInit(): void {
+    this.notificationService.loadNotifications();
+  }
 }

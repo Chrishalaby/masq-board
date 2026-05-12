@@ -88,4 +88,11 @@ export const routes: Routes = [
         (m) => m.ExecDashboardComponent,
       ),
   },
+  {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./features/notifications/notification-center/notification-center.component').then(
+        (m) => m.NotificationCenterComponent,
+      ),
+  },
 ];
