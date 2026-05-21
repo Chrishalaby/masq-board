@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,11 +11,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 import { Button } from 'primeng/button';
 import { Textarea } from 'primeng/textarea';
-import { CopilotChatService } from '../../../services/copilot-chat.service';
 import { CopilotConversation } from '../../../models/copilot-chat.model';
+import { CopilotChatService } from '../../../services/copilot-chat.service';
 
 @Component({
   selector: 'app-copilot-chat-panel',
@@ -44,9 +44,7 @@ import { CopilotConversation } from '../../../models/copilot-chat.model';
       >
         <div class="flex items-center gap-2">
           <i class="pi pi-sparkles text-lg text-purple-400"></i>
-          <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Copilot Chat
-          </h2>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Copilot Chat</h2>
         </div>
         <div class="flex items-center gap-1">
           <p-button
@@ -111,9 +109,7 @@ import { CopilotConversation } from '../../../models/copilot-chat.model';
                 >
                   <i class="pi pi-comment text-gray-400 dark:text-gray-500"></i>
                   <div class="min-w-0 flex-1">
-                    <p
-                      class="truncate text-sm font-medium text-gray-800 dark:text-gray-200"
-                    >
+                    <p class="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
                       {{ conv.title || 'New conversation' }}
                     </p>
                     <p class="text-xs text-gray-400 dark:text-gray-500">
@@ -139,9 +135,7 @@ import { CopilotConversation } from '../../../models/copilot-chat.model';
         <!-- Chat view -->
         @if (!activeConversation()) {
           <!-- Welcome / empty state -->
-          <div
-            class="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center"
-          >
+          <div class="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
             <div
               class="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/40"
             >
@@ -151,8 +145,8 @@ import { CopilotConversation } from '../../../models/copilot-chat.model';
               Microsoft 365 Copilot
             </h3>
             <p class="max-w-xs text-sm text-gray-500 dark:text-gray-400">
-              Ask about your tasks, projects, and notes. Copilot has context
-              about your work and can help you stay organized.
+              Ask about your tasks, projects, and notes. Copilot has context about your work and can
+              help you stay organized.
             </p>
             <p-button
               label="Start a conversation"
@@ -187,11 +181,8 @@ import { CopilotConversation } from '../../../models/copilot-chat.model';
                 >
                   @if (msg.role === 'assistant') {
                     <div class="flex items-center gap-1.5 pb-1">
-                      <i
-                        class="pi pi-sparkles text-xs text-purple-400"
-                      ></i>
-                      <span
-                        class="text-xs font-medium text-purple-500 dark:text-purple-400"
+                      <i class="pi pi-sparkles text-xs text-purple-400"></i>
+                      <span class="text-xs font-medium text-purple-500 dark:text-purple-400"
                         >Copilot</span
                       >
                     </div>
@@ -199,7 +190,9 @@ import { CopilotConversation } from '../../../models/copilot-chat.model';
                   <div
                     class="whitespace-pre-wrap text-sm leading-relaxed"
                     [class.copilot-response]="msg.role === 'assistant'"
-                  >{{ msg.content }}</div>
+                  >
+                    {{ msg.content }}
+                  </div>
                   <p
                     class="mt-1 text-right text-[10px]"
                     [class.text-purple-200]="msg.role === 'user'"
@@ -217,9 +210,7 @@ import { CopilotConversation } from '../../../models/copilot-chat.model';
                 <div
                   class="flex items-center gap-2 rounded-2xl bg-gray-100 px-4 py-3 dark:bg-gray-800"
                 >
-                  <i
-                    class="pi pi-sparkles text-xs text-purple-400"
-                  ></i>
+                  <i class="pi pi-sparkles text-xs text-purple-400"></i>
                   <div class="flex gap-1">
                     <span
                       class="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.3s]"
@@ -237,9 +228,7 @@ import { CopilotConversation } from '../../../models/copilot-chat.model';
           </div>
 
           <!-- Input area -->
-          <div
-            class="border-t border-gray-200 p-3 dark:border-gray-700"
-          >
+          <div class="border-t border-gray-200 p-3 dark:border-gray-700">
             <div class="flex items-end gap-2">
               <textarea
                 pTextarea
@@ -295,8 +284,7 @@ import { CopilotConversation } from '../../../models/copilot-chat.model';
 })
 export class CopilotChatPanelComponent {
   private readonly chatService = inject(CopilotChatService);
-  private readonly messageContainer =
-    viewChild<ElementRef<HTMLDivElement>>('messageContainer');
+  private readonly messageContainer = viewChild<ElementRef<HTMLDivElement>>('messageContainer');
 
   readonly visible = input(false);
   readonly visibleChange = output<boolean>();

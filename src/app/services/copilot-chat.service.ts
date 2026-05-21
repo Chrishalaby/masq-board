@@ -2,10 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
-import {
-  CopilotConversation,
-  CopilotMessage,
-} from '../models/copilot-chat.model';
+import { CopilotConversation, CopilotMessage } from '../models/copilot-chat.model';
 
 @Injectable({ providedIn: 'root' })
 export class CopilotChatService {
@@ -13,8 +10,7 @@ export class CopilotChatService {
   private readonly baseUrl = `${environment.apiUrl}/copilot-chat`;
 
   private readonly conversationsSignal = signal<CopilotConversation[]>([]);
-  private readonly activeConversationSignal =
-    signal<CopilotConversation | null>(null);
+  private readonly activeConversationSignal = signal<CopilotConversation | null>(null);
   private readonly sendingSignal = signal(false);
 
   readonly conversations = this.conversationsSignal.asReadonly();
@@ -34,22 +30,18 @@ export class CopilotChatService {
   }
 
   createConversation(title?: string): Observable<CopilotConversation> {
-    return this.http
-      .post<CopilotConversation>(this.baseUrl, { title })
-      .pipe(
-        tap((created) => {
-          this.conversationsSignal.update((list) => [created, ...list]);
-          this.activeConversationSignal.set({ ...created, messages: [] });
-        }),
-      );
+    return this.http.post<CopilotConversation>(this.baseUrl, { title }).pipe(
+      tap((created) => {
+        this.conversationsSignal.update((list) => [created, ...list]);
+        this.activeConversationSignal.set({ ...created, messages: [] });
+      }),
+    );
   }
 
   deleteConversation(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
       tap(() => {
-        this.conversationsSignal.update((list) =>
-          list.filter((c) => c.id !== id),
-        );
+        this.conversationsSignal.update((list) => list.filter((c) => c.id !== id));
         if (this.activeConversationSignal()?.id === id) {
           this.activeConversationSignal.set(null);
         }
@@ -57,10 +49,7 @@ export class CopilotChatService {
     );
   }
 
-  sendMessage(
-    conversationId: string,
-    content: string,
-  ): Observable<CopilotMessage> {
+  sendMessage(conversationId: string, content: string): Observable<CopilotMessage> {
     this.sendingSignal.set(true);
 
     // Optimistically add user message to the active conversation
