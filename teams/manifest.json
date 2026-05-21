@@ -59,6 +59,13 @@
       "scopes": ["personal"]
     },
     {
+      "entityId": "notifications",
+      "name": "Notifications",
+      "contentUrl": "https://masq-board.netlify.app/notifications",
+      "websiteUrl": "https://masq-board.netlify.app/notifications",
+      "scopes": ["personal"]
+    },
+    {
       "entityId": "admin",
       "name": "Admin",
       "contentUrl": "https://masq-board.netlify.app/admin",

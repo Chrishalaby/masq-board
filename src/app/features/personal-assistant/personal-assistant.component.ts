@@ -44,8 +44,10 @@ import { NoteService } from '../../services/note.service';
 import { ReminderService } from '../../services/reminder.service';
 import { TaskService } from '../../services/task.service';
 import { TodoItem, TodoService } from '../../services/todo.service';
+import { CopilotChatService } from '../../services/copilot-chat.service';
 import { CalendarEvent, MailMessage, UserService } from '../../services/user.service';
 import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component';
+import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-panel.component';
 
 @Component({
   selector: 'app-personal-assistant',
@@ -68,6 +70,7 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
     Textarea,
     ToggleSwitch,
     TaskEditorComponent,
+    CopilotChatPanelComponent,
   ],
   template: `
     <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
@@ -787,6 +790,21 @@ import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component'
         </div>
       }
     </p-dialog>
+
+    <!-- Copilot Chat Panel -->
+    <app-copilot-chat-panel
+      [visible]="copilotPanelVisible()"
+      (visibleChange)="copilotPanelVisible.set($event)"
+    />
+
+    <!-- Copilot FAB -->
+    <button
+      class="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition-all hover:scale-105 hover:bg-purple-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 active:scale-95 dark:focus:ring-offset-gray-900"
+      (click)="openCopilotPanel()"
+      aria-label="Open Copilot Chat"
+    >
+      <i class="pi pi-sparkles text-xl"></i>
+    </button>
   `,
 })
 export class PersonalAssistantComponent implements OnInit {
@@ -796,8 +814,12 @@ export class PersonalAssistantComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly reminderService = inject(ReminderService);
   private readonly todoService = inject(TodoService);
+  private readonly copilotChatService = inject(CopilotChatService);
 
   private readonly SECTION_ORDER_KEY = 'pa-section-order';
+
+  // Copilot chat state
+  readonly copilotPanelVisible = signal(false);
 
   readonly users = this.userService.users;
   readonly noteColors = NOTE_COLORS;
@@ -1246,5 +1268,12 @@ export class PersonalAssistantComponent implements OnInit {
       low: 'success',
     };
     return map[p];
+  }
+
+  /* ── Copilot Chat ── */
+
+  openCopilotPanel(): void {
+    this.copilotChatService.loadConversations();
+    this.copilotPanelVisible.set(true);
   }
 }
