@@ -215,6 +215,13 @@ export class HomeComponent {
       bgClass: 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300',
     },
     {
+      title: 'IT Support',
+      description: 'Submit and track IT requests. The only accepted way to request IT work.',
+      route: '/it-support',
+      icon: 'pi pi-wrench',
+      bgClass: 'bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-300',
+    },
+    {
       title: 'Exec Dashboard',
       description: 'High-level overview and executive insights.',
       route: '/exec-dashboard',

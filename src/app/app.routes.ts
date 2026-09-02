@@ -89,6 +89,27 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'it-support',
+    loadComponent: () =>
+      import('./features/it-support/ticket-list/ticket-list.component').then(
+        (m) => m.TicketListComponent,
+      ),
+  },
+  {
+    path: 'it-support/new',
+    loadComponent: () =>
+      import('./features/it-support/ticket-form/ticket-form.component').then(
+        (m) => m.TicketFormComponent,
+      ),
+  },
+  {
+    path: 'it-support/:id',
+    loadComponent: () =>
+      import('./features/it-support/ticket-detail/ticket-detail.component').then(
+        (m) => m.TicketDetailComponent,
+      ),
+  },
+  {
     path: 'notifications',
     loadComponent: () =>
       import('./features/notifications/notification-center/notification-center.component').then(

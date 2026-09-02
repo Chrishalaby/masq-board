@@ -15,6 +15,7 @@ export class AuthService {
   private readonly teamsEmailSignal = signal('');
   private readonly teamsOidSignal = signal('');
   private readonly isTeamsContextSignal = signal(false);
+  private readonly teamsSubPageIdSignal = signal('');
 
   readonly isAuthenticated = computed(
     () => !!this.activeAccountSignal() || this.teamsAuthenticatedSignal(),
@@ -28,6 +29,7 @@ export class AuthService {
   );
   readonly teamsOid = this.teamsOidSignal.asReadonly();
   readonly inTeamsContext = this.isTeamsContextSignal.asReadonly();
+  readonly teamsSubPageId = this.teamsSubPageIdSignal.asReadonly();
 
   async initialize(): Promise<void> {
     await this.msal.instance.initialize();
@@ -40,6 +42,7 @@ export class AuthService {
 
       const context = await microsoftTeams.app.getContext();
       this.teamsDisplayNameSignal.set(context.user?.displayName ?? '');
+      this.teamsSubPageIdSignal.set(context.page?.subPageId ?? '');
       await this.acquireTeamsToken();
     } catch {
       // Not in Teams context — standard MSAL flow
@@ -50,6 +53,12 @@ export class AuthService {
         this.activeAccountSignal.set(accounts[0]);
       }
     }
+  }
+
+  consumeTeamsSubPageId(): string {
+    const subPageId = this.teamsSubPageIdSignal();
+    this.teamsSubPageIdSignal.set('');
+    return subPageId;
   }
 
   async login(): Promise<void> {

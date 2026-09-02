@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
   "manifestVersion": "1.17",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "id": "7028812e-7502-40a0-9aac-4e860bf07bcf",
   "developer": {
     "name": "Your Company",
@@ -59,6 +59,13 @@
       "scopes": ["personal"]
     },
     {
+      "entityId": "it-support",
+      "name": "IT Support",
+      "contentUrl": "https://masq-board.netlify.app/it-support?subEntityId={subEntityId}",
+      "websiteUrl": "https://masq-board.netlify.app/it-support",
+      "scopes": ["personal"]
+    },
+    {
       "entityId": "notifications",
       "name": "Notifications",
       "contentUrl": "https://masq-board.netlify.app/notifications",
@@ -80,6 +87,20 @@
       "scopes": ["team", "groupChat"]
     }
   ],
+  "activities": {
+    "activityTypes": [
+      {
+        "type": "itTicketCreated",
+        "description": "IT ticket assigned to you",
+        "templateText": "{requester} submitted IT ticket {ticketRef}"
+      },
+      {
+        "type": "itTicketStatusChanged",
+        "description": "IT ticket status changed",
+        "templateText": "IT ticket {ticketRef} is now {status}"
+      }
+    ]
+  },
   "permissions": ["identity"],
   "devicePermissions": ["media", "notifications"],
   "validDomains": ["masq-board.netlify.app", "login.microsoftonline.com"],
