@@ -30,8 +30,10 @@ import {
   ItTicketStatus,
   UpdateItTicketPayload,
 } from '../../../models/it-ticket.model';
+import { User } from '../../../models/user.model';
 import { ItSupportService } from '../../../services/it-support.service';
 import { UserService } from '../../../services/user.service';
+import { TicketCommentsComponent } from '../ticket-comments/ticket-comments.component';
 import {
   createItTicketFieldsForm,
   formatDateOnly,
@@ -58,6 +60,7 @@ import {
     Tag,
     Textarea,
     TicketFieldsComponent,
+    TicketCommentsComponent,
   ],
   template: `
     <p-confirmdialog />
@@ -366,6 +369,8 @@ import {
                 }
               </ol>
             </section>
+
+            <app-ticket-comments [ticketId]="t.id" [highlightCommentId]="highlightCommentId()" />
           </div>
 
           <aside class="flex flex-col gap-6">
@@ -411,6 +416,33 @@ import {
                       <p-chip [label]="assignee.displayName" />
                     } @empty {
                       <span class="text-gray-500 dark:text-gray-400">Unassigned</span>
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                    Responsible Person
+                    @if (canManage()) {
+                      <p-button
+                        icon="pi pi-pencil"
+                        [text]="true"
+                        size="small"
+                        severity="secondary"
+                        ariaLabel="Set the responsible person"
+                        (onClick)="openResponsibleDialog()"
+                      />
+                    }
+                  </dt>
+                  <dd class="text-gray-900 dark:text-gray-100">
+                    @if (t.responsiblePerson) {
+                      {{ t.responsiblePerson.displayName }}
+                    } @else {
+                      <span class="text-gray-500 dark:text-gray-400">
+                        Not assigned yet
+                        @if (canManage()) {
+                          <span> &mdash; pick who is working on this</span>
+                        }
+                      </span>
                     }
                   </dd>
                 </div>
@@ -562,6 +594,49 @@ import {
     </p-dialog>
 
     <p-dialog
+      header="Responsible Person"
+      [(visible)]="responsibleDialogVisible"
+      [modal]="true"
+      [style]="{ width: '32rem' }"
+      [draggable]="false"
+    >
+      <div class="flex flex-col gap-1 pt-2">
+        <label for="responsiblePerson" class="text-sm font-medium"
+          >Who is working on this ticket?</label
+        >
+        <p-select
+          inputId="responsiblePerson"
+          [ngModel]="responsibleIdDraft()"
+          (ngModelChange)="responsibleIdDraft.set($event)"
+          [options]="responsibleOptions()"
+          [group]="true"
+          optionGroupLabel="label"
+          optionGroupChildren="items"
+          optionLabel="displayName"
+          optionValue="id"
+          placeholder="Select a person"
+          [filter]="true"
+          filterBy="displayName"
+          [showClear]="true"
+          appendTo="body"
+          [fluid]="true"
+        />
+        <span class="text-xs text-gray-500 dark:text-gray-400"
+          >The requester and everyone on the ticket are told about the change.</span
+        >
+      </div>
+      <ng-template #footer>
+        <p-button
+          label="Cancel"
+          severity="secondary"
+          [text]="true"
+          (onClick)="responsibleDialogVisible.set(false)"
+        />
+        <p-button label="Save" [loading]="saving()" (onClick)="submitResponsible()" />
+      </ng-template>
+    </p-dialog>
+
+    <p-dialog
       header="Edit Ticket"
       [(visible)]="editDialogVisible"
       [modal]="true"
@@ -606,6 +681,8 @@ export class TicketDetailComponent implements OnInit {
   readonly rejectionNotesDraft = signal('');
   readonly approverNotesDraft = signal('');
   readonly assigneesDialogVisible = signal(false);
+  readonly responsibleDialogVisible = signal(false);
+  readonly responsibleIdDraft = signal<string | null>(null);
   readonly assigneeIdsDraft = signal<string[]>([]);
   readonly editDialogVisible = signal(false);
   readonly editForm = createItTicketFieldsForm();
@@ -642,8 +719,26 @@ export class TicketDetailComponent implements OnInit {
     IT_TICKET_STATUSES.filter((s) => s.value !== this.ticket()?.status),
   );
 
+  readonly highlightCommentId = signal<string | null>(null);
+
+  readonly responsibleOptions = computed(() => {
+    const assignees = this.ticket()?.assignees ?? [];
+    const assignedIds = new Set(assignees.map((user) => user.id));
+    const others = this.users().filter((user) => !assignedIds.has(user.id));
+    const groups: { label: string; items: User[] }[] = [];
+
+    if (assignees.length > 0) {
+      groups.push({ label: 'Assigned to this ticket', items: [...assignees] });
+    }
+    if (others.length > 0) {
+      groups.push({ label: 'Everyone else', items: others });
+    }
+    return groups;
+  });
+
   ngOnInit(): void {
     this.itSupportService.loadCategories();
+    this.highlightCommentId.set(this.route.snapshot.queryParamMap.get('comment'));
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.loading.set(false);
@@ -697,6 +792,24 @@ export class TicketDetailComponent implements OnInit {
         },
         error: () => this.saving.set(false),
       });
+  }
+
+  openResponsibleDialog(): void {
+    const t = this.ticket();
+    if (!t) return;
+    if (this.users().length === 0) {
+      this.userService.loadUsers();
+    }
+    this.responsibleIdDraft.set(t.responsiblePersonId ?? null);
+    this.responsibleDialogVisible.set(true);
+  }
+
+  submitResponsible(): void {
+    this.patchTicket(
+      { responsiblePersonId: this.responsibleIdDraft() },
+      'Responsible person updated',
+      () => this.responsibleDialogVisible.set(false),
+    );
   }
 
   openAssigneesDialog(): void {

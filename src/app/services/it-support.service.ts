@@ -4,10 +4,12 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   ChangeItTicketStatusPayload,
+  CreateItCommentPayload,
   CreateItTicketPayload,
   ItCategory,
   ItCategoryPayload,
   ItTicket,
+  ItTicketComment,
   UpdateItTicketPayload,
 } from '../models/it-ticket.model';
 
@@ -83,6 +85,22 @@ export class ItSupportService {
     return this.http
       .delete<ItTicket>(`${this.ticketsUrl}/${id}/attachments/${index}`)
       .pipe(tap((updated) => this.replaceTicket(updated)));
+  }
+
+  getComments(ticketId: string): Observable<ItTicketComment[]> {
+    return this.http.get<ItTicketComment[]>(`${this.ticketsUrl}/${ticketId}/comments`);
+  }
+
+  addComment(ticketId: string, input: CreateItCommentPayload): Observable<ItTicketComment> {
+    const formData = new FormData();
+    formData.append('body', input.body);
+    if (input.mentionIds.length > 0) {
+      formData.append('mentionIds', JSON.stringify(input.mentionIds));
+    }
+    for (const file of input.files) {
+      formData.append('files', file, file.name);
+    }
+    return this.http.post<ItTicketComment>(`${this.ticketsUrl}/${ticketId}/comments`, formData);
   }
 
   deleteTicket(id: string): Observable<{ success: boolean }> {

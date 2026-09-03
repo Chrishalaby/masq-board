@@ -276,7 +276,7 @@ export class TicketListComponent implements OnInit {
       if (!subPageId) return;
       untracked(() => {
         this.auth.consumeTeamsSubPageId();
-        this.router.navigate(['/it-support', subPageId]);
+        this.openDeepLink(subPageId, false);
       });
     });
   }
@@ -284,11 +284,23 @@ export class TicketListComponent implements OnInit {
   ngOnInit(): void {
     const subEntityId = this.route.snapshot.queryParamMap.get('subEntityId');
     if (subEntityId) {
-      this.router.navigate(['/it-support', subEntityId], { replaceUrl: true });
+      this.openDeepLink(subEntityId, true);
       return;
     }
     this.itSupportService.loadTickets();
     this.itSupportService.loadCategories();
+  }
+
+  /**
+   * Teams deep links carry `<ticketId>` or `<ticketId>_<commentId>`.
+   */
+  private openDeepLink(subEntityId: string, replaceUrl: boolean): void {
+    const [ticketId, commentId] = subEntityId.split('_');
+    if (!ticketId) return;
+    this.router.navigate(['/it-support', ticketId], {
+      replaceUrl,
+      queryParams: commentId ? { comment: commentId } : {},
+    });
   }
 
   newTicket(): void {

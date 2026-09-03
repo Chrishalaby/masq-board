@@ -44,6 +44,25 @@ export interface ItTicketStatusLog {
   readonly changedAt: string;
 }
 
+export interface ItTicketComment {
+  readonly id: string;
+  readonly ticketId: string;
+  readonly authorId?: string | null;
+  readonly author?: User | null;
+  readonly authorName: string;
+  readonly body: string;
+  readonly attachments: ItTicketAttachment[];
+  readonly mentions: User[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface CreateItCommentPayload {
+  readonly body: string;
+  readonly mentionIds: readonly string[];
+  readonly files: readonly File[];
+}
+
 export interface ItTicket {
   readonly id: string;
   readonly ticketNumber: number;
@@ -58,6 +77,8 @@ export interface ItTicket {
   readonly neededBy?: string | null;
   readonly status: ItTicketStatus;
   readonly assignees: User[];
+  readonly responsiblePersonId?: string | null;
+  readonly responsiblePerson?: User | null;
   readonly attachments: ItTicketAttachment[];
   readonly approverNotes?: string | null;
   readonly approvedById?: string | null;
@@ -89,6 +110,7 @@ export interface UpdateItTicketPayload {
   readonly description?: string;
   readonly neededBy?: string | null;
   readonly assigneeIds?: string[];
+  readonly responsiblePersonId?: string | null;
   readonly approverNotes?: string | null;
   readonly rejectionNotes?: string | null;
 }
