@@ -202,7 +202,7 @@ export class TicketFormComponent implements OnInit {
       .pipe(
         switchMap((ticket) =>
           files.length
-            ? this.itSupportService.uploadAttachments(ticket.id, files).pipe(
+            ? this.itSupportService.uploadAttachments(ticket.id, files, { notify: false }).pipe(
                 catchError(() => {
                   this.messageService.add({
                     severity: 'warn',

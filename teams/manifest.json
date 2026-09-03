@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
   "manifestVersion": "1.17",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "id": "7028812e-7502-40a0-9aac-4e860bf07bcf",
   "developer": {
     "name": "Your Company",
@@ -98,6 +98,11 @@
         "type": "itTicketStatusChanged",
         "description": "IT ticket status changed",
         "templateText": "IT ticket {ticketRef} is now {status}"
+      },
+      {
+        "type": "itTicketUpdated",
+        "description": "IT ticket edited",
+        "templateText": "{actor} updated IT ticket {ticketRef}"
       }
     ]
   },

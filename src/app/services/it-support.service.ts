@@ -64,13 +64,18 @@ export class ItSupportService {
       .pipe(tap((updated) => this.replaceTicket(updated)));
   }
 
-  uploadAttachments(id: string, files: readonly File[]): Observable<ItTicket> {
+  uploadAttachments(
+    id: string,
+    files: readonly File[],
+    options: { notify?: boolean } = {},
+  ): Observable<ItTicket> {
     const formData = new FormData();
     for (const file of files) {
       formData.append('files', file, file.name);
     }
+    const params: Record<string, string> = options.notify === false ? { notify: 'false' } : {};
     return this.http
-      .post<ItTicket>(`${this.ticketsUrl}/${id}/attachments`, formData)
+      .post<ItTicket>(`${this.ticketsUrl}/${id}/attachments`, formData, { params })
       .pipe(tap((updated) => this.replaceTicket(updated)));
   }
 

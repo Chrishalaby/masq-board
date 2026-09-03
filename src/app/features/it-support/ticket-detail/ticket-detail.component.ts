@@ -503,7 +503,7 @@ import {
           </div>
         }
         <p class="text-xs text-gray-500 dark:text-gray-400">
-          The change is logged on the ticket and the requester is notified via Teams.
+          The change is logged on the ticket and the requester and assignees are notified via Teams.
         </p>
       </div>
       <ng-template #footer>
@@ -546,7 +546,8 @@ import {
           [fluid]="true"
         />
         <span class="text-xs text-gray-500 dark:text-gray-400"
-          >Newly added people are notified via Teams.</span
+          >Newly added people are notified via Teams; everyone else on the ticket is told about the
+          change.</span
         >
       </div>
       <ng-template #footer>
@@ -690,7 +691,7 @@ export class TicketDetailComponent implements OnInit {
           this.messageService.add({
             severity: 'success',
             summary: `Status set to ${itStatusLabel(updated.status)}`,
-            detail: 'The requester has been notified.',
+            detail: 'The requester and assignees have been notified.',
             life: 4000,
           });
         },
