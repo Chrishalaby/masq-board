@@ -212,6 +212,7 @@ export class TicketCommentsComponent implements OnInit {
   readonly mentions = signal<User[]>([]);
   readonly files = signal<File[]>([]);
   readonly highlightedId = signal<string | null>(null);
+  private readonly scrolledTo = signal<string | null>(null);
 
   readonly users = this.userService.users;
 
@@ -234,6 +235,8 @@ export class TicketCommentsComponent implements OnInit {
       if (!target || !loaded) return;
 
       untracked(() => {
+        if (this.scrolledTo() === target) return;
+        this.scrolledTo.set(target);
         this.highlightedId.set(target);
         setTimeout(() => {
           document
