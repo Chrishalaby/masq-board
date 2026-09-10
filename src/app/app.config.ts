@@ -36,7 +36,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideHttpClient(
       withInterceptorsFromDi(),
-      withInterceptors([appApiAuthInterceptor, errorInterceptor]),
+      withInterceptors([errorInterceptor, appApiAuthInterceptor]),
     ),
     {
       provide: MSAL_INSTANCE,

@@ -4,12 +4,17 @@ import { AccountInfo } from '@azure/msal-browser';
 import * as microsoftTeams from '@microsoft/teams-js';
 import { environment } from '../../environments/environment';
 
+const TOKEN_REFRESH_MARGIN_MS = 60_000;
+const TEAMS_INIT_TIMEOUT_MS = 8000;
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly msal = inject(MsalService);
 
   private readonly activeAccountSignal = signal<AccountInfo | null>(null);
   private readonly apiAccessTokenSignal = signal<string | null>(null);
+  private readonly apiTokenExpiresAtSignal = signal(0);
+  private readonly teamsAuthErrorSignal = signal('');
   private readonly teamsAuthenticatedSignal = signal(false);
   private readonly teamsDisplayNameSignal = signal('');
   private readonly teamsEmailSignal = signal('');
@@ -30,6 +35,7 @@ export class AuthService {
   readonly teamsOid = this.teamsOidSignal.asReadonly();
   readonly inTeamsContext = this.isTeamsContextSignal.asReadonly();
   readonly teamsSubPageId = this.teamsSubPageIdSignal.asReadonly();
+  readonly teamsAuthError = this.teamsAuthErrorSignal.asReadonly();
 
   async initialize(): Promise<void> {
     await this.msal.instance.initialize();
@@ -37,14 +43,26 @@ export class AuthService {
 
     // Check if we're running inside Microsoft Teams
     try {
-      await microsoftTeams.app.initialize();
+      await this.withTimeout(microsoftTeams.app.initialize(), 'Teams did not respond');
       this.isTeamsContextSignal.set(true);
 
-      const context = await microsoftTeams.app.getContext();
+      const context = await this.withTimeout(
+        microsoftTeams.app.getContext(),
+        'Teams did not provide the app context',
+      );
       this.teamsDisplayNameSignal.set(context.user?.displayName ?? '');
       this.teamsSubPageIdSignal.set(context.page?.subPageId ?? '');
       await this.acquireTeamsToken();
-    } catch {
+    } catch (error) {
+      if (this.isEmbedded()) {
+        this.isTeamsContextSignal.set(true);
+        this.teamsAuthErrorSignal.set(
+          `${error instanceof Error ? error.message : String(error)}. Update Microsoft Teams or close and reopen the app.`,
+        );
+        console.error('Teams host initialization failed:', error);
+        return;
+      }
+
       // Not in Teams context — standard MSAL flow
       this.isTeamsContextSignal.set(false);
       const accounts = this.msal.instance.getAllAccounts();
@@ -53,6 +71,26 @@ export class AuthService {
         this.activeAccountSignal.set(accounts[0]);
       }
     }
+  }
+
+  private isEmbedded(): boolean {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
+  }
+
+  private withTimeout<T>(promise: Promise<T>, reason: string): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`${reason} within ${TEAMS_INIT_TIMEOUT_MS / 1000} seconds`)),
+          TEAMS_INIT_TIMEOUT_MS,
+        ),
+      ),
+    ]);
   }
 
   consumeTeamsSubPageId(): string {
@@ -91,12 +129,11 @@ export class AuthService {
   async getApiAccessToken(): Promise<string | null> {
     if (this.isTeamsContextSignal()) {
       const existingToken = this.apiAccessTokenSignal();
-      if (existingToken) {
+      if (existingToken && this.apiTokenExpiresAtSignal() - Date.now() > TOKEN_REFRESH_MARGIN_MS) {
         return existingToken;
       }
 
-      await this.acquireTeamsToken();
-      return this.apiAccessTokenSignal();
+      return this.refreshApiAccessToken();
     }
 
     const account = this.activeAccountSignal() || this.msal.instance.getActiveAccount();
@@ -115,14 +152,27 @@ export class AuthService {
     }
   }
 
+  async refreshApiAccessToken(): Promise<string | null> {
+    if (!this.isTeamsContextSignal()) {
+      return this.getApiAccessToken();
+    }
+    await this.acquireTeamsToken();
+    return this.apiAccessTokenSignal();
+  }
+
   private async acquireTeamsToken(): Promise<void> {
     try {
       const ssoToken = await microsoftTeams.authentication.getAuthToken();
       const tokenPayload = this.decodeJwtPayload(ssoToken);
       const loginHint =
         tokenPayload['preferred_username'] || tokenPayload['upn'] || tokenPayload['email'];
+      const expiresAt = Number(tokenPayload['exp']) * 1000;
 
       this.apiAccessTokenSignal.set(ssoToken);
+      this.apiTokenExpiresAtSignal.set(
+        Number.isFinite(expiresAt) && expiresAt > 0 ? expiresAt : Date.now() + 5 * 60_000,
+      );
+      this.teamsAuthErrorSignal.set('');
       this.teamsAuthenticatedSignal.set(true);
       if (tokenPayload['oid']) {
         this.teamsOidSignal.set(tokenPayload['oid']);
@@ -133,8 +183,13 @@ export class AuthService {
       if (!this.teamsDisplayNameSignal()) {
         this.teamsDisplayNameSignal.set(tokenPayload['name'] || '');
       }
-    } catch {
-      // Teams SSO token acquisition failed
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.apiAccessTokenSignal.set(null);
+      this.apiTokenExpiresAtSignal.set(0);
+      this.teamsAuthenticatedSignal.set(false);
+      this.teamsAuthErrorSignal.set(message || 'Unknown error');
+      console.error('Teams SSO token acquisition failed:', error);
     }
   }
 

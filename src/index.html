@@ -7,11 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://teams.cloud.microsoft https://*.cloud.microsoft https://*.skype.com https://*.teams.microsoft.us https://local.teams.office.com https://*.mcas.ms"
+      content="frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://*.microsoft.com https://*.cloud.microsoft https://*.office.com https://*.microsoft365.com https://*.skype.com https://*.teams.microsoft.us https://local.teams.office.com https://*.mcas.ms"
     />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
   </head>
   <body>
-    <app-root></app-root>
+    <app-root>
+      <div
+        style="
+          display: flex;
+          min-height: 100vh;
+          align-items: center;
+          justify-content: center;
+          font-family: system-ui, sans-serif;
+          color: #6b7280;
+        "
+      >
+        Loading MASQ Collaboration Suite…
+      </div>
+    </app-root>
   </body>
 </html>
