@@ -171,7 +171,7 @@ import {
             [sortOrder]="state.table().sortOrder"
             (onSort)="state.setSort($event.field, $event.order)"
             styleClass="p-datatable-sm"
-            [tableStyle]="{ 'min-width': '72rem' }"
+            [tableStyle]="{ 'min-width': '82rem' }"
           >
             <ng-template #header>
               <tr>
@@ -189,6 +189,9 @@ import {
                   Requester <p-sortIcon field="requester.displayName" />
                 </th>
                 <th>Assigned To</th>
+                <th pSortableColumn="responsiblePerson.displayName">
+                  Responsible <p-sortIcon field="responsiblePerson.displayName" />
+                </th>
                 <th pSortableColumn="createdAt">Created <p-sortIcon field="createdAt" /></th>
               </tr>
             </ng-template>
@@ -219,12 +222,19 @@ import {
                 </td>
                 <td>{{ ticket.requester?.displayName || '—' }}</td>
                 <td>{{ assigneeNames(ticket.assignees) }}</td>
+                <td>
+                  @if (ticket.responsiblePerson) {
+                    {{ ticket.responsiblePerson.displayName }}
+                  } @else {
+                    <span class="text-gray-500 dark:text-gray-400">Not assigned yet</span>
+                  }
+                </td>
                 <td>{{ ticket.createdAt | date: 'mediumDate' }}</td>
               </tr>
             </ng-template>
             <ng-template #emptymessage>
               <tr>
-                <td colspan="9" class="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                <td colspan="10" class="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                   @if (tickets().length === 0) {
                     No tickets yet. Submit the first one with “New Ticket”.
                   } @else {

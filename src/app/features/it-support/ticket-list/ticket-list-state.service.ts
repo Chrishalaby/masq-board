@@ -43,6 +43,7 @@ const SORTABLE_FIELDS = [
   'priority',
   'status',
   'requester.displayName',
+  'responsiblePerson.displayName',
   'createdAt',
 ];
 
