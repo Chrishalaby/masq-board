@@ -6,7 +6,6 @@ import {
   effect,
   inject,
   OnInit,
-  signal,
   untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -24,19 +23,19 @@ import {
   IT_COMPANIES,
   IT_TICKET_PRIORITIES,
   IT_TICKET_STATUSES,
-  ItCompany,
   itPriorityLabel,
   itPrioritySeverity,
   itStatusLabel,
   itStatusSeverity,
   ItTicket,
-  ItTicketPriority,
-  ItTicketStatus,
 } from '../../../models/it-ticket.model';
 import { ItSupportService } from '../../../services/it-support.service';
 import { UserService } from '../../../services/user.service';
-
-type TicketScope = 'all' | 'mine';
+import {
+  TicketListStateService,
+  TicketScope,
+  UNASSIGNED_RESPONSIBLE,
+} from './ticket-list-state.service';
 
 @Component({
   selector: 'app-ticket-list',
@@ -78,12 +77,12 @@ type TicketScope = 'all' | 'mine';
           placeholder="Search by title"
           aria-label="Search tickets by title"
           class="w-64"
-          [ngModel]="search()"
-          (ngModelChange)="search.set($event)"
+          [ngModel]="filters().search"
+          (ngModelChange)="state.patchFilters({ search: $event })"
         />
         <p-select
-          [ngModel]="statusFilter()"
-          (ngModelChange)="statusFilter.set($event)"
+          [ngModel]="filters().status"
+          (ngModelChange)="state.patchFilters({ status: $event })"
           [options]="statusOptions"
           optionLabel="label"
           optionValue="value"
@@ -92,8 +91,8 @@ type TicketScope = 'all' | 'mine';
           ariaLabel="Filter by status"
         />
         <p-select
-          [ngModel]="categoryFilter()"
-          (ngModelChange)="categoryFilter.set($event)"
+          [ngModel]="filters().categoryId"
+          (ngModelChange)="state.patchFilters({ categoryId: $event })"
           [options]="categories()"
           optionLabel="name"
           optionValue="id"
@@ -102,16 +101,16 @@ type TicketScope = 'all' | 'mine';
           ariaLabel="Filter by category"
         />
         <p-select
-          [ngModel]="companyFilter()"
-          (ngModelChange)="companyFilter.set($event)"
+          [ngModel]="filters().company"
+          (ngModelChange)="state.patchFilters({ company: $event })"
           [options]="companyOptions"
           placeholder="All companies"
           [showClear]="true"
           ariaLabel="Filter by company"
         />
         <p-select
-          [ngModel]="priorityFilter()"
-          (ngModelChange)="priorityFilter.set($event)"
+          [ngModel]="filters().priority"
+          (ngModelChange)="state.patchFilters({ priority: $event })"
           [options]="priorityOptions"
           optionLabel="label"
           optionValue="value"
@@ -119,15 +118,37 @@ type TicketScope = 'all' | 'mine';
           [showClear]="true"
           ariaLabel="Filter by priority"
         />
+        <p-select
+          [ngModel]="filters().responsiblePersonId"
+          (ngModelChange)="state.patchFilters({ responsiblePersonId: $event })"
+          [options]="responsibleOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All responsible people"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          ariaLabel="Filter by responsible person"
+        />
         <p-selectbutton
-          [ngModel]="scope()"
-          (ngModelChange)="scope.set($event)"
+          [ngModel]="filters().scope"
+          (ngModelChange)="state.patchFilters({ scope: $event })"
           [options]="scopeOptions"
           optionLabel="label"
           optionValue="value"
           [allowEmpty]="false"
           ariaLabel="Ticket scope"
         />
+        @if (state.hasActiveFilters()) {
+          <p-button
+            label="Clear filters"
+            icon="pi pi-filter-slash"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            (onClick)="state.clearFilters()"
+          />
+        }
       </div>
 
       @if (loading()) {
@@ -144,8 +165,11 @@ type TicketScope = 'all' | 'mine';
             [paginator]="filteredTickets().length > 20"
             [rows]="20"
             [rowHover]="true"
-            sortField="createdAt"
-            [sortOrder]="-1"
+            [first]="state.table().first"
+            (firstChange)="state.setFirst($event)"
+            [sortField]="state.table().sortField"
+            [sortOrder]="state.table().sortOrder"
+            (onSort)="state.setSort($event.field, $event.order)"
             styleClass="p-datatable-sm"
             [tableStyle]="{ 'min-width': '72rem' }"
           >
@@ -226,12 +250,8 @@ export class TicketListComponent implements OnInit {
   readonly categories = this.itSupportService.categories;
   readonly loading = this.itSupportService.loading;
 
-  readonly search = signal('');
-  readonly statusFilter = signal<ItTicketStatus | null>(null);
-  readonly categoryFilter = signal<string | null>(null);
-  readonly companyFilter = signal<ItCompany | null>(null);
-  readonly priorityFilter = signal<ItTicketPriority | null>(null);
-  readonly scope = signal<TicketScope>('all');
+  protected readonly state = inject(TicketListStateService);
+  readonly filters = this.state.filters;
 
   readonly statusOptions = [...IT_TICKET_STATUSES];
   readonly priorityOptions = [...IT_TICKET_PRIORITIES];
@@ -247,30 +267,67 @@ export class TicketListComponent implements OnInit {
   readonly prioritySeverity = itPrioritySeverity;
   readonly assigneeNames = assigneeNames;
 
+  readonly responsibleOptions = computed(() => {
+    const people = new Map<string, string>();
+    for (const ticket of this.tickets()) {
+      if (ticket.responsiblePerson) {
+        people.set(ticket.responsiblePerson.id, ticket.responsiblePerson.displayName);
+      }
+    }
+    const options = [...people]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    return [{ value: UNASSIGNED_RESPONSIBLE, label: 'Not assigned yet' }, ...options];
+  });
+
   readonly filteredTickets = computed(() => {
-    const search = this.search().trim().toLowerCase();
-    const status = this.statusFilter();
-    const categoryId = this.categoryFilter();
-    const company = this.companyFilter();
-    const priority = this.priorityFilter();
-    const mineOnly = this.scope() === 'mine';
+    const filters = this.filters();
+    const search = filters.search.trim().toLowerCase();
+    const mineOnly = filters.scope === 'mine';
     const me = this.userService.currentUser()?.id;
 
     return this.tickets().filter(
       (ticket) =>
         (!search || ticket.title.toLowerCase().includes(search)) &&
-        (!status || ticket.status === status) &&
-        (!categoryId || ticket.categoryId === categoryId) &&
-        (!company || ticket.company === company) &&
-        (!priority || ticket.priority === priority) &&
+        (!filters.status || ticket.status === filters.status) &&
+        (!filters.categoryId || ticket.categoryId === filters.categoryId) &&
+        (!filters.company || ticket.company === filters.company) &&
+        (!filters.priority || ticket.priority === filters.priority) &&
+        this.matchesResponsible(ticket, filters.responsiblePersonId) &&
         (!mineOnly ||
           !me ||
           ticket.requesterId === me ||
+          ticket.responsiblePersonId === me ||
           ticket.assignees?.some((assignee) => assignee.id === me)),
     );
   });
 
   constructor() {
+    effect(() => {
+      if (this.loading()) return;
+      const filters = this.filters();
+      const categories = this.categories();
+      const responsibleOptions = this.responsibleOptions();
+      const hasTickets = this.tickets().length > 0;
+
+      untracked(() => {
+        if (
+          filters.categoryId &&
+          categories.length > 0 &&
+          !categories.some((category) => category.id === filters.categoryId)
+        ) {
+          this.state.patchFilters({ categoryId: null });
+        }
+        if (
+          filters.responsiblePersonId &&
+          hasTickets &&
+          !responsibleOptions.some((option) => option.value === filters.responsiblePersonId)
+        ) {
+          this.state.patchFilters({ responsiblePersonId: null });
+        }
+      });
+    });
+
     effect(() => {
       const subPageId = this.auth.teamsSubPageId();
       if (!subPageId) return;
@@ -309,5 +366,11 @@ export class TicketListComponent implements OnInit {
 
   openTicket(ticket: ItTicket): void {
     this.router.navigate(['/it-support', ticket.id]);
+  }
+
+  private matchesResponsible(ticket: ItTicket, responsiblePersonId: string | null): boolean {
+    if (!responsiblePersonId) return true;
+    if (responsiblePersonId === UNASSIGNED_RESPONSIBLE) return !ticket.responsiblePersonId;
+    return ticket.responsiblePersonId === responsiblePersonId;
   }
 }
