@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
+import { MultiSelect } from 'primeng/multiselect';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { Select } from 'primeng/select';
 import { SelectButton } from 'primeng/selectbutton';
@@ -32,6 +33,7 @@ import {
 import { ItSupportService } from '../../../services/it-support.service';
 import { UserService } from '../../../services/user.service';
 import {
+  TICKET_LIST_COLUMNS,
   TicketListStateService,
   TicketScope,
   UNASSIGNED_RESPONSIBLE,
@@ -46,6 +48,7 @@ import {
     RouterLink,
     Button,
     InputText,
+    MultiSelect,
     ProgressSpinner,
     Select,
     SelectButton,
@@ -151,14 +154,32 @@ import {
         }
       </div>
 
-      @if (loading()) {
+      @if (!ready()) {
         <div class="flex justify-center py-16">
           <p-progressspinner strokeWidth="4" [style]="{ width: '2rem', height: '2rem' }" />
         </div>
       } @else {
-        <p class="mb-2 text-xs text-gray-500 dark:text-gray-400" aria-live="polite">
-          {{ filteredTickets().length }} of {{ tickets().length }} tickets
-        </p>
+        <div class="mb-2 flex flex-wrap items-center justify-between gap-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400" aria-live="polite">
+            {{ filteredTickets().length }} of {{ tickets().length }} tickets
+          </p>
+          <p-multiselect
+            class="w-40"
+            [ngModel]="state.columns()"
+            (ngModelChange)="state.setColumns($event)"
+            [options]="columnOptions"
+            optionLabel="label"
+            optionValue="key"
+            placeholder="Columns"
+            selectedItemsLabel="Columns"
+            [maxSelectedLabels]="0"
+            [filter]="false"
+            size="small"
+            appendTo="body"
+            scrollHeight="24rem"
+            ariaLabel="Choose which columns to show"
+          />
+        </div>
         <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
           <p-table
             [value]="filteredTickets()"
@@ -171,7 +192,7 @@ import {
             [sortOrder]="state.table().sortOrder"
             (onSort)="state.setSort($event.field, $event.order)"
             styleClass="p-datatable-sm"
-            [tableStyle]="{ 'min-width': '82rem' }"
+            [tableStyle]="tableStyle()"
           >
             <ng-template #header>
               <tr>
@@ -179,20 +200,42 @@ import {
                   # <p-sortIcon field="ticketNumber" />
                 </th>
                 <th pSortableColumn="title">Title <p-sortIcon field="title" /></th>
-                <th pSortableColumn="company">Company <p-sortIcon field="company" /></th>
-                <th pSortableColumn="category.name">
-                  Category <p-sortIcon field="category.name" />
-                </th>
-                <th pSortableColumn="priority">Priority <p-sortIcon field="priority" /></th>
-                <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
-                <th pSortableColumn="requester.displayName">
-                  Requester <p-sortIcon field="requester.displayName" />
-                </th>
-                <th>Assigned To</th>
-                <th pSortableColumn="responsiblePerson.displayName">
-                  Responsible <p-sortIcon field="responsiblePerson.displayName" />
-                </th>
-                <th pSortableColumn="createdAt">Created <p-sortIcon field="createdAt" /></th>
+                @if (shown().has('company')) {
+                  <th pSortableColumn="company">Company <p-sortIcon field="company" /></th>
+                }
+                @if (shown().has('category')) {
+                  <th pSortableColumn="category.name">
+                    Category <p-sortIcon field="category.name" />
+                  </th>
+                }
+                @if (shown().has('priority')) {
+                  <th pSortableColumn="priority">Priority <p-sortIcon field="priority" /></th>
+                }
+                @if (shown().has('status')) {
+                  <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+                }
+                @if (shown().has('requester')) {
+                  <th pSortableColumn="requester.displayName">
+                    Requester <p-sortIcon field="requester.displayName" />
+                  </th>
+                }
+                @if (shown().has('assignees')) {
+                  <th>Assigned To</th>
+                }
+                @if (shown().has('responsible')) {
+                  <th pSortableColumn="responsiblePerson.displayName">
+                    Responsible <p-sortIcon field="responsiblePerson.displayName" />
+                  </th>
+                }
+                @if (shown().has('neededBy')) {
+                  <th pSortableColumn="neededBy">Needed By <p-sortIcon field="neededBy" /></th>
+                }
+                @if (shown().has('createdAt')) {
+                  <th pSortableColumn="createdAt">Created <p-sortIcon field="createdAt" /></th>
+                }
+                @if (shown().has('updatedAt')) {
+                  <th pSortableColumn="updatedAt">Last Updated <p-sortIcon field="updatedAt" /></th>
+                }
               </tr>
             </ng-template>
             <ng-template #body let-ticket>
@@ -205,36 +248,67 @@ import {
               >
                 <td class="text-gray-500 dark:text-gray-400">#{{ ticket.ticketNumber }}</td>
                 <td class="font-medium">{{ ticket.title }}</td>
-                <td>{{ ticket.company }}</td>
-                <td>{{ ticket.category?.name || '—' }}</td>
-                <td>
-                  <p-tag
-                    [value]="priorityLabel(ticket.priority)"
-                    [severity]="prioritySeverity(ticket.priority)"
-                    [rounded]="true"
-                  />
-                </td>
-                <td>
-                  <p-tag
-                    [value]="statusLabel(ticket.status)"
-                    [severity]="statusSeverity(ticket.status)"
-                  />
-                </td>
-                <td>{{ ticket.requester?.displayName || '—' }}</td>
-                <td>{{ assigneeNames(ticket.assignees) }}</td>
-                <td>
-                  @if (ticket.responsiblePerson) {
-                    {{ ticket.responsiblePerson.displayName }}
-                  } @else {
-                    <span class="text-gray-500 dark:text-gray-400">Not assigned yet</span>
-                  }
-                </td>
-                <td>{{ ticket.createdAt | date: 'mediumDate' }}</td>
+                @if (shown().has('company')) {
+                  <td>{{ ticket.company }}</td>
+                }
+                @if (shown().has('category')) {
+                  <td>{{ ticket.category?.name || '—' }}</td>
+                }
+                @if (shown().has('priority')) {
+                  <td>
+                    <p-tag
+                      [value]="priorityLabel(ticket.priority)"
+                      [severity]="prioritySeverity(ticket.priority)"
+                      [rounded]="true"
+                    />
+                  </td>
+                }
+                @if (shown().has('status')) {
+                  <td>
+                    <p-tag
+                      [value]="statusLabel(ticket.status)"
+                      [severity]="statusSeverity(ticket.status)"
+                    />
+                  </td>
+                }
+                @if (shown().has('requester')) {
+                  <td>{{ ticket.requester?.displayName || '—' }}</td>
+                }
+                @if (shown().has('assignees')) {
+                  <td>{{ assigneeNames(ticket.assignees) }}</td>
+                }
+                @if (shown().has('responsible')) {
+                  <td>
+                    @if (ticket.responsiblePerson) {
+                      {{ ticket.responsiblePerson.displayName }}
+                    } @else {
+                      <span class="text-gray-500 dark:text-gray-400">Not assigned yet</span>
+                    }
+                  </td>
+                }
+                @if (shown().has('neededBy')) {
+                  <td>
+                    @if (ticket.neededBy) {
+                      {{ ticket.neededBy | date: 'mediumDate' }}
+                    } @else {
+                      <span class="text-gray-500 dark:text-gray-400">—</span>
+                    }
+                  </td>
+                }
+                @if (shown().has('createdAt')) {
+                  <td>{{ ticket.createdAt | date: 'mediumDate' }}</td>
+                }
+                @if (shown().has('updatedAt')) {
+                  <td>{{ ticket.updatedAt | date: 'MMM d, y, h:mm a' }}</td>
+                }
               </tr>
             </ng-template>
             <ng-template #emptymessage>
               <tr>
-                <td colspan="10" class="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                <td
+                  [attr.colspan]="columnCount()"
+                  class="py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                >
                   @if (tickets().length === 0) {
                     No tickets yet. Submit the first one with “New Ticket”.
                   } @else {
@@ -270,6 +344,14 @@ export class TicketListComponent implements OnInit {
     { label: 'All tickets', value: 'all' },
     { label: 'My tickets', value: 'mine' },
   ];
+  readonly columnOptions = [...TICKET_LIST_COLUMNS];
+
+  readonly ready = computed(() => !this.loading() && this.state.savedLoaded());
+  readonly shown = computed(() => new Set(this.state.columns()));
+  readonly columnCount = computed(() => this.state.columns().length + 2);
+  readonly tableStyle = computed(() => ({
+    'min-width': `${18 + this.state.columns().length * 8}rem`,
+  }));
 
   readonly statusLabel = itStatusLabel;
   readonly statusSeverity = itStatusSeverity;
@@ -354,6 +436,7 @@ export class TicketListComponent implements OnInit {
       this.openDeepLink(subEntityId, true);
       return;
     }
+    this.state.loadSaved();
     this.itSupportService.loadTickets();
     this.itSupportService.loadCategories();
   }
