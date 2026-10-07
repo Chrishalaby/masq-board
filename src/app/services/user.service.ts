@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AttendanceAccess } from '../models/attendance.model';
 import { UserAssignment } from '../models/user-assignment.model';
 import { User } from '../models/user.model';
 
@@ -83,6 +84,18 @@ export class UserService {
           this.currentUserSignal.set(updated);
         }
       }),
+    );
+  }
+
+  applyAttendanceAccess(access: AttendanceAccess): void {
+    const checkIn = new Set(access.checkInUserIds);
+    const reports = new Set(access.reportUserIds);
+    this.usersSignal.update((users) =>
+      users.map((user) => ({
+        ...user,
+        canUseAttendance: checkIn.has(user.id),
+        canViewAttendanceReports: reports.has(user.id),
+      })),
     );
   }
 

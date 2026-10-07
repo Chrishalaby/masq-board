@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './auth/admin.guard';
+import { attendanceGuard } from './auth/attendance.guard';
 
 export const routes: Routes = [
   {
@@ -108,6 +109,14 @@ export const routes: Routes = [
       import('./features/it-support/ticket-detail/ticket-detail.component').then(
         (m) => m.TicketDetailComponent,
       ),
+  },
+  {
+    path: 'attendance',
+    loadComponent: () =>
+      import('./features/attendance/attendance-page/attendance-page.component').then(
+        (m) => m.AttendancePageComponent,
+      ),
+    canActivate: [attendanceGuard],
   },
   {
     path: 'notifications',

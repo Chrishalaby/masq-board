@@ -1,6 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
+import { User } from '../../models/user.model';
+import { UserService } from '../../services/user.service';
+
+interface HomeCard {
+  readonly title: string;
+  readonly description: string;
+  readonly route: string;
+  readonly icon: string;
+  readonly bgClass: string;
+  readonly visibleTo?: (user: User | null) => boolean;
+}
 
 @Component({
   selector: 'app-home',
@@ -166,7 +177,7 @@ import { AuthService } from '../../auth/auth.service';
       </div>
 
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        @for (card of cards; track card.route) {
+        @for (card of cards(); track card.route) {
           <a
             [routerLink]="card.route"
             class="group rounded-xl border border-gray-200 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-indigo-400 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/80 dark:hover:border-indigo-500"
@@ -191,8 +202,9 @@ import { AuthService } from '../../auth/auth.service';
 })
 export class HomeComponent {
   protected readonly auth = inject(AuthService);
+  private readonly userService = inject(UserService);
 
-  readonly cards = [
+  private readonly allCards: HomeCard[] = [
     {
       title: 'Projects',
       description: 'View and manage projects, members, and integrations.',
@@ -222,6 +234,14 @@ export class HomeComponent {
       bgClass: 'bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-300',
     },
     {
+      title: 'Attendance',
+      description: 'Check in and out, and see attendance reports.',
+      route: '/attendance',
+      icon: 'pi pi-clock',
+      bgClass: 'bg-rose-100 text-rose-600 dark:bg-rose-900 dark:text-rose-300',
+      visibleTo: (user) => !!user && (user.canUseAttendance || user.canViewAttendanceReports),
+    },
+    {
       title: 'Exec Dashboard',
       description: 'High-level overview and executive insights.',
       route: '/exec-dashboard',
@@ -229,4 +249,9 @@ export class HomeComponent {
       bgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300',
     },
   ];
+
+  readonly cards = computed(() => {
+    const user = this.userService.currentUser();
+    return this.allCards.filter((card) => !card.visibleTo || card.visibleTo(user));
+  });
 }

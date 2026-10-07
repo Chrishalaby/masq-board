@@ -23,9 +23,10 @@ import { UserAssignment } from '../../../models/user-assignment.model';
 import { User } from '../../../models/user.model';
 import { DepartmentService } from '../../../services/department.service';
 import { UserService } from '../../../services/user.service';
+import { AttendanceAccessAdminComponent } from '../attendance-access-admin/attendance-access-admin.component';
 import { ItCategoriesAdminComponent } from '../it-categories-admin/it-categories-admin.component';
 
-type AdminTab = 'users' | 'departments' | 'assignments' | 'it-categories';
+type AdminTab = 'users' | 'departments' | 'assignments' | 'it-categories' | 'attendance';
 
 @Component({
   selector: 'app-admin-panel',
@@ -48,6 +49,7 @@ type AdminTab = 'users' | 'departments' | 'assignments' | 'it-categories';
     TabPanels,
     TabPanel,
     ItCategoriesAdminComponent,
+    AttendanceAccessAdminComponent,
   ],
   template: `
     <p-toast />
@@ -68,6 +70,7 @@ type AdminTab = 'users' | 'departments' | 'assignments' | 'it-categories';
           <p-tab value="departments">Departments</p-tab>
           <p-tab value="assignments">Assign Permissions</p-tab>
           <p-tab value="it-categories">IT Support</p-tab>
+          <p-tab value="attendance">Attendance</p-tab>
         </p-tablist>
 
         <p-tabpanels>
@@ -290,6 +293,10 @@ type AdminTab = 'users' | 'departments' | 'assignments' | 'it-categories';
 
           <p-tabpanel value="it-categories">
             <app-it-categories-admin />
+          </p-tabpanel>
+
+          <p-tabpanel value="attendance">
+            <app-attendance-access-admin />
           </p-tabpanel>
         </p-tabpanels>
       </p-tabs>
