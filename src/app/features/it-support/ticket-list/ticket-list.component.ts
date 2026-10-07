@@ -122,6 +122,18 @@ import {
           ariaLabel="Filter by priority"
         />
         <p-select
+          [ngModel]="filters().requesterId"
+          (ngModelChange)="state.patchFilters({ requesterId: $event })"
+          [options]="requesterOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All requesters"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          ariaLabel="Filter by requester"
+        />
+        <p-select
           [ngModel]="filters().responsiblePersonId"
           (ngModelChange)="state.patchFilters({ responsiblePersonId: $event })"
           [options]="responsibleOptions()"
@@ -359,6 +371,18 @@ export class TicketListComponent implements OnInit {
   readonly prioritySeverity = itPrioritySeverity;
   readonly assigneeNames = assigneeNames;
 
+  readonly requesterOptions = computed(() => {
+    const people = new Map<string, string>();
+    for (const ticket of this.tickets()) {
+      if (ticket.requester) {
+        people.set(ticket.requester.id, ticket.requester.displayName);
+      }
+    }
+    return [...people]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  });
+
   readonly responsibleOptions = computed(() => {
     const people = new Map<string, string>();
     for (const ticket of this.tickets()) {
@@ -385,6 +409,7 @@ export class TicketListComponent implements OnInit {
         (!filters.categoryId || ticket.categoryId === filters.categoryId) &&
         (!filters.company || ticket.company === filters.company) &&
         (!filters.priority || ticket.priority === filters.priority) &&
+        (!filters.requesterId || ticket.requesterId === filters.requesterId) &&
         this.matchesResponsible(ticket, filters.responsiblePersonId) &&
         (!mineOnly ||
           !me ||
@@ -399,6 +424,7 @@ export class TicketListComponent implements OnInit {
       if (this.loading()) return;
       const filters = this.filters();
       const categories = this.categories();
+      const requesterOptions = this.requesterOptions();
       const responsibleOptions = this.responsibleOptions();
       const hasTickets = this.tickets().length > 0;
 
@@ -409,6 +435,13 @@ export class TicketListComponent implements OnInit {
           !categories.some((category) => category.id === filters.categoryId)
         ) {
           this.state.patchFilters({ categoryId: null });
+        }
+        if (
+          filters.requesterId &&
+          hasTickets &&
+          !requesterOptions.some((option) => option.value === filters.requesterId)
+        ) {
+          this.state.patchFilters({ requesterId: null });
         }
         if (
           filters.responsiblePersonId &&

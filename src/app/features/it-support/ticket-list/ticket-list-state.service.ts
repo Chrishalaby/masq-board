@@ -62,6 +62,7 @@ export interface TicketListFilters {
   readonly categoryId: string | null;
   readonly company: ItCompany | null;
   readonly priority: ItTicketPriority | null;
+  readonly requesterId: string | null;
   readonly responsiblePersonId: string | null;
   readonly scope: TicketScope;
 }
@@ -110,6 +111,7 @@ const DEFAULT_FILTERS: TicketListFilters = {
   categoryId: null,
   company: null,
   priority: null,
+  requesterId: null,
   responsiblePersonId: null,
   scope: 'all',
 };
@@ -153,6 +155,7 @@ export class TicketListStateService {
       filters.categoryId !== null ||
       filters.company !== null ||
       filters.priority !== null ||
+      filters.requesterId !== null ||
       filters.responsiblePersonId !== null ||
       filters.scope !== 'all'
     );
@@ -275,6 +278,7 @@ export class TicketListStateService {
         categoryId: filters.categoryId,
         company: filters.company,
         priority: filters.priority,
+        requesterId: filters.requesterId,
         responsiblePersonId: filters.responsiblePersonId,
         scope: filters.scope,
       },
@@ -329,6 +333,7 @@ export class TicketListStateService {
         raw.priority,
         IT_TICKET_PRIORITIES.map((option) => option.value),
       ),
+      requesterId: this.nonEmptyString(raw.requesterId),
       responsiblePersonId: this.nonEmptyString(raw.responsiblePersonId),
       scope: raw.scope === 'mine' ? 'mine' : 'all',
     };
