@@ -1,6 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { MsalService } from '@azure/msal-angular';
-import { AccountInfo } from '@azure/msal-browser';
+import { Injectable, computed, signal } from '@angular/core';
+import type { AccountInfo, PublicClientApplication } from '@azure/msal-browser';
 import * as microsoftTeams from '@microsoft/teams-js';
 import { environment } from '../../environments/environment';
 
@@ -9,7 +8,7 @@ const TEAMS_INIT_TIMEOUT_MS = 8000;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly msal = inject(MsalService);
+  private msalClient: Promise<PublicClientApplication> | null = null;
 
   private readonly activeAccountSignal = signal<AccountInfo | null>(null);
   private readonly apiAccessTokenSignal = signal<string | null>(null);
@@ -38,9 +37,6 @@ export class AuthService {
   readonly teamsAuthError = this.teamsAuthErrorSignal.asReadonly();
 
   async initialize(): Promise<void> {
-    await this.msal.instance.initialize();
-    await this.msal.instance.handleRedirectPromise();
-
     // Check if we're running inside Microsoft Teams
     try {
       await this.withTimeout(microsoftTeams.app.initialize(), 'Teams did not respond');
@@ -65,12 +61,23 @@ export class AuthService {
 
       // Not in Teams context — standard MSAL flow
       this.isTeamsContextSignal.set(false);
-      const accounts = this.msal.instance.getAllAccounts();
+      const msal = await this.loadMsalClient();
+      await msal.handleRedirectPromise();
+      const accounts = msal.getAllAccounts();
       if (accounts.length) {
-        this.msal.instance.setActiveAccount(accounts[0]);
+        msal.setActiveAccount(accounts[0]);
         this.activeAccountSignal.set(accounts[0]);
       }
     }
+  }
+
+  private loadMsalClient(): Promise<PublicClientApplication> {
+    this.msalClient ??= import('./auth.config').then(async ({ msalInstanceFactory }) => {
+      const client = msalInstanceFactory();
+      await client.initialize();
+      return client;
+    });
+    return this.msalClient;
   }
 
   private isEmbedded(): boolean {
@@ -106,10 +113,11 @@ export class AuthService {
     }
 
     try {
-      const result = await this.msal.instance.loginPopup({
+      const msal = await this.loadMsalClient();
+      const result = await msal.loginPopup({
         scopes: environment.msalConfig.apiScopes,
       });
-      this.msal.instance.setActiveAccount(result.account);
+      msal.setActiveAccount(result.account);
       this.activeAccountSignal.set(result.account);
     } catch (error) {
       console.error('Login failed:', error);
@@ -121,7 +129,8 @@ export class AuthService {
       // Can't sign out from within Teams — the Teams shell manages auth
       return;
     }
-    await this.msal.instance.logoutPopup();
+    const msal = await this.loadMsalClient();
+    await msal.logoutPopup();
     this.activeAccountSignal.set(null);
     this.apiAccessTokenSignal.set(null);
   }
@@ -136,13 +145,18 @@ export class AuthService {
       return this.refreshApiAccessToken();
     }
 
-    const account = this.activeAccountSignal() || this.msal.instance.getActiveAccount();
-    if (!account) {
+    if (!this.msalClient) {
       return null;
     }
 
     try {
-      const result = await this.msal.instance.acquireTokenSilent({
+      const msal = await this.msalClient;
+      const account = this.activeAccountSignal() || msal.getActiveAccount();
+      if (!account) {
+        return null;
+      }
+
+      const result = await msal.acquireTokenSilent({
         scopes: environment.msalConfig.apiScopes,
         account,
       });
