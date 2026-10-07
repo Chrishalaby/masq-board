@@ -31,9 +31,9 @@ import { CallOverlayComponent } from './shared/call-overlay/call-overlay.compone
           />
         </div>
       }
-      <div class="flex-1 overflow-auto">
+      <main class="flex-1 overflow-auto">
         <router-outlet />
-      </div>
+      </main>
     </div>
     <app-call-overlay />
   `,
