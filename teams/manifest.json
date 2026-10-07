@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
   "manifestVersion": "1.17",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "id": "7028812e-7502-40a0-9aac-4e860bf07bcf",
   "developer": {
     "name": "Your Company",
-    "websiteUrl": "https://masq-board.netlify.app",
-    "privacyUrl": "https://masq-board.netlify.app/privacy",
-    "termsOfUseUrl": "https://masq-board.netlify.app/terms"
+    "websiteUrl": "https://masq-board.up.railway.app",
+    "privacyUrl": "https://masq-board.up.railway.app/privacy",
+    "termsOfUseUrl": "https://masq-board.up.railway.app/terms"
   },
   "name": {
     "short": "MASQ Collaboration Suite",
@@ -26,63 +26,63 @@
     {
       "entityId": "home",
       "name": "Home",
-      "contentUrl": "https://masq-board.netlify.app",
-      "websiteUrl": "https://masq-board.netlify.app",
+      "contentUrl": "https://masq-board.up.railway.app",
+      "websiteUrl": "https://masq-board.up.railway.app",
       "scopes": ["personal"]
     },
     {
       "entityId": "projects",
       "name": "Projects",
-      "contentUrl": "https://masq-board.netlify.app/projects",
-      "websiteUrl": "https://masq-board.netlify.app/projects",
+      "contentUrl": "https://masq-board.up.railway.app/projects",
+      "websiteUrl": "https://masq-board.up.railway.app/projects",
       "scopes": ["personal"]
     },
     {
       "entityId": "personal-assistant",
       "name": "Personal Assistant",
-      "contentUrl": "https://masq-board.netlify.app/personal-assistant",
-      "websiteUrl": "https://masq-board.netlify.app/personal-assistant",
+      "contentUrl": "https://masq-board.up.railway.app/personal-assistant",
+      "websiteUrl": "https://masq-board.up.railway.app/personal-assistant",
       "scopes": ["personal"]
     },
     {
       "entityId": "exec-dashboard",
       "name": "Exec Dashboard",
-      "contentUrl": "https://masq-board.netlify.app/exec-dashboard",
-      "websiteUrl": "https://masq-board.netlify.app/exec-dashboard",
+      "contentUrl": "https://masq-board.up.railway.app/exec-dashboard",
+      "websiteUrl": "https://masq-board.up.railway.app/exec-dashboard",
       "scopes": ["personal"]
     },
     {
       "entityId": "departments",
       "name": "Departments",
-      "contentUrl": "https://masq-board.netlify.app/departments",
-      "websiteUrl": "https://masq-board.netlify.app/departments",
+      "contentUrl": "https://masq-board.up.railway.app/departments",
+      "websiteUrl": "https://masq-board.up.railway.app/departments",
       "scopes": ["personal"]
     },
     {
       "entityId": "it-support",
       "name": "IT Support",
-      "contentUrl": "https://masq-board.netlify.app/it-support?subEntityId={subEntityId}",
-      "websiteUrl": "https://masq-board.netlify.app/it-support",
+      "contentUrl": "https://masq-board.up.railway.app/it-support?subEntityId={subEntityId}",
+      "websiteUrl": "https://masq-board.up.railway.app/it-support",
       "scopes": ["personal"]
     },
     {
       "entityId": "notifications",
       "name": "Notifications",
-      "contentUrl": "https://masq-board.netlify.app/notifications",
-      "websiteUrl": "https://masq-board.netlify.app/notifications",
+      "contentUrl": "https://masq-board.up.railway.app/notifications",
+      "websiteUrl": "https://masq-board.up.railway.app/notifications",
       "scopes": ["personal"]
     },
     {
       "entityId": "admin",
       "name": "Admin",
-      "contentUrl": "https://masq-board.netlify.app/admin",
-      "websiteUrl": "https://masq-board.netlify.app/admin",
+      "contentUrl": "https://masq-board.up.railway.app/admin",
+      "websiteUrl": "https://masq-board.up.railway.app/admin",
       "scopes": ["personal"]
     }
   ],
   "configurableTabs": [
     {
-      "configurationUrl": "https://masq-board.netlify.app",
+      "configurationUrl": "https://masq-board.up.railway.app",
       "canUpdateConfiguration": false,
       "scopes": ["team", "groupChat"]
     }
@@ -118,9 +118,9 @@
   },
   "permissions": ["identity"],
   "devicePermissions": ["media", "notifications"],
-  "validDomains": ["masq-board.netlify.app", "login.microsoftonline.com"],
+  "validDomains": ["masq-board.up.railway.app", "login.microsoftonline.com"],
   "webApplicationInfo": {
     "id": "7028812e-7502-40a0-9aac-4e860bf07bcf",
-    "resource": "api://masq-board.netlify.app/7028812e-7502-40a0-9aac-4e860bf07bcf"
+    "resource": "api://masq-board.up.railway.app/7028812e-7502-40a0-9aac-4e860bf07bcf"
   }
 }
