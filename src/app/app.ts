@@ -16,7 +16,7 @@ import { CallOverlayComponent } from './shared/call-overlay/call-overlay.compone
       @if (auth.inTeamsContext() && !auth.isAuthenticated() && auth.teamsAuthError()) {
         <div
           role="alert"
-          class="flex flex-wrap items-center gap-3 border-b border-red-300 bg-red-50 px-6 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100"
+          class="relative z-10 flex flex-wrap items-center gap-3 border-b border-red-300 bg-red-50 px-6 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100"
         >
           <span class="flex-1">
             <strong>Teams could not sign you in.</strong>

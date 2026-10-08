@@ -29,6 +29,7 @@ interface HomeCard {
       position: fixed;
       inset: 0;
       z-index: 0;
+      pointer-events: none;
       background: linear-gradient(
         135deg,
         rgba(99, 102, 241, 0.15) 0%,
@@ -47,6 +48,7 @@ interface HomeCard {
       filter: blur(70px);
       opacity: 0.25;
       z-index: 0;
+      pointer-events: none;
     }
 
     .orb-1 {
