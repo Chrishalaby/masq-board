@@ -3,6 +3,8 @@
 @import 'tailwindcss';
 @import 'primeicons/primeicons.css';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Smooth drag-and-drop transitions */
 .cdk-drag-preview {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
