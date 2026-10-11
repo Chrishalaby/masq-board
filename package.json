@@ -31,6 +31,8 @@
     "@primeng/themes": "^21.0.4",
     "@primeuix/themes": "^2.0.3",
     "chart.js": "^4.5.1",
+    "powerbi-client": "^2.25.0",
+    "powerbi-client-angular": "^6.0.3",
     "primeicons": "^7.0.0",
     "primeng": "^21.1.3",
     "rxjs": "~7.8.0",

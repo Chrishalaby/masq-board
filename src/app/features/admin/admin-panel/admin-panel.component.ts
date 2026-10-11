@@ -25,8 +25,15 @@ import { DepartmentService } from '../../../services/department.service';
 import { UserService } from '../../../services/user.service';
 import { AttendanceAccessAdminComponent } from '../attendance-access-admin/attendance-access-admin.component';
 import { ItCategoriesAdminComponent } from '../it-categories-admin/it-categories-admin.component';
+import { PowerBiReportsAdminComponent } from '../power-bi-reports-admin/power-bi-reports-admin.component';
 
-type AdminTab = 'users' | 'departments' | 'assignments' | 'it-categories' | 'attendance';
+type AdminTab =
+  | 'users'
+  | 'departments'
+  | 'assignments'
+  | 'it-categories'
+  | 'attendance'
+  | 'power-bi';
 
 @Component({
   selector: 'app-admin-panel',
@@ -50,6 +57,7 @@ type AdminTab = 'users' | 'departments' | 'assignments' | 'it-categories' | 'att
     TabPanel,
     ItCategoriesAdminComponent,
     AttendanceAccessAdminComponent,
+    PowerBiReportsAdminComponent,
   ],
   template: `
     <p-toast />
@@ -71,6 +79,7 @@ type AdminTab = 'users' | 'departments' | 'assignments' | 'it-categories' | 'att
           <p-tab value="assignments">Assign Permissions</p-tab>
           <p-tab value="it-categories">IT Support</p-tab>
           <p-tab value="attendance">Attendance</p-tab>
+          <p-tab value="power-bi">Power BI Reports</p-tab>
         </p-tablist>
 
         <p-tabpanels>
@@ -297,6 +306,10 @@ type AdminTab = 'users' | 'departments' | 'assignments' | 'it-categories' | 'att
 
           <p-tabpanel value="attendance">
             <app-attendance-access-admin />
+          </p-tabpanel>
+
+          <p-tabpanel value="power-bi">
+            <app-power-bi-reports-admin />
           </p-tabpanel>
         </p-tabpanels>
       </p-tabs>

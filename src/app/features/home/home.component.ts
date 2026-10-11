@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { filter, switchMap, take } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { User } from '../../models/user.model';
+import { PowerBiService } from '../../services/power-bi.service';
 import { UserService } from '../../services/user.service';
 
 interface HomeCard {
@@ -205,6 +208,7 @@ interface HomeCard {
 export class HomeComponent {
   protected readonly auth = inject(AuthService);
   private readonly userService = inject(UserService);
+  private readonly powerBiService = inject(PowerBiService);
 
   private readonly allCards: HomeCard[] = [
     {
@@ -244,6 +248,14 @@ export class HomeComponent {
       visibleTo: (user) => !!user && (user.canUseAttendance || user.canViewAttendanceReports),
     },
     {
+      title: 'Reports',
+      description: 'Power BI reports that have been shared with you.',
+      route: '/reports',
+      icon: 'pi pi-chart-line',
+      bgClass: 'bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-300',
+      visibleTo: () => (this.powerBiService.myReports()?.length ?? 0) > 0,
+    },
+    {
       title: 'Exec Dashboard',
       description: 'High-level overview and executive insights.',
       route: '/exec-dashboard',
@@ -256,4 +268,15 @@ export class HomeComponent {
     const user = this.userService.currentUser();
     return this.allCards.filter((card) => !card.visibleTo || card.visibleTo(user));
   });
+
+  constructor() {
+    toObservable(this.userService.currentUser)
+      .pipe(
+        filter((user) => user !== null),
+        take(1),
+        switchMap(() => this.powerBiService.loadMyReports()),
+        takeUntilDestroyed(),
+      )
+      .subscribe({ error: () => undefined });
+  }
 }

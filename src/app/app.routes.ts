@@ -119,6 +119,13 @@ export const routes: Routes = [
     canActivate: [attendanceGuard],
   },
   {
+    path: 'reports',
+    loadComponent: () =>
+      import('./features/power-bi/power-bi-reports-page/power-bi-reports-page.component').then(
+        (m) => m.PowerBiReportsPageComponent,
+      ),
+  },
+  {
     path: 'notifications',
     loadComponent: () =>
       import('./features/notifications/notification-center/notification-center.component').then(
