@@ -1,31 +1,64 @@
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { ConfirmDialog } from 'primeng/confirmdialog';
+import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
+import { MessageService } from 'primeng/api';
+import { Button } from 'primeng/button';
+import { Dialog } from 'primeng/dialog';
 import { Toast } from 'primeng/toast';
 import { Task, TASK_STATUSES, TaskStatus } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
 import { TaskService } from '../../../services/task.service';
 import { TaskCardComponent } from '../task-card/task-card.component';
 
+interface PendingMove {
+  readonly task: Task;
+  readonly newStatus: TaskStatus;
+  readonly dropIndex: number;
+  readonly statusLabel: string;
+}
+
 @Component({
   selector: 'app-task-board',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [MessageService, ConfirmationService],
-  imports: [DragDropModule, TaskCardComponent, Toast, ConfirmDialog],
+  providers: [MessageService],
+  imports: [DragDropModule, TaskCardComponent, Toast, Dialog, Button],
   template: `
     <p-toast />
-    <p-confirmdialog />
-    <div class="flex gap-4 overflow-x-auto p-4" role="region" aria-label="Task board">
+    <p-dialog
+      header="Move from Completed"
+      [visible]="pendingMove() !== null"
+      (visibleChange)="pendingMove.set(null)"
+      closeAriaLabel="Close"
+      [modal]="true"
+      [style]="{ width: '28rem' }"
+      [breakpoints]="{ '520px': '95vw' }"
+      [draggable]="false"
+    >
+      @if (pendingMove(); as move) {
+        <p class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-200">
+          <i class="pi pi-exclamation-triangle mt-0.5 text-amber-400" aria-hidden="true"></i>
+          Are you sure you want to move this task from Completed to {{ move.statusLabel }}?
+        </p>
+      }
+      <ng-template #footer>
+        <p-button
+          label="Cancel"
+          severity="secondary"
+          [text]="true"
+          (onClick)="pendingMove.set(null)"
+        />
+        <p-button label="Yes, move it" (onClick)="confirmPendingMove()" />
+      </ng-template>
+    </p-dialog>
+    <div class="flex gap-4 overflow-x-auto p-4" role="region" aria-label="Task board" tabindex="0">
       @for (col of columns; track col.value) {
         <div class="flex w-72 min-w-72 flex-col rounded-lg bg-gray-50 dark:bg-gray-900">
           <div
             class="flex items-center justify-between rounded-t-lg px-4 py-3"
             [class]="columnHeaderClass(col.value)"
           >
-            <h3 class="text-sm font-semibold">{{ col.label }}</h3>
+            <h2 class="text-sm font-semibold">{{ col.label }}</h2>
             <span
-              class="flex h-6 w-6 items-center justify-center rounded-full bg-white/30 text-xs font-bold"
+              class="flex h-6 w-6 items-center justify-center rounded-full bg-black/25 text-xs font-bold"
             >
               {{ tasksByStatus()[col.value].length }}
             </span>
@@ -59,7 +92,6 @@ import { TaskCardComponent } from '../task-card/task-card.component';
 export class TaskBoardComponent {
   private readonly taskService = inject(TaskService);
   private readonly messageService = inject(MessageService);
-  private readonly confirmationService = inject(ConfirmationService);
 
   readonly taskClick = output<Task>();
   readonly setupClick = output<Task>();
@@ -68,6 +100,7 @@ export class TaskBoardComponent {
   readonly tasksByStatus = this.taskService.tasksByStatus;
   readonly columns = TASK_STATUSES;
   readonly connectedLists = TASK_STATUSES.map((s) => s.value);
+  protected readonly pendingMove = signal<PendingMove | null>(null);
 
   protected columnHeaderClass(status: TaskStatus): string {
     const map: Record<TaskStatus, string> = {
@@ -119,19 +152,19 @@ export class TaskBoardComponent {
       // Confirm: moving FROM "Completed" to another status
       if (prevStatus === 'completed') {
         const statusLabel = this.columns.find((c) => c.value === newStatus)?.label ?? newStatus;
-        this.confirmationService.confirm({
-          message: `Are you sure you want to move this task from Completed to ${statusLabel}?`,
-          header: 'Move from Completed',
-          icon: 'pi pi-exclamation-triangle',
-          acceptLabel: 'Yes, move it',
-          rejectLabel: 'Cancel',
-          accept: () => this.executeMove(task, newStatus, event.currentIndex),
-        });
+        this.pendingMove.set({ task, newStatus, dropIndex: event.currentIndex, statusLabel });
         return;
       }
 
       this.executeMove(task, newStatus, event.currentIndex);
     }
+  }
+
+  protected confirmPendingMove(): void {
+    const move = this.pendingMove();
+    if (!move) return;
+    this.pendingMove.set(null);
+    this.executeMove(move.task, move.newStatus, move.dropIndex);
   }
 
   private executeMove(task: Task, newStatus: TaskStatus, dropIndex: number): void {

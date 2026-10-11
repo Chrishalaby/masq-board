@@ -47,7 +47,7 @@ const PRESET_COLORS = [
         <div
           class="rounded-lg border border-dashed border-gray-300 p-8 text-center dark:border-gray-600"
         >
-          <i class="pi pi-tag mb-2 text-4xl text-gray-400"></i>
+          <i class="pi pi-tag mb-2 text-4xl text-gray-400" aria-hidden="true"></i>
           <p class="text-gray-500 dark:text-gray-400">No labels yet.</p>
         </div>
       } @else {
@@ -93,6 +93,7 @@ const PRESET_COLORS = [
     <p-dialog
       [header]="editingLabel() ? 'Edit Label' : 'New Label'"
       [(visible)]="dialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '24rem' }"
       [dismissableMask]="true"
@@ -105,8 +106,8 @@ const PRESET_COLORS = [
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Color</label>
-          <div class="flex flex-wrap gap-2">
+          <span id="labelColorHeading" class="text-sm font-medium">Color</span>
+          <div class="flex flex-wrap gap-2" role="group" aria-labelledby="labelColorHeading">
             @for (c of presetColors; track c) {
               <button
                 type="button"
@@ -117,6 +118,7 @@ const PRESET_COLORS = [
                 [class.dark:border-white]="form.controls.color.value === c"
                 (click)="form.controls.color.setValue(c)"
                 [attr.aria-label]="'Color ' + c"
+                [attr.aria-pressed]="form.controls.color.value === c"
               ></button>
             }
           </div>

@@ -43,10 +43,10 @@ import { TaskTemplateService } from '../../../services/task-template.service';
         <div
           class="rounded-lg border border-dashed border-gray-300 p-8 text-center dark:border-gray-600"
         >
-          <i class="pi pi-file-edit mb-2 text-4xl text-gray-400"></i>
+          <i class="pi pi-file-edit mb-2 text-4xl text-gray-400" aria-hidden="true"></i>
           <p class="text-gray-500 dark:text-gray-400">No task templates yet.</p>
           @if (templateService.isAdmin()) {
-            <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Create a template to auto-generate tasks for new projects.
             </p>
           }
@@ -68,7 +68,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
                   </span>
                   @if (!tpl.isActive) {
                     <span
-                      class="rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                      class="rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                     >
                       Inactive
                     </span>
@@ -78,7 +78,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
                   <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ tpl.description }}</p>
                 }
                 @if (tpl.checklist?.length) {
-                  <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     {{ tpl.checklist!.length }} milestone{{ tpl.checklist!.length > 1 ? 's' : '' }}
                   </p>
                 }
@@ -110,10 +110,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
       }
 
       <div class="mt-6">
-        <a
-          routerLink="/tasks"
-          class="text-sm text-primary-600 hover:underline dark:text-primary-400"
-        >
+        <a routerLink="/tasks" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
           ← Back to Tasks
         </a>
       </div>
@@ -124,6 +121,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
       [header]="editingTemplate() ? 'Edit Template' : 'New Template'"
       [visible]="editorVisible()"
       (visibleChange)="editorVisible.set($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '36rem' }"
       [dismissableMask]="true"
@@ -158,8 +156,8 @@ import { TaskTemplateService } from '../../../services/task-template.service';
         </div>
 
         <div class="flex items-center gap-2">
-          <p-toggleswitch formControlName="isActive" />
-          <label class="text-sm font-medium">Active</label>
+          <p-toggleswitch formControlName="isActive" inputId="tplActive" />
+          <label for="tplActive" class="text-sm font-medium">Active</label>
         </div>
 
         <!-- Milestones -->
@@ -168,7 +166,12 @@ import { TaskTemplateService } from '../../../services/task-template.service';
           <div class="flex flex-col gap-2">
             @for (item of checklistArray.controls; track $index) {
               <div class="flex items-center gap-2">
-                <input pInputText class="flex-1" [formControl]="getChecklistTitle($index)" />
+                <input
+                  pInputText
+                  class="flex-1"
+                  [formControl]="getChecklistTitle($index)"
+                  [attr.aria-label]="'Milestone ' + ($index + 1) + ' title'"
+                />
                 <p-button
                   icon="pi pi-trash"
                   severity="danger"
@@ -184,6 +187,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
                 pInputText
                 class="flex-1"
                 placeholder="New milestone"
+                aria-label="New milestone"
                 [formControl]="newChecklistControl"
                 (keydown.enter)="addChecklist(); $event.preventDefault()"
               />
@@ -193,6 +197,7 @@ import { TaskTemplateService } from '../../../services/task-template.service';
                 [text]="true"
                 size="small"
                 (onClick)="addChecklist()"
+                ariaLabel="Add milestone"
               />
             </div>
           </div>

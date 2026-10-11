@@ -11,16 +11,17 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { ProgressBar } from 'primeng/progressbar';
 import { Tag } from 'primeng/tag';
 import { Task, TaskPriority } from '../../../models/task.model';
 import { User } from '../../../models/user.model';
 import { TaskService } from '../../../services/task.service';
+import { ProgressMeterComponent } from '../../../shared/progress-meter/progress-meter.component';
+import { labelChipColors } from '../label-chip-colors';
 
 @Component({
   selector: 'app-task-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CdkDragHandle, DatePipe, Tag, ProgressBar],
+  imports: [CdkDragHandle, DatePipe, Tag, ProgressMeterComponent],
   template: `
     <div
       class="task-card overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
@@ -31,35 +32,32 @@ import { TaskService } from '../../../services/task.service';
       <!-- Action Tabs -->
       <div
         class="flex border-b border-gray-200 dark:border-gray-700"
-        role="tablist"
+        role="group"
         aria-label="Task actions"
       >
         <button
           class="flex flex-1 items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-blue-400"
-          role="tab"
-          aria-label="View task details"
+          type="button"
           (click)="setupClick.emit(task()); $event.stopPropagation()"
         >
-          <i class="pi pi-eye text-xs"></i>
-          Setup
+          <i class="pi pi-eye text-xs" aria-hidden="true"></i>
+          Setup<span class="sr-only">: view task details</span>
         </button>
         <button
           class="flex flex-1 items-center justify-center gap-1 border-x border-gray-200 px-2 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-green-50 hover:text-green-600 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-green-400"
-          role="tab"
-          aria-label="Edit task"
+          type="button"
           (click)="cardClick.emit(task()); $event.stopPropagation()"
         >
-          <i class="pi pi-pencil text-xs"></i>
-          Edit
+          <i class="pi pi-pencil text-xs" aria-hidden="true"></i>
+          Edit<span class="sr-only"> task</span>
         </button>
         <button
           class="flex flex-1 items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-purple-400"
-          role="tab"
-          aria-label="View task files"
+          type="button"
           (click)="linksClick.emit(task()); $event.stopPropagation()"
         >
-          <i class="pi pi-file text-xs"></i>
-          Files
+          <i class="pi pi-file text-xs" aria-hidden="true"></i>
+          Files<span class="sr-only">: view task files</span>
           @if (task().linkedFiles?.length) {
             <span
               class="flex h-4 min-w-4 items-center justify-center rounded-full bg-purple-100 px-1 text-xs text-purple-700 dark:bg-purple-800 dark:text-purple-300"
@@ -76,11 +74,12 @@ import { TaskService } from '../../../services/task.service';
           <div class="flex min-w-0 items-center gap-2">
             @if (task().status === 'in-progress') {
               <button
+                type="button"
                 class="flex h-6 w-6 items-center justify-center rounded-full transition-colors"
                 [class]="
                   task().isPrioritized
                     ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300'
-                    : 'text-gray-400 hover:text-yellow-500 dark:text-gray-500'
+                    : 'text-gray-500 hover:text-yellow-500 dark:text-gray-400'
                 "
                 [attr.aria-label]="task().isPrioritized ? 'Remove priority' : 'Prioritize task'"
                 [attr.aria-pressed]="task().isPrioritized"
@@ -89,6 +88,7 @@ import { TaskService } from '../../../services/task.service';
                 <i
                   class="pi text-xs"
                   [class]="task().isPrioritized ? 'pi-star-fill' : 'pi-star'"
+                  aria-hidden="true"
                 ></i>
               </button>
               @if (task().isPrioritized && task().priorityOrder) {
@@ -99,11 +99,11 @@ import { TaskService } from '../../../services/task.service';
                 </span>
               }
             }
-            <h4
+            <h3
               class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-gray-100"
             >
               {{ task().title }}
-            </h4>
+            </h3>
           </div>
           <p-tag [value]="task().priority" [severity]="prioritySeverity()" [rounded]="true" />
         </div>
@@ -136,7 +136,7 @@ import { TaskService } from '../../../services/task.service';
           @if (task().assignees?.length) {
             @for (ta of task().assignees; track ta.userId; let last = $last) {
               <span
-                class="cursor-pointer hover:text-blue-600 hover:underline"
+                class="cursor-pointer hover:text-blue-600 hover:underline dark:hover:text-blue-400"
                 (click)="onAssigneeClick($event, ta.user)"
                 >{{ ta.user?.displayName }}
                 @if (ta.role) {
@@ -149,7 +149,7 @@ import { TaskService } from '../../../services/task.service';
             }
           } @else if (task().assignee) {
             <span
-              class="cursor-pointer hover:text-blue-600 hover:underline"
+              class="cursor-pointer hover:text-blue-600 hover:underline dark:hover:text-blue-400"
               (click)="onAssigneeClick($event, task().assignee)"
               >{{ task().assignee!.displayName }}</span
             >
@@ -195,6 +195,9 @@ import { TaskService } from '../../../services/task.service';
             [class.text-amber-600]="task().status === 'on-hold'"
             [class.dark:text-amber-400]="task().status === 'on-hold'"
             [class.text-gray-500]="task().status !== 'in-progress' && task().status !== 'on-hold'"
+            [class.dark:text-gray-400]="
+              task().status !== 'in-progress' && task().status !== 'on-hold'
+            "
           >
             @if (task().status === 'on-hold') {
               <i class="pi pi-pause mr-1 text-xs"></i>{{ at }} active (paused)
@@ -208,11 +211,11 @@ import { TaskService } from '../../../services/task.service';
 
         @if (task().labels?.length) {
           <div class="mb-2 flex flex-wrap gap-1">
-            @for (label of task().labels; track label.id || label.name) {
+            @for (label of labelChips(); track label.id || label.name) {
               <span
                 class="rounded-full px-2 py-0.5 text-xs"
-                [style.background-color]="(label.color || '#3B82F6') + '20'"
-                [style.color]="label.color || '#3B82F6'"
+                [style.background-color]="label.chip.background"
+                [style.color]="label.chip.text"
               >
                 {{ label.name }}
               </span>
@@ -227,11 +230,11 @@ import { TaskService } from '../../../services/task.service';
                 [href]="url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs text-blue-600 hover:bg-blue-100 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
+                class="inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs text-blue-600 hover:bg-blue-100 dark:bg-gray-700 dark:text-blue-300 dark:hover:bg-gray-600"
                 [title]="url"
                 (click)="$event.stopPropagation()"
               >
-                <i class="pi pi-file mr-1"></i>
+                <i class="pi pi-file mr-1" aria-hidden="true"></i>
                 {{ fileNameAt(i) }}
               </a>
             }
@@ -249,14 +252,15 @@ import { TaskService } from '../../../services/task.service';
           }
           @if (checklistProgress(); as progress) {
             <div class="flex-1">
-              <div class="mb-1 flex justify-between text-xs text-gray-500">
+              <div class="mb-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>Milestones</span>
                 <span>{{ progress.done }}/{{ progress.total }}</span>
               </div>
-              <p-progressBar
-                [value]="progress.percent"
-                [showValue]="false"
-                [style]="{ height: '6px' }"
+              <app-progress-meter
+                class="h-1.5"
+                label="Milestones"
+                [percent]="progress.percent"
+                [valueText]="progress.done + ' of ' + progress.total + ' completed'"
               />
             </div>
           }
@@ -351,6 +355,10 @@ export class TaskCardComponent implements OnInit {
     const done = checklist.filter((c) => c.completed).length;
     return { done, total: checklist.length, percent: Math.round((done / checklist.length) * 100) };
   });
+
+  protected readonly labelChips = computed(() =>
+    (this.task().labels ?? []).map((label) => ({ ...label, chip: labelChipColors(label.color) })),
+  );
 
   protected onAssigneeClick(event: MouseEvent, user?: User): void {
     if (!user) return;

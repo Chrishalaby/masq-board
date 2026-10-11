@@ -16,6 +16,7 @@ import { TaskService } from '../../../services/task.service';
       header="Files"
       [visible]="visible()"
       (visibleChange)="visibleChange.emit($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '36rem' }"
       [dismissableMask]="true"
@@ -30,7 +31,7 @@ import { TaskService } from '../../../services/task.service';
                 <div
                   class="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
                 >
-                  <i class="pi pi-file text-gray-400"></i>
+                  <i class="pi pi-file text-gray-400" aria-hidden="true"></i>
                   <a
                     [href]="url"
                     target="_blank"
@@ -65,12 +66,15 @@ import { TaskService } from '../../../services/task.service';
 
           <!-- Add URL -->
           <div class="border-t border-gray-200 pt-3 dark:border-gray-700">
-            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            <label
+              for="taskLinkUrl"
+              class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
               >Add Link</label
             >
             <div class="flex items-center gap-2">
               <input
                 pInputText
+                id="taskLinkUrl"
                 class="flex-1"
                 placeholder="https://..."
                 [formControl]="newUrlControl"
@@ -88,11 +92,19 @@ import { TaskService } from '../../../services/task.service';
 
           <!-- Upload file -->
           <div class="border-t border-gray-200 pt-3 dark:border-gray-700">
-            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            <label
+              for="taskLinkFile"
+              class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
               >Upload File</label
             >
             <div class="flex items-center gap-2">
-              <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)" />
+              <input
+                #fileInput
+                id="taskLinkFile"
+                type="file"
+                class="hidden"
+                (change)="onFileSelected($event)"
+              />
               <p-button
                 icon="pi pi-upload"
                 label="Upload to SharePoint"
@@ -105,7 +117,9 @@ import { TaskService } from '../../../services/task.service';
                 <span
                   class="text-xs"
                   [class.text-green-600]="!uploadError()"
+                  [class.dark:text-green-400]="!uploadError()"
                   [class.text-red-500]="uploadError()"
+                  [class.dark:text-red-400]="uploadError()"
                 >
                   {{ uploadStatus() }}
                 </span>

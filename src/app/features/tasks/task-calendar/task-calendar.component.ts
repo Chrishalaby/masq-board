@@ -66,7 +66,6 @@ interface CalendarDay {
             class="min-h-28 bg-white p-1.5 dark:bg-gray-800"
             [class.bg-gray-50]="!day.inMonth"
             [class.dark:bg-gray-900]="!day.inMonth"
-            [class.opacity-50]="!day.inMonth"
           >
             <div class="mb-1 flex items-center justify-between">
               <span
@@ -74,8 +73,10 @@ interface CalendarDay {
                 [class.bg-blue-600]="day.isToday"
                 [class.text-white]="day.isToday"
                 [class.font-bold]="day.isToday"
-                [class.text-gray-700]="!day.isToday"
-                [class.dark:text-gray-300]="!day.isToday"
+                [class.text-gray-700]="!day.isToday && day.inMonth"
+                [class.dark:text-gray-300]="!day.isToday && day.inMonth"
+                [class.text-gray-500]="!day.isToday && !day.inMonth"
+                [class.dark:text-gray-400]="!day.isToday && !day.inMonth"
               >
                 {{ day.date.getDate() }}
               </span>
@@ -148,11 +149,13 @@ interface CalendarDay {
                     task.title
                   }}</span>
                   @if (task.assignees?.length) {
-                    <span class="text-xs text-gray-500">{{
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{
                       task.assignees![0].user?.displayName
                     }}</span>
                   } @else if (task.assignee) {
-                    <span class="text-xs text-gray-500">{{ task.assignee.displayName }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{
+                      task.assignee.displayName
+                    }}</span>
                   }
                 </button>
               }

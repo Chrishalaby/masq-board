@@ -2,19 +2,21 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { Chip } from 'primeng/chip';
 import { Dialog } from 'primeng/dialog';
-import { ProgressBar } from 'primeng/progressbar';
 import { Tag } from 'primeng/tag';
 import { Task, TaskPriority } from '../../../models/task.model';
+import { ProgressMeterComponent } from '../../../shared/progress-meter/progress-meter.component';
+import { labelChipColors } from '../label-chip-colors';
 
 @Component({
   selector: 'app-task-detail-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, Dialog, Tag, Chip, ProgressBar],
+  imports: [DatePipe, Dialog, Tag, Chip, ProgressMeterComponent],
   template: `
     <p-dialog
       header="Task Details"
       [visible]="visible()"
       (visibleChange)="visibleChange.emit($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '44rem' }"
       [dismissableMask]="true"
@@ -160,11 +162,11 @@ import { Task, TaskPriority } from '../../../models/task.model';
             <div class="flex flex-col gap-1">
               <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Labels</span>
               <div class="flex flex-wrap gap-1">
-                @for (label of t.labels; track label.id || label.name) {
+                @for (label of labelChips(); track label.id || label.name) {
                   <span
                     class="rounded-full px-2.5 py-1 text-xs font-medium"
-                    [style.background-color]="(label.color || '#3B82F6') + '20'"
-                    [style.color]="label.color || '#3B82F6'"
+                    [style.background-color]="label.chip.background"
+                    [style.color]="label.chip.text"
                   >
                     {{ label.name }}
                   </span>
@@ -178,9 +180,16 @@ import { Task, TaskPriority } from '../../../models/task.model';
             <div class="flex flex-col gap-2">
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Checklist</span>
-                <span class="text-xs text-gray-500">{{ progress.done }}/{{ progress.total }}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400"
+                  >{{ progress.done }}/{{ progress.total }}</span
+                >
               </div>
-              <p-progressBar [value]="progress.percent" [style]="{ height: '8px' }" />
+              <app-progress-meter
+                class="h-2"
+                label="Checklist"
+                [percent]="progress.percent"
+                [valueText]="progress.done + ' of ' + progress.total + ' completed'"
+              />
               <div class="flex flex-col gap-1">
                 @for (item of t.checklist; track $index) {
                   <div class="flex items-center gap-2 text-sm">
@@ -190,7 +199,9 @@ import { Task, TaskPriority } from '../../../models/task.model';
                           ? 'pi pi-check-circle text-green-500'
                           : 'pi pi-circle text-gray-300'
                       "
+                      aria-hidden="true"
                     ></i>
+                    <span class="sr-only">{{ item.completed ? 'Done:' : 'To do:' }}</span>
                     <span
                       [class.line-through]="item.completed"
                       [class.text-gray-400]="item.completed"
@@ -277,6 +288,10 @@ export class TaskDetailViewComponent {
     };
     return map[t.status] ?? 'info';
   });
+
+  protected readonly labelChips = computed(() =>
+    (this.task()?.labels ?? []).map((label) => ({ ...label, chip: labelChipColors(label.color) })),
+  );
 
   protected readonly checklistProgress = computed(() => {
     const checklist = this.task()?.checklist;

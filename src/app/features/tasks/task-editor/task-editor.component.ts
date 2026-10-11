@@ -63,6 +63,7 @@ import { UserService } from '../../../services/user.service';
       [header]="task() ? 'Edit Task — ' + task()!.title : 'New Task'"
       [visible]="visible()"
       (visibleChange)="onVisibleChange($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '42rem' }"
       [dismissableMask]="true"
@@ -177,7 +178,7 @@ import { UserService } from '../../../services/user.service';
           <div class="flex flex-col gap-1">
             <label for="startDate" class="text-sm font-medium">Start Date</label>
             <p-datepicker
-              id="startDate"
+              inputId="startDate"
               formControlName="startDate"
               dateFormat="yy-mm-dd"
               [showIcon]="true"
@@ -189,7 +190,7 @@ import { UserService } from '../../../services/user.service';
           <div class="flex flex-col gap-1">
             <label for="dueDate" class="text-sm font-medium">Due Date</label>
             <p-datepicker
-              id="dueDate"
+              inputId="dueDate"
               formControlName="dueDate"
               dateFormat="yy-mm-dd"
               [showIcon]="true"
@@ -222,8 +223,17 @@ import { UserService } from '../../../services/user.service';
                 class="flex flex-col gap-1 rounded border border-gray-200 p-2 dark:border-gray-700"
               >
                 <div class="flex items-center gap-2">
-                  <p-checkbox [formControl]="getChecklistCompleted($index)" [binary]="true" />
-                  <input pInputText class="flex-1" [formControl]="getChecklistTitle($index)" />
+                  <p-checkbox
+                    [formControl]="getChecklistCompleted($index)"
+                    [binary]="true"
+                    [ariaLabel]="'Milestone ' + ($index + 1) + ' completed'"
+                  />
+                  <input
+                    pInputText
+                    class="flex-1"
+                    [formControl]="getChecklistTitle($index)"
+                    [attr.aria-label]="'Milestone ' + ($index + 1) + ' title'"
+                  />
                   <p-button
                     icon="pi pi-arrow-up"
                     [text]="true"
@@ -256,6 +266,7 @@ import { UserService } from '../../../services/user.service';
                     optionLabel="displayName"
                     optionValue="id"
                     placeholder="Assignee"
+                    [ariaLabel]="'Milestone ' + ($index + 1) + ' assignee'"
                     [showClear]="true"
                     [formControl]="getChecklistAssigneeId($index)"
                     appendTo="body"
@@ -265,6 +276,7 @@ import { UserService } from '../../../services/user.service';
                     [formControl]="getChecklistDeadline($index)"
                     dateFormat="yy-mm-dd"
                     placeholder="Deadline"
+                    [ariaLabel]="'Milestone ' + ($index + 1) + ' deadline'"
                     [showIcon]="true"
                     appendTo="body"
                     [autoZIndex]="true"
@@ -278,6 +290,7 @@ import { UserService } from '../../../services/user.service';
                 pInputText
                 class="flex-1"
                 placeholder="New milestone"
+                aria-label="New milestone"
                 [formControl]="newChecklistControl"
                 (keydown.enter)="addChecklist(); $event.preventDefault()"
               />
@@ -287,6 +300,7 @@ import { UserService } from '../../../services/user.service';
                 [text]="true"
                 size="small"
                 (onClick)="addChecklist()"
+                ariaLabel="Add milestone"
               />
             </div>
           </div>
@@ -295,27 +309,30 @@ import { UserService } from '../../../services/user.service';
         <!-- Milestone Status (read-only) -->
         <div class="grid grid-cols-3 gap-3">
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">Milestone Achieved</label>
+            <label for="milestoneAchieved" class="text-sm font-medium">Milestone Achieved</label>
             <input
               pInputText
+              id="milestoneAchieved"
               [value]="computedMilestoneAchieved()"
               [readonly]="true"
               class="bg-gray-50 dark:bg-gray-900"
             />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">Current Milestone</label>
+            <label for="currentMilestone" class="text-sm font-medium">Current Milestone</label>
             <input
               pInputText
+              id="currentMilestone"
               [value]="computedCurrentMilestone()"
               [readonly]="true"
               class="bg-gray-50 dark:bg-gray-900"
             />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">Next Milestone</label>
+            <label for="nextMilestone" class="text-sm font-medium">Next Milestone</label>
             <input
               pInputText
+              id="nextMilestone"
               [value]="computedNextMilestone()"
               [readonly]="true"
               class="bg-gray-50 dark:bg-gray-900"
@@ -335,7 +352,13 @@ import { UserService } from '../../../services/user.service';
           <div class="flex flex-col gap-2">
             @for (url of linkedFilesArray.controls; track $index) {
               <div class="flex items-center gap-2">
-                <input pInputText class="flex-1" [formControl]="url" placeholder="https://..." />
+                <input
+                  pInputText
+                  class="flex-1"
+                  [formControl]="url"
+                  placeholder="https://..."
+                  [attr.aria-label]="'Linked file ' + ($index + 1) + ' URL'"
+                />
                 <p-button
                   icon="pi pi-trash"
                   severity="danger"
@@ -351,6 +374,7 @@ import { UserService } from '../../../services/user.service';
                 pInputText
                 class="flex-1"
                 placeholder="Add a file URL..."
+                aria-label="New linked file URL"
                 [formControl]="newLinkedFileControl"
                 (keydown.enter)="addLinkedFile(); $event.preventDefault()"
               />
@@ -360,11 +384,18 @@ import { UserService } from '../../../services/user.service';
                 [text]="true"
                 size="small"
                 (onClick)="addLinkedFile()"
+                ariaLabel="Add linked file"
               />
             </div>
             @if (task()) {
               <div class="flex items-center gap-2">
-                <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)" />
+                <input
+                  #fileInput
+                  type="file"
+                  class="hidden"
+                  aria-label="File to upload to SharePoint"
+                  (change)="onFileSelected($event)"
+                />
                 <p-button
                   icon="pi pi-upload"
                   label="Upload to SharePoint"
@@ -374,7 +405,7 @@ import { UserService } from '../../../services/user.service';
                   [loading]="uploading()"
                 />
                 @if (uploadError()) {
-                  <span class="text-xs text-red-500">{{ uploadError() }}</span>
+                  <span class="text-xs text-red-500 dark:text-red-400">{{ uploadError() }}</span>
                 }
               </div>
             }
@@ -424,7 +455,9 @@ import { UserService } from '../../../services/user.service';
             />
             <div class="mt-2 grid grid-cols-2 gap-2">
               <div class="flex flex-col gap-1">
-                <label for="depType" class="text-xs text-gray-500">Dependency Type</label>
+                <label for="depType" class="text-xs text-gray-500 dark:text-gray-400"
+                  >Dependency Type</label
+                >
                 <p-select
                   id="depType"
                   [formControl]="dependencyTypeControl"
@@ -439,7 +472,9 @@ import { UserService } from '../../../services/user.service';
                 dependencyTypeControl.value === 'finish-to-finish'
               ) {
                 <div class="flex flex-col gap-1">
-                  <label for="lagDays" class="text-xs text-gray-500">Lag (days)</label>
+                  <label for="lagDays" class="text-xs text-gray-500 dark:text-gray-400"
+                    >Lag (days)</label
+                  >
                   <input
                     pInputText
                     id="lagDays"
