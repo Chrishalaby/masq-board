@@ -50,6 +50,7 @@ import { UserService } from '../../../services/user.service';
             optionLabel="displayName"
             optionValue="id"
             placeholder="Filter by person"
+            ariaLabel="Filter notes by person"
             [showClear]="true"
             [formControl]="filterUser"
             (onChange)="onFilterChange()"
@@ -67,7 +68,7 @@ import { UserService } from '../../../services/user.service';
       <!-- Public section -->
       <section>
         <h2 class="mb-3 text-lg font-semibold text-gray-700 dark:text-gray-300">
-          <i class="pi pi-globe mr-2"></i>Public Board
+          <i class="pi pi-globe mr-2" aria-hidden="true"></i>Public Board
         </h2>
         @if (publicNotes().length === 0) {
           <p class="text-sm text-gray-500 dark:text-gray-400">No public notes yet.</p>
@@ -75,27 +76,31 @@ import { UserService } from '../../../services/user.service';
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           @for (note of publicNotes(); track note.id) {
             <div
-              class="flex cursor-pointer flex-col gap-2 rounded-lg border p-4 shadow-sm transition hover:shadow-md dark:border-gray-700"
+              class="relative flex flex-col gap-2 rounded-lg border p-4 shadow-sm transition hover:shadow-md dark:border-gray-700"
               [style.background-color]="note.color || ''"
+              [style.--p-button-text-danger-color]="note.color ? '#b91c1c' : null"
               [class.dark:bg-gray-800]="!note.color"
-              (click)="note.isOwn ? openEdit(note) : openDetail(note)"
-              (keydown.enter)="note.isOwn ? openEdit(note) : openDetail(note)"
-              tabindex="0"
-              role="button"
-              [attr.aria-label]="(note.isOwn ? 'Edit' : 'View') + ' note: ' + note.title"
             >
               <div class="flex items-start justify-between">
                 <h3 class="font-semibold text-gray-900" [class.dark:text-white]="!note.color">
-                  {{ note.title }}
+                  <button
+                    type="button"
+                    class="cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-blue-500"
+                    (click)="note.isOwn ? openEdit(note) : openDetail(note)"
+                  >
+                    <span class="sr-only">{{ note.isOwn ? 'Edit' : 'View' }} note: </span
+                    >{{ note.title }}
+                  </button>
                 </h3>
                 @if (note.isOwn) {
                   <p-button
+                    class="relative z-10"
                     icon="pi pi-trash"
                     severity="danger"
                     [text]="true"
                     size="small"
                     (onClick)="deleteNote(note, $event)"
-                    ariaLabel="Delete note"
+                    [ariaLabel]="'Delete note: ' + note.title"
                   />
                 }
               </div>
@@ -110,7 +115,7 @@ import { UserService } from '../../../services/user.service';
                   <p-chip [label]="user.displayName" styleClass="text-xs" />
                 }
               </div>
-              <span class="text-xs text-gray-500" [class.dark:text-gray-400]="!note.color">
+              <span class="text-xs text-gray-600" [class.dark:text-gray-400]="!note.color">
                 by {{ note.author?.displayName || 'Unknown' }}
               </span>
             </div>
@@ -121,7 +126,7 @@ import { UserService } from '../../../services/user.service';
       <!-- Private section -->
       <section>
         <h2 class="mb-3 text-lg font-semibold text-gray-700 dark:text-gray-300">
-          <i class="pi pi-lock mr-2"></i>My Private Notes
+          <i class="pi pi-lock mr-2" aria-hidden="true"></i>My Private Notes
         </h2>
         @if (privateNotes().length === 0) {
           <p class="text-sm text-gray-500 dark:text-gray-400">No private notes yet.</p>
@@ -129,26 +134,29 @@ import { UserService } from '../../../services/user.service';
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           @for (note of privateNotes(); track note.id) {
             <div
-              class="flex cursor-pointer flex-col gap-2 rounded-lg border p-4 shadow-sm transition hover:shadow-md dark:border-gray-700"
+              class="relative flex flex-col gap-2 rounded-lg border p-4 shadow-sm transition hover:shadow-md dark:border-gray-700"
               [style.background-color]="note.color || ''"
+              [style.--p-button-text-danger-color]="note.color ? '#b91c1c' : null"
               [class.dark:bg-gray-800]="!note.color"
-              (click)="openEdit(note)"
-              (keydown.enter)="openEdit(note)"
-              tabindex="0"
-              role="button"
-              [attr.aria-label]="'Edit note: ' + note.title"
             >
               <div class="flex items-start justify-between">
                 <h3 class="font-semibold text-gray-900" [class.dark:text-white]="!note.color">
-                  {{ note.title }}
+                  <button
+                    type="button"
+                    class="cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-blue-500"
+                    (click)="openEdit(note)"
+                  >
+                    <span class="sr-only">Edit note: </span>{{ note.title }}
+                  </button>
                 </h3>
                 <p-button
+                  class="relative z-10"
                   icon="pi pi-trash"
                   severity="danger"
                   [text]="true"
                   size="small"
                   (onClick)="deleteNote(note, $event)"
-                  ariaLabel="Delete note"
+                  [ariaLabel]="'Delete note: ' + note.title"
                 />
               </div>
               <p
@@ -157,7 +165,7 @@ import { UserService } from '../../../services/user.service';
               >
                 {{ note.content }}
               </p>
-              <span class="text-xs text-gray-500" [class.dark:text-gray-400]="!note.color">
+              <span class="text-xs text-gray-600" [class.dark:text-gray-400]="!note.color">
                 {{ note.updatedAt | date: 'short' }}
               </span>
             </div>
@@ -171,6 +179,7 @@ import { UserService } from '../../../services/user.service';
       [header]="editingNote() ? 'Edit Note' : 'New Note'"
       [visible]="dialogVisible()"
       (visibleChange)="dialogVisible.set($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '36rem' }"
       [dismissableMask]="true"
@@ -217,7 +226,7 @@ import { UserService } from '../../../services/user.service';
           <div class="flex flex-col gap-1">
             <label for="noteTags" class="text-sm font-medium">Tag People</label>
             <p-multiselect
-              id="noteTags"
+              inputId="noteTags"
               formControlName="taggedUserIds"
               [options]="users()"
               optionLabel="displayName"
@@ -248,6 +257,7 @@ import { UserService } from '../../../services/user.service';
       header="Note Details"
       [visible]="detailVisible()"
       (visibleChange)="detailVisible.set($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '36rem' }"
       [dismissableMask]="true"

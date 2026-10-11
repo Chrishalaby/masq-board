@@ -23,7 +23,7 @@ import { TeamsCallService } from '../../services/teams-call.service';
           pTooltip="Call"
           tooltipPosition="top"
           (onClick)="call()"
-          aria-label="Audio call"
+          ariaLabel="Audio call"
         />
         <p-button
           icon="pi pi-video"
@@ -34,7 +34,7 @@ import { TeamsCallService } from '../../services/teams-call.service';
           pTooltip="Video Call"
           tooltipPosition="top"
           (onClick)="videoCall()"
-          aria-label="Video call"
+          ariaLabel="Video call"
         />
         <p-button
           icon="pi pi-desktop"
@@ -45,7 +45,7 @@ import { TeamsCallService } from '../../services/teams-call.service';
           pTooltip="Share Screen"
           tooltipPosition="top"
           (onClick)="shareScreen()"
-          aria-label="Share screen"
+          ariaLabel="Share screen"
         />
       </div>
     </p-popover>

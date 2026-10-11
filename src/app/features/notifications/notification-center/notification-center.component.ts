@@ -55,8 +55,8 @@ import { ProjectService } from '../../../services/project.service';
         <p-progressspinner strokeWidth="4" [style]="{ width: '2rem', height: '2rem' }" />
       </div>
     } @else if (isEmpty()) {
-      <div class="flex flex-col items-center gap-3 py-20 text-gray-400 dark:text-gray-500">
-        <i class="pi pi-bell text-4xl"></i>
+      <div class="flex flex-col items-center gap-3 py-20 text-gray-500 dark:text-gray-400">
+        <i class="pi pi-bell text-4xl" aria-hidden="true"></i>
         <p class="text-sm">You're all caught up — no notifications.</p>
       </div>
     } @else {
@@ -143,7 +143,7 @@ import { ProjectService } from '../../../services/project.service';
                         notification.body
                       }}</span>
                     }
-                    <span class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{
+                    <span class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{
                       formatDate(notification.createdAt)
                     }}</span>
                   </div>

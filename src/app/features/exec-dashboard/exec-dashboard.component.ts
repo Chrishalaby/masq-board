@@ -17,6 +17,14 @@ import { Task, TaskPriority, TaskStatus } from '../../models/task.model';
 import { UserAssignment } from '../../models/user-assignment.model';
 import { UserService } from '../../services/user.service';
 
+interface CompletionChartData {
+  readonly labels: string[];
+  readonly datasets: { readonly data: number[] }[];
+}
+
+const CHART_TEXT_COLOR = '#d1d5db';
+const CHART_GRID_COLOR = 'rgba(255, 255, 255, 0.12)';
+
 interface DashboardStats {
   total: number;
   byStatus: Record<TaskStatus, number>;
@@ -39,7 +47,7 @@ interface DashboardStats {
         <div
           class="rounded-xl border border-dashed border-gray-300 p-16 text-center dark:border-gray-600"
         >
-          <i class="pi pi-lock text-5xl text-gray-300 dark:text-gray-600"></i>
+          <i class="pi pi-lock text-5xl text-gray-300 dark:text-gray-600" aria-hidden="true"></i>
           <h1 class="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">Access Denied</h1>
           <p class="mt-2 text-gray-500 dark:text-gray-400">
             You do not have permission to access the Executive Dashboard.
@@ -65,7 +73,7 @@ interface DashboardStats {
             class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800"
           >
             <p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
-            <p class="mt-1 text-3xl font-bold text-green-600">
+            <p class="mt-1 text-3xl font-bold text-green-600 dark:text-green-400">
               {{ stats().byStatus['completed'] }}
             </p>
           </div>
@@ -73,7 +81,7 @@ interface DashboardStats {
             class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800"
           >
             <p class="text-sm text-gray-500 dark:text-gray-400">In Progress</p>
-            <p class="mt-1 text-3xl font-bold text-blue-600">
+            <p class="mt-1 text-3xl font-bold text-blue-600 dark:text-blue-400">
               {{ stats().byStatus['in-progress'] }}
             </p>
           </div>
@@ -81,7 +89,7 @@ interface DashboardStats {
             class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800"
           >
             <p class="text-sm text-gray-500 dark:text-gray-400">Urgent</p>
-            <p class="mt-1 text-3xl font-bold text-red-600">
+            <p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">
               {{ stats().byPriority['urgent'] }}
             </p>
           </div>
@@ -95,7 +103,13 @@ interface DashboardStats {
             <h2 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">
               Tasks by Status
             </h2>
-            <p-chart type="pie" [data]="statusChartData()" [options]="pieOptions" height="300px" />
+            <p-chart
+              type="pie"
+              [data]="statusChartData()"
+              [options]="pieOptions"
+              height="300px"
+              [ariaLabel]="statusChartSummary()"
+            />
           </div>
           <div
             class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800"
@@ -108,6 +122,7 @@ interface DashboardStats {
               [data]="priorityChartData()"
               [options]="pieOptions"
               height="300px"
+              [ariaLabel]="priorityChartSummary()"
             />
           </div>
         </div>
@@ -126,9 +141,12 @@ interface DashboardStats {
                 [data]="projectChartData()"
                 [options]="barOptions"
                 height="300px"
+                [ariaLabel]="projectChartSummary()"
               />
             } @else {
-              <p class="py-8 text-center text-sm text-gray-400">No project data.</p>
+              <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                No project data.
+              </p>
             }
           </div>
           <div
@@ -143,9 +161,12 @@ interface DashboardStats {
                 [data]="initiativeChartData()"
                 [options]="barOptions"
                 height="300px"
+                [ariaLabel]="initiativeChartSummary()"
               />
             } @else {
-              <p class="py-8 text-center text-sm text-gray-400">No initiative data.</p>
+              <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                No initiative data.
+              </p>
             }
           </div>
         </div>
@@ -163,9 +184,12 @@ interface DashboardStats {
               [data]="completionChartData()"
               [options]="percentBarOptions"
               height="300px"
+              [ariaLabel]="completionChartSummary()"
             />
           } @else {
-            <p class="py-8 text-center text-sm text-gray-400">No project data.</p>
+            <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              No project data.
+            </p>
           }
         </div>
       }
@@ -347,19 +371,52 @@ export class ExecDashboardComponent implements OnInit {
     };
   });
 
+  readonly statusChartSummary = computed(() => {
+    const s = this.stats().byStatus;
+    return `Tasks by status: ${s['not-started']} not started, ${s['on-hold']} on hold, ${s['in-progress']} in progress, ${s['completed']} completed`;
+  });
+
+  readonly priorityChartSummary = computed(() => {
+    const p = this.stats().byPriority;
+    return `Tasks by priority: ${p.low} low, ${p.medium} medium, ${p.high} high, ${p.urgent} urgent`;
+  });
+
+  readonly projectChartSummary = computed(() =>
+    this.completedOfTotalSummary('Tasks by project', this.projectChartData()),
+  );
+
+  readonly initiativeChartSummary = computed(() =>
+    this.completedOfTotalSummary('Tasks by initiative', this.initiativeChartData()),
+  );
+
+  readonly completionChartSummary = computed(() => {
+    const { labels, datasets } = this.completionChartData();
+    const rates = labels.map((label, i) => `${label} ${datasets[0].data[i]}%`);
+    return `Completion rate by project: ${rates.join('; ')}`;
+  });
+
   readonly pieOptions = {
-    plugins: { legend: { position: 'bottom' as const } },
+    plugins: { legend: { position: 'bottom' as const, labels: { color: CHART_TEXT_COLOR } } },
     responsive: true,
     maintainAspectRatio: false,
   };
 
   readonly barOptions = {
-    plugins: { legend: { position: 'top' as const } },
+    plugins: { legend: { position: 'top' as const, labels: { color: CHART_TEXT_COLOR } } },
     responsive: true,
     maintainAspectRatio: false,
     scales: {
-      x: { stacked: true },
-      y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } },
+      x: {
+        stacked: true,
+        ticks: { color: CHART_TEXT_COLOR },
+        grid: { color: CHART_GRID_COLOR },
+      },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+        ticks: { stepSize: 1, color: CHART_TEXT_COLOR },
+        grid: { color: CHART_GRID_COLOR },
+      },
     },
   };
 
@@ -368,10 +425,12 @@ export class ExecDashboardComponent implements OnInit {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
+      x: { ticks: { color: CHART_TEXT_COLOR }, grid: { color: CHART_GRID_COLOR } },
       y: {
         beginAtZero: true,
         max: 100,
-        ticks: { callback: (v: number) => `${v}%` },
+        ticks: { callback: (v: number) => `${v}%`, color: CHART_TEXT_COLOR },
+        grid: { color: CHART_GRID_COLOR },
       },
     },
   };
@@ -388,6 +447,15 @@ export class ExecDashboardComponent implements OnInit {
         });
       }
     });
+  }
+
+  private completedOfTotalSummary(title: string, chart: CompletionChartData): string {
+    const [completed, remaining] = chart.datasets;
+    const groups = chart.labels.map(
+      (label, i) =>
+        `${label} ${completed.data[i]} of ${completed.data[i] + remaining.data[i]} completed`,
+    );
+    return `${title}: ${groups.join('; ')}`;
   }
 
   ngOnInit(): void {

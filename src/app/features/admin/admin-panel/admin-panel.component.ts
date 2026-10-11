@@ -319,6 +319,7 @@ type AdminTab =
     <p-dialog
       header="Edit User"
       [(visible)]="userDialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"
@@ -386,6 +387,7 @@ type AdminTab =
     <p-dialog
       [header]="editingDepartment() ? 'Edit Department' : 'New Department'"
       [(visible)]="deptDialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"
@@ -441,6 +443,7 @@ type AdminTab =
     <p-dialog
       header="Add Assignment Permission"
       [(visible)]="assignDialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"

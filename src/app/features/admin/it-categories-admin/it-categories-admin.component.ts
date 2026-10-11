@@ -84,6 +84,7 @@ import { UserService } from '../../../services/user.service';
     <p-dialog
       [header]="editing() ? 'Edit Category' : 'New Category'"
       [(visible)]="dialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"

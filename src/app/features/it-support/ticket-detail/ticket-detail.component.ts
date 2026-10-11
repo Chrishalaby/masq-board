@@ -9,10 +9,9 @@ import {
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { MessageService } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Chip } from 'primeng/chip';
-import { ConfirmDialog } from 'primeng/confirmdialog';
 import { Dialog } from 'primeng/dialog';
 import { MultiSelect } from 'primeng/multiselect';
 import { ProgressSpinner } from 'primeng/progressspinner';
@@ -44,7 +43,6 @@ import {
 @Component({
   selector: 'app-ticket-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [ConfirmationService],
   imports: [
     DatePipe,
     FormsModule,
@@ -52,7 +50,6 @@ import {
     RouterLink,
     Button,
     Chip,
-    ConfirmDialog,
     Dialog,
     MultiSelect,
     ProgressSpinner,
@@ -63,8 +60,6 @@ import {
     TicketCommentsComponent,
   ],
   template: `
-    <p-confirmdialog />
-
     <div class="mx-auto max-w-6xl px-6 py-8">
       <div class="mb-4">
         <a routerLink="/it-support" class="text-sm text-blue-600 hover:underline dark:text-blue-400"
@@ -486,6 +481,7 @@ import {
     <p-dialog
       header="Change Status"
       [(visible)]="statusDialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"
@@ -557,6 +553,7 @@ import {
     <p-dialog
       header="Assigned To"
       [(visible)]="assigneesDialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"
@@ -596,6 +593,7 @@ import {
     <p-dialog
       header="Responsible Person"
       [(visible)]="responsibleDialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"
@@ -639,6 +637,7 @@ import {
     <p-dialog
       header="Edit Ticket"
       [(visible)]="editDialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '40rem' }"
       [draggable]="false"
@@ -657,13 +656,38 @@ import {
         </div>
       </form>
     </p-dialog>
+
+    <p-dialog
+      header="Delete ticket"
+      [(visible)]="deleteDialogVisible"
+      closeAriaLabel="Close"
+      [modal]="true"
+      [style]="{ width: '28rem' }"
+      [breakpoints]="{ '520px': '95vw' }"
+      [draggable]="false"
+    >
+      @if (ticket(); as t) {
+        <p class="flex items-start gap-3 pt-2 text-sm text-gray-700 dark:text-gray-200">
+          <i class="pi pi-exclamation-triangle mt-0.5 text-amber-400" aria-hidden="true"></i>
+          Delete ticket #{{ t.ticketNumber }} "{{ t.title }}"? This cannot be undone.
+        </p>
+      }
+      <ng-template #footer>
+        <p-button
+          label="Cancel"
+          severity="secondary"
+          [text]="true"
+          (onClick)="deleteDialogVisible.set(false)"
+        />
+        <p-button label="Delete" severity="danger" (onClick)="deleteConfirmed()" />
+      </ng-template>
+    </p-dialog>
   `,
 })
 export class TicketDetailComponent implements OnInit {
   private readonly itSupportService = inject(ItSupportService);
   private readonly userService = inject(UserService);
   private readonly messageService = inject(MessageService);
-  private readonly confirmationService = inject(ConfirmationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -685,6 +709,7 @@ export class TicketDetailComponent implements OnInit {
   readonly responsibleIdDraft = signal<string | null>(null);
   readonly assigneeIdsDraft = signal<string[]>([]);
   readonly editDialogVisible = signal(false);
+  readonly deleteDialogVisible = signal(false);
   readonly editForm = createItTicketFieldsForm();
   readonly editingRejectionNotes = signal(false);
   readonly editingApproverNotes = signal(false);
@@ -926,16 +951,13 @@ export class TicketDetailComponent implements OnInit {
   }
 
   confirmDelete(): void {
+    if (this.ticket()) this.deleteDialogVisible.set(true);
+  }
+
+  deleteConfirmed(): void {
     const t = this.ticket();
-    if (!t) return;
-    this.confirmationService.confirm({
-      header: 'Delete ticket',
-      message: `Delete ticket #${t.ticketNumber} "${t.title}"? This cannot be undone.`,
-      icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Delete', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', text: true },
-      accept: () => this.deleteTicket(t),
-    });
+    this.deleteDialogVisible.set(false);
+    if (t) this.deleteTicket(t);
   }
 
   private deleteTicket(t: ItTicket): void {

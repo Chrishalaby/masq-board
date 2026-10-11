@@ -72,7 +72,8 @@ import { TaskLinksDialogComponent } from '../../tasks/task-links-dialog/task-lin
                 class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-bold text-red-700 dark:bg-red-900 dark:text-red-300"
                 role="alert"
               >
-                <i class="pi pi-exclamation-circle"></i> Critical Task On Hold — Initiative Blocked
+                <i class="pi pi-exclamation-circle" aria-hidden="true"></i> Critical Task On Hold —
+                Initiative Blocked
               </span>
             }
           </div>
@@ -162,6 +163,7 @@ import { TaskLinksDialogComponent } from '../../tasks/task-links-dialog/task-lin
       header="Manage Initiative Access"
       [visible]="inclusionsDialogVisible()"
       (visibleChange)="inclusionsDialogVisible.set($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"
@@ -176,6 +178,7 @@ import { TaskLinksDialogComponent } from '../../tasks/task-links-dialog/task-lin
           optionLabel="displayName"
           optionValue="id"
           placeholder="Select users to include"
+          ariaLabel="Users included in this initiative"
           [filter]="true"
           filterBy="displayName"
           display="chip"

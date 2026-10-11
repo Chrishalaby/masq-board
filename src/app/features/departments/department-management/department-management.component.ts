@@ -80,11 +80,11 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
                 [routerLink]="['/departments', dept.id]"
                 class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-indigo-400 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-500"
               >
-                <h3
+                <h2
                   class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-gray-100 dark:group-hover:text-indigo-400"
                 >
                   {{ dept.name }}
-                </h3>
+                </h2>
                 @if (dept.description) {
                   <p class="mt-1 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
                     {{ dept.description }}
@@ -112,7 +112,7 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
           <p class="mt-3 text-gray-500 dark:text-gray-400">
             You are not assigned to any department yet.
           </p>
-          <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Ask an administrator to assign you to a department.
           </p>
         </div>
@@ -169,9 +169,14 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
               </div>
 
               @if (filteredDepartmentUsers().length === 0) {
-                <p class="text-sm text-gray-400 dark:text-gray-500">No users found.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">No users found.</p>
               } @else {
-                <div class="flex max-h-[280px] flex-col gap-2 overflow-y-auto">
+                <div
+                  class="flex max-h-[280px] flex-col gap-2 overflow-y-auto"
+                  role="group"
+                  aria-label="Department users"
+                  tabindex="0"
+                >
                   @for (user of filteredDepartmentUsers(); track user.id) {
                     <div
                       class="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 dark:border-gray-700"
@@ -192,7 +197,7 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
                         [text]="true"
                         severity="success"
                         size="small"
-                        ariaLabel="Call user"
+                        [ariaLabel]="'Call ' + user.displayName"
                         (onClick)="onDepartmentUserCall(user, $event)"
                       />
                     </div>
@@ -209,7 +214,7 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
               >
                 <i class="pi pi-flag text-4xl text-gray-300 dark:text-gray-600"></i>
                 <p class="mt-3 text-gray-500 dark:text-gray-400">No initiatives yet.</p>
-                <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   Create the first initiative for this department.
                 </p>
                 <p-button
@@ -284,6 +289,7 @@ import { CallPopoverComponent } from '../../../shared/call-popover/call-popover.
     <p-dialog
       [header]="editingInitiative() ? 'Edit Initiative' : 'New Initiative'"
       [(visible)]="dialogVisible"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"
