@@ -47,6 +47,7 @@ import { ProjectEditorComponent } from '../project-editor/project-editor.compone
           optionLabel="label"
           optionValue="value"
           placeholder="All Statuses"
+          ariaLabel="Filter projects by status"
           [showClear]="true"
           (onChange)="onFilterChange()"
         />
@@ -70,7 +71,7 @@ import { ProjectEditorComponent } from '../project-editor/project-editor.compone
         <h2
           class="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400"
         >
-          <i class="pi pi-clock"></i>
+          <i class="pi pi-clock" aria-hidden="true"></i>
           Pending Apollo Projects ({{ pendingApolloProjects().length }})
         </h2>
         <div class="flex flex-col gap-2">

@@ -48,12 +48,17 @@ const PADDING = 16;
   template: `
     <div class="border-t border-gray-200 dark:border-gray-700">
       <button
+        type="button"
         class="flex w-full items-center gap-2 px-6 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
         (click)="collapsed.set(!collapsed())"
         [attr.aria-expanded]="!collapsed()"
         aria-controls="cpm-chart-panel"
       >
-        <i class="pi" [class]="collapsed() ? 'pi-chevron-right' : 'pi-chevron-down'"></i>
+        <i
+          class="pi"
+          [class]="collapsed() ? 'pi-chevron-right' : 'pi-chevron-down'"
+          aria-hidden="true"
+        ></i>
         Gantt Chart
         @if (criticalCount() > 0) {
           <span
@@ -67,7 +72,7 @@ const PADDING = 16;
       @if (!collapsed()) {
         <div id="cpm-chart-panel" class="px-6 pb-6">
           @if (ganttData().tasks.length === 0) {
-            <p class="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+            <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
               No tasks with dates to visualize. Add start and due dates to see the Gantt chart.
             </p>
           } @else {
@@ -151,6 +156,7 @@ const PADDING = 16;
                     font-size="11"
                     font-weight="500"
                     [attr.fill]="isWeekend(day) ? '#cbd5e1' : '#64748b'"
+                    [class.dark:fill-gray-400]="!isWeekend(day)"
                   >
                     {{ day | date: 'd' }}
                   </text>
@@ -241,7 +247,7 @@ const PADDING = 16;
                       text-anchor="middle"
                       font-size="10"
                       font-weight="500"
-                      fill="#ffffff"
+                      [attr.fill]="barLabelColor(task)"
                     >
                       {{ task.duration }}d
                     </text>
@@ -316,6 +322,11 @@ export class CpmChartComponent {
     if (task.isCritical) return '#ef4444'; // red
     if (task.isDependent) return '#38bdf8'; // sky
     return '#3b82f6'; // blue
+  }
+
+  barLabelColor(task: GanttTask): string {
+    const lightBar = task.isDependent && !task.isCritical && task.status !== 'completed';
+    return lightBar ? '#0f172a' : '#ffffff';
   }
 
   private computeGantt(tasks: Task[]): {

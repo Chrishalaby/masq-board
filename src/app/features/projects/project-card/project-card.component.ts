@@ -9,21 +9,23 @@ import { Project, ProjectStatus } from '../../../models/project.model';
   imports: [DatePipe, Tag],
   template: `
     <div
-      class="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+      class="relative rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
       [class.border-l-4]="project().isHot"
       [class.border-l-red-500]="project().isHot"
-      (click)="cardClick.emit(project())"
-      role="button"
-      [attr.aria-label]="'Open project: ' + project().name"
-      tabindex="0"
-      (keydown.enter)="cardClick.emit(project())"
-      (keydown.space)="cardClick.emit(project()); $event.preventDefault()"
     >
       <div class="mb-2 flex items-start justify-between gap-2">
-        <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ project().name }}</h3>
+        <h2 class="font-semibold text-gray-900 dark:text-gray-100">
+          <button
+            type="button"
+            class="cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-blue-500"
+            (click)="cardClick.emit(project())"
+          >
+            <span class="sr-only">Open project: </span>{{ project().name }}
+          </button>
+        </h2>
         <div class="flex items-center gap-1">
           @if (project().isHot) {
-            <span class="text-sm" title="Hot project">🔥</span>
+            <span class="text-sm" role="img" aria-label="Hot project" title="Hot project">🔥</span>
           }
           @if (project().dynamicsNo) {
             <span

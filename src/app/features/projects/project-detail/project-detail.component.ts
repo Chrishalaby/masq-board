@@ -73,7 +73,7 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
           <div class="flex items-center gap-3">
             <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ p.name }}</h1>
             @if (p.isHot) {
-              <span title="Hot project">🔥</span>
+              <span role="img" aria-label="Hot project" title="Hot project">🔥</span>
             }
             <p-tag [value]="p.status" [severity]="statusSeverity(p.status)" [rounded]="true" />
             @if (hasCriticalOnHold()) {
@@ -81,7 +81,8 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
                 class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-bold text-red-700 dark:bg-red-900 dark:text-red-300"
                 role="alert"
               >
-                <i class="pi pi-exclamation-circle"></i> Critical Task On Hold — Project Blocked
+                <i class="pi pi-exclamation-circle" aria-hidden="true"></i> Critical Task On Hold —
+                Project Blocked
               </span>
             }
           </div>
@@ -185,15 +186,17 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
               <i class="pi pi-video mr-1"></i>Join Kickoff
             </a>
             @if (p.kickoffStartTime) {
-              <span class="text-xs text-gray-400 dark:text-gray-500">
+              <span class="text-xs text-gray-500 dark:text-gray-400">
                 {{ p.kickoffStartTime | date: 'MMM d, y h:mm a' }}
               </span>
             }
             <button
-              class="text-blue-600 hover:underline dark:text-blue-400"
+              type="button"
+              class="cursor-pointer text-blue-600 hover:underline dark:text-blue-400"
+              [attr.aria-expanded]="attendanceVisible()"
               (click)="loadAttendance()"
             >
-              <i class="pi pi-users mr-1"></i>Attendance
+              <i class="pi pi-users mr-1" aria-hidden="true"></i>Attendance
             </button>
           }
           @if (p.projectAccountant) {
@@ -226,9 +229,9 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
           <div
             class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
           >
-            <h3 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-              <i class="pi pi-users mr-1"></i>Kickoff Attendance
-            </h3>
+            <h2 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <i class="pi pi-users mr-1" aria-hidden="true"></i>Kickoff Attendance
+            </h2>
             @if (attendanceData().length) {
               <div class="flex flex-wrap gap-2">
                 @for (a of attendanceData(); track a.email) {
@@ -245,7 +248,7 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
                 }
               </div>
             } @else {
-              <p class="text-xs text-gray-400 dark:text-gray-500">
+              <p class="text-xs text-gray-500 dark:text-gray-400">
                 No responses yet. Attendees will appear here once they accept or decline the
                 invitation.
               </p>
@@ -401,6 +404,7 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
       <p-dialog
         header="Book Kickoff Meeting"
         [(visible)]="kickoffDialogVisible"
+        closeAriaLabel="Close"
         [modal]="true"
         [style]="{ width: '28rem' }"
       >
@@ -456,6 +460,8 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
               separator=","
               placeholder="Type an email and press Enter, or pick from dropdown"
               inputId="extraAttendees"
+              dropdownAriaLabel="Show attendee suggestions"
+              [pt]="attendeeFieldPassThrough"
               appendTo="body"
               [fluid]="true"
               (completeMethod)="searchAttendees($event)"
@@ -482,6 +488,7 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
       <p-dialog
         header="Link to Dynamics BC Job"
         [(visible)]="dynamicsDialogVisible"
+        closeAriaLabel="Close"
         [modal]="true"
         [style]="{ width: '28rem' }"
       >
@@ -525,6 +532,7 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
       <p-dialog
         header="Delete Project"
         [(visible)]="confirmDeleteVisible"
+        closeAriaLabel="Close"
         [modal]="true"
         [style]="{ width: '24rem' }"
       >
@@ -581,6 +589,15 @@ export class ProjectDetailComponent implements OnInit {
   kickoffDuration = 60;
   extraAttendees: string[] = [];
   attendeeSuggestions: string[] = [];
+  readonly attendeeFieldPassThrough = {
+    inputMultiple: {
+      role: 'list',
+      'aria-label': 'Additional attendees',
+      'aria-orientation': null,
+    },
+    chipItem: { role: 'listitem', 'aria-selected': null },
+    inputChip: { role: 'listitem' },
+  };
   includeMyself = true;
   readonly today = new Date();
 

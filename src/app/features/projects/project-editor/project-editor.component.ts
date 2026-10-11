@@ -19,6 +19,7 @@ import { ProjectService } from '../../../services/project.service';
       [header]="project() ? 'Edit Project' : 'New Project'"
       [visible]="visible()"
       (visibleChange)="onVisibleChange($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '36rem' }"
       [dismissableMask]="true"
@@ -47,7 +48,7 @@ import { ProjectService } from '../../../services/project.service';
           <div class="flex flex-col gap-1">
             <label for="startDate" class="text-sm font-medium">Start Date</label>
             <p-datepicker
-              id="startDate"
+              inputId="startDate"
               formControlName="startDate"
               dateFormat="yy-mm-dd"
               [showIcon]="true"
@@ -59,7 +60,7 @@ import { ProjectService } from '../../../services/project.service';
           <div class="flex flex-col gap-1">
             <label for="endDate" class="text-sm font-medium">End Date</label>
             <p-datepicker
-              id="endDate"
+              inputId="endDate"
               formControlName="endDate"
               dateFormat="yy-mm-dd"
               [showIcon]="true"

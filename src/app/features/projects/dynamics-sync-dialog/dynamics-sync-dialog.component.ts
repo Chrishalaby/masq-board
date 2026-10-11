@@ -25,6 +25,7 @@ import { ProjectService } from '../../../services/project.service';
       header="Import from Dynamics 365"
       [visible]="visible()"
       (visibleChange)="onVisibleChange($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '48rem' }"
       [dismissableMask]="true"
@@ -52,7 +53,12 @@ import { ProjectService } from '../../../services/project.service';
           />
         </div>
 
-        <div class="max-h-96 space-y-2 overflow-y-auto">
+        <div
+          class="max-h-96 space-y-2 overflow-y-auto"
+          role="group"
+          aria-label="Dynamics 365 jobs"
+          tabindex="0"
+        >
           @for (job of dynamicsService.jobs(); track job.No) {
             <div
               class="flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
@@ -61,6 +67,7 @@ import { ProjectService } from '../../../services/project.service';
                 [binary]="true"
                 [ngModel]="isSelected(job.No)"
                 (ngModelChange)="toggleSelect(job.No)"
+                [ariaLabel]="'Select job ' + job.No"
               />
               <div class="flex-1">
                 <div class="flex items-center gap-2">
@@ -73,7 +80,7 @@ import { ProjectService } from '../../../services/project.service';
                   {{ job.Description || 'No description' }}
                 </p>
                 @if (job.Starting_Date || job.Ending_Date) {
-                  <p class="text-xs text-gray-400 dark:text-gray-500">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
                     @if (job.Starting_Date) {
                       Start: {{ job.Starting_Date }}
                     }
