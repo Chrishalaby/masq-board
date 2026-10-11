@@ -35,6 +35,7 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
       class="fixed right-0 top-0 z-50 flex h-full w-full flex-col border-l border-gray-200 bg-white shadow-2xl transition-transform duration-300 dark:border-gray-700 dark:bg-gray-900 sm:w-[440px]"
       [class.translate-x-0]="visible()"
       [class.translate-x-full]="!visible()"
+      [attr.inert]="visible() ? null : ''"
       role="complementary"
       aria-label="Copilot Chat"
     >
@@ -54,7 +55,7 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
             severity="secondary"
             size="small"
             (onClick)="startNewConversation()"
-            aria-label="New conversation"
+            ariaLabel="New conversation"
           />
           <p-button
             [icon]="showHistory() ? 'pi pi-comments' : 'pi pi-history'"
@@ -63,7 +64,7 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
             severity="secondary"
             size="small"
             (onClick)="showHistory.set(!showHistory())"
-            [attr.aria-label]="showHistory() ? 'Show chat' : 'Show history'"
+            [ariaLabel]="showHistory() ? 'Show chat' : 'Show history'"
           />
           <p-button
             icon="pi pi-times"
@@ -72,7 +73,7 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
             severity="secondary"
             size="small"
             (onClick)="close()"
-            aria-label="Close Copilot Chat"
+            ariaLabel="Close Copilot Chat"
           />
         </div>
       </header>
@@ -82,9 +83,9 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
         <div class="flex-1 overflow-y-auto">
           @if (conversations().length === 0) {
             <div
-              class="flex flex-col items-center justify-center gap-3 p-8 text-center text-gray-400 dark:text-gray-500"
+              class="flex flex-col items-center justify-center gap-3 p-8 text-center text-gray-500 dark:text-gray-400"
             >
-              <i class="pi pi-comments text-4xl"></i>
+              <i class="pi pi-comments text-4xl" aria-hidden="true"></i>
               <p class="text-sm">No conversations yet</p>
               <p-button
                 label="Start a chat"
@@ -107,12 +108,12 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
                   tabindex="0"
                   role="listitem"
                 >
-                  <i class="pi pi-comment text-gray-400 dark:text-gray-500"></i>
+                  <i class="pi pi-comment text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
                   <div class="min-w-0 flex-1">
                     <p class="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
                       {{ conv.title || 'New conversation' }}
                     </p>
-                    <p class="text-xs text-gray-400 dark:text-gray-500">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
                       {{ conv.updatedAt | date: 'MMM d, y h:mm a' }}
                     </p>
                   </div>
@@ -122,9 +123,9 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
                     [text]="true"
                     severity="danger"
                     size="small"
-                    class="opacity-0 transition-opacity group-hover:opacity-100"
+                    class="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
                     (onClick)="deleteConversation(conv, $event)"
-                    aria-label="Delete conversation"
+                    ariaLabel="Delete conversation"
                   />
                 </li>
               }
@@ -164,6 +165,7 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
             role="log"
             aria-label="Chat messages"
             aria-live="polite"
+            tabindex="0"
           >
             @for (msg of activeConversation()?.messages || []; track msg.id) {
               <div
@@ -181,7 +183,7 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
                 >
                   @if (msg.role === 'assistant') {
                     <div class="flex items-center gap-1.5 pb-1">
-                      <i class="pi pi-sparkles text-xs text-purple-400"></i>
+                      <i class="pi pi-sparkles text-xs text-purple-400" aria-hidden="true"></i>
                       <span class="text-xs font-medium text-purple-500 dark:text-purple-400"
                         >Copilot</span
                       >
@@ -195,7 +197,7 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
                   </div>
                   <p
                     class="mt-1 text-right text-[10px]"
-                    [class.text-purple-200]="msg.role === 'user'"
+                    [class.text-purple-50]="msg.role === 'user'"
                     [class.text-gray-400]="msg.role === 'assistant'"
                   >
                     {{ msg.createdAt | date: 'h:mm a' }}
@@ -245,7 +247,7 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
                 [rounded]="true"
                 [disabled]="!messageInput.trim() || sending()"
                 (onClick)="send()"
-                aria-label="Send message"
+                ariaLabel="Send message"
                 severity="help"
               />
             </div>

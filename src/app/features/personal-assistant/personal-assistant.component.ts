@@ -9,6 +9,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   inject,
   OnInit,
   signal,
@@ -48,6 +49,8 @@ import { TodoItem, TodoService } from '../../services/todo.service';
 import { CalendarEvent, MailMessage, UserService } from '../../services/user.service';
 import { TaskEditorComponent } from '../tasks/task-editor/task-editor.component';
 import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-panel.component';
+
+const CALENDAR_EVENT_COLOR = '#2563eb';
 
 @Component({
   selector: 'app-personal-assistant',
@@ -96,7 +99,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                   <div class="mb-3 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                       <i
-                        class="pi pi-bars cursor-grab text-xs text-gray-300 dark:text-gray-600"
+                        class="pi pi-bars cursor-grab text-xs text-gray-500 dark:text-gray-400"
                         cdkDragHandle
                       ></i>
                       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
@@ -140,7 +143,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                   <section cdkDrag>
                     <div class="mb-3 flex items-center gap-2">
                       <i
-                        class="pi pi-bars cursor-grab text-xs text-gray-300 dark:text-gray-600"
+                        class="pi pi-bars cursor-grab text-xs text-gray-500 dark:text-gray-400"
                         cdkDragHandle
                       ></i>
                       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
@@ -181,7 +184,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                   <section cdkDrag>
                     <div class="mb-3 flex items-center gap-2">
                       <i
-                        class="pi pi-bars cursor-grab text-xs text-gray-300 dark:text-gray-600"
+                        class="pi pi-bars cursor-grab text-xs text-gray-500 dark:text-gray-400"
                         cdkDragHandle
                       ></i>
                       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
@@ -221,7 +224,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                 <section cdkDrag>
                   <div class="mb-3 flex items-center gap-2">
                     <i
-                      class="pi pi-bars cursor-grab text-xs text-gray-300 dark:text-gray-600"
+                      class="pi pi-bars cursor-grab text-xs text-gray-500 dark:text-gray-400"
                       cdkDragHandle
                     ></i>
                     <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
@@ -236,6 +239,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                         pInputText
                         class="flex-1"
                         placeholder="Add a to-do..."
+                        aria-label="New to-do"
                         [formControl]="newTodoControl"
                         (keydown.enter)="addTodo()"
                       />
@@ -259,6 +263,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                             [binary]="true"
                             [ngModel]="todo.completed"
                             (onChange)="toggleTodo(todo)"
+                            [ariaLabel]="todo.title"
                           />
                           <span
                             class="flex-1 text-sm"
@@ -287,7 +292,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                   <div class="mb-3 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                       <i
-                        class="pi pi-bars cursor-grab text-xs text-gray-300 dark:text-gray-600"
+                        class="pi pi-bars cursor-grab text-xs text-gray-500 dark:text-gray-400"
                         cdkDragHandle
                       ></i>
                       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
@@ -308,16 +313,21 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                     @for (reminder of reminders(); track reminder.id) {
                       <div
                         class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
-                        [class.opacity-50]="reminder.sent"
                       >
                         <div>
-                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <p
+                            class="text-sm font-medium"
+                            [class.text-gray-900]="!reminder.sent"
+                            [class.dark:text-gray-100]="!reminder.sent"
+                            [class.text-gray-500]="reminder.sent"
+                            [class.dark:text-gray-400]="reminder.sent"
+                          >
                             {{ reminder.title }}
                           </p>
                           <p class="text-xs text-gray-500 dark:text-gray-400">
                             {{ reminder.remindAt | date: 'EEE, MMM d, y · h:mm a' }}
                             @if (reminder.sent) {
-                              <span class="ml-1 text-green-600">(sent)</span>
+                              <span class="ml-1 text-green-600 dark:text-green-400">(sent)</span>
                             }
                           </p>
                         </div>
@@ -354,7 +364,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                   <div class="mb-3 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                       <i
-                        class="pi pi-bars cursor-grab text-xs text-gray-300 dark:text-gray-600"
+                        class="pi pi-bars cursor-grab text-xs text-gray-500 dark:text-gray-400"
                         cdkDragHandle
                       ></i>
                       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
@@ -381,7 +391,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                   <div class="mb-3 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                       <i
-                        class="pi pi-bars cursor-grab text-xs text-gray-300 dark:text-gray-600"
+                        class="pi pi-bars cursor-grab text-xs text-gray-500 dark:text-gray-400"
                         cdkDragHandle
                       ></i>
                       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
@@ -418,13 +428,15 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                             [class.dark:bg-red-900]="!email.isRead"
                             [class.dark:text-red-300]="!email.isRead"
                             [class.bg-gray-100]="email.isRead"
-                            [class.text-gray-400]="email.isRead"
+                            [class.text-gray-500]="email.isRead"
                             [class.dark:bg-gray-700]="email.isRead"
-                            [class.dark:text-gray-500]="email.isRead"
+                            [class.dark:text-gray-300]="email.isRead"
                           >
                             <i
                               [class]="email.isRead ? 'pi pi-envelope-open' : 'pi pi-envelope'"
+                              aria-hidden="true"
                             ></i>
+                            <span class="sr-only">{{ email.isRead ? 'Read' : 'Unread' }}</span>
                           </div>
                           <div class="min-w-0 flex-1">
                             <p
@@ -436,7 +448,8 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                             <p class="text-xs text-gray-500 dark:text-gray-400">
                               {{ email.from }}
                               @if (email.hasAttachments) {
-                                <i class="pi pi-paperclip ml-1"></i>
+                                <i class="pi pi-paperclip ml-1" aria-hidden="true"></i>
+                                <span class="sr-only">Has attachments</span>
                               }
                             </p>
                             <p class="truncate text-xs text-gray-400">{{ email.bodyPreview }}</p>
@@ -455,7 +468,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                   <div class="mb-3 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                       <i
-                        class="pi pi-bars cursor-grab text-xs text-gray-300 dark:text-gray-600"
+                        class="pi pi-bars cursor-grab text-xs text-gray-500 dark:text-gray-400"
                         cdkDragHandle
                       ></i>
                       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
@@ -475,29 +488,31 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
                   <div class="flex flex-col gap-2">
                     @for (note of myNotes(); track note.id) {
                       <div
-                        class="group relative cursor-pointer rounded-lg border p-3 shadow-sm transition hover:shadow-md dark:border-gray-700"
+                        class="group relative rounded-lg border p-3 shadow-sm transition hover:shadow-md dark:border-gray-700"
                         [style.background-color]="note.color || ''"
+                        [style.--p-button-text-danger-color]="note.color ? '#b91c1c' : null"
                         [class.dark:bg-gray-800]="!note.color"
-                        (click)="openEditNote(note)"
-                        (keydown.enter)="openEditNote(note)"
-                        tabindex="0"
-                        role="button"
-                        [attr.aria-label]="'Edit note: ' + note.title"
                       >
                         <p-button
                           icon="pi pi-trash"
                           [text]="true"
                           severity="danger"
                           size="small"
-                          class="absolute right-1 top-1 opacity-0 transition group-hover:opacity-100"
+                          class="absolute right-1 top-1 z-10 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100"
                           (onClick)="onQuickDeleteNote(note, $event)"
-                          ariaLabel="Delete note"
+                          [ariaLabel]="'Delete note: ' + note.title"
                         />
                         <h3
                           class="text-sm font-semibold text-gray-900"
                           [class.dark:text-white]="!note.color"
                         >
-                          {{ note.title }}
+                          <button
+                            type="button"
+                            class="cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-blue-500"
+                            (click)="openEditNote(note)"
+                          >
+                            <span class="sr-only">Edit note: </span>{{ note.title }}
+                          </button>
                         </h3>
                         <p
                           class="line-clamp-2 text-xs text-gray-700"
@@ -536,6 +551,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
       header="New Reminder"
       [visible]="reminderDialogVisible()"
       (visibleChange)="reminderDialogVisible.set($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '28rem' }"
       [dismissableMask]="true"
@@ -558,7 +574,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
         <div class="flex flex-col gap-1">
           <label for="remindAt" class="text-sm font-medium">Remind At *</label>
           <p-datepicker
-            id="remindAt"
+            inputId="remindAt"
             formControlName="remindAt"
             [showTime]="true"
             [showIcon]="true"
@@ -583,6 +599,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
       header="Add Calendar Event"
       [visible]="eventDialogVisible()"
       (visibleChange)="eventDialogVisible.set($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '28rem' }"
       [dismissableMask]="true"
@@ -602,7 +619,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
           <div class="flex flex-col gap-1">
             <label for="eventStart" class="text-sm font-medium">Start *</label>
             <p-datepicker
-              id="eventStart"
+              inputId="eventStart"
               formControlName="start"
               [showTime]="true"
               [showIcon]="true"
@@ -613,7 +630,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
           <div class="flex flex-col gap-1">
             <label for="eventEnd" class="text-sm font-medium">End *</label>
             <p-datepicker
-              id="eventEnd"
+              inputId="eventEnd"
               formControlName="end"
               [showTime]="true"
               [showIcon]="true"
@@ -644,6 +661,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
       [header]="editingNote() ? 'Edit Note' : 'New Note'"
       [visible]="noteDialogVisible()"
       (visibleChange)="noteDialogVisible.set($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '36rem' }"
       [dismissableMask]="true"
@@ -687,7 +705,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
           <div class="flex flex-col gap-1">
             <label for="noteTags" class="text-sm font-medium">Tag People</label>
             <p-multiselect
-              id="noteTags"
+              inputId="noteTags"
               formControlName="taggedUserIds"
               [options]="users()"
               optionLabel="displayName"
@@ -725,6 +743,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
       [header]="viewingEmail()?.subject || 'Email'"
       [visible]="emailDialogVisible()"
       (visibleChange)="emailDialogVisible.set($event)"
+      closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '48rem', 'max-height': '80vh' }"
       [dismissableMask]="true"
@@ -736,12 +755,15 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
             <div>
               <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {{ email.from }}
-                <span class="font-normal text-gray-500">&lt;{{ email.fromEmail }}&gt;</span>
+                <span class="font-normal text-gray-500 dark:text-gray-400"
+                  >&lt;{{ email.fromEmail }}&gt;</span
+                >
               </p>
               <p class="text-xs text-gray-400">
                 {{ email.receivedDateTime | date: 'EEEE, MMMM d, y · h:mm a' }}
                 @if (email.hasAttachments) {
-                  <i class="pi pi-paperclip ml-1"></i>
+                  <i class="pi pi-paperclip ml-1" aria-hidden="true"></i>
+                  <span class="sr-only">Has attachments</span>
                 }
               </p>
             </div>
@@ -766,11 +788,14 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
 
           <!-- Reply Section -->
           <div class="border-t border-gray-200 pt-3 dark:border-gray-700">
-            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            <label
+              for="emailReply"
+              class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
               >Reply</label
             >
             <textarea
               pTextarea
+              id="emailReply"
               class="w-full"
               rows="4"
               placeholder="Type your reply..."
@@ -803,7 +828,7 @@ import { CopilotChatPanelComponent } from './copilot-chat-panel/copilot-chat-pan
       (click)="openCopilotPanel()"
       aria-label="Open Copilot Chat"
     >
-      <i class="pi pi-sparkles text-xl"></i>
+      <i class="pi pi-sparkles text-xl" aria-hidden="true"></i>
     </button>
   `,
 })
@@ -815,6 +840,7 @@ export class PersonalAssistantComponent implements OnInit {
   private readonly reminderService = inject(ReminderService);
   private readonly todoService = inject(TodoService);
   private readonly copilotChatService = inject(CopilotChatService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   private readonly SECTION_ORDER_KEY = 'pa-section-order';
 
@@ -865,6 +891,7 @@ export class PersonalAssistantComponent implements OnInit {
       },
       height: 500,
       events,
+      eventColor: CALENDAR_EVENT_COLOR,
       nowIndicator: true,
       editable: false,
       selectable: false,
@@ -877,7 +904,10 @@ export class PersonalAssistantComponent implements OnInit {
           window.open(info.event.extendedProps['joinUrl'], '_blank', 'noopener,noreferrer');
         }
       },
+      viewDidMount: () => this.markCalendarToolbarIconsDecorative(),
+      dayCellDidMount: (cell) => cell.el.removeAttribute('aria-labelledby'),
       datesSet: (dateInfo) => {
+        this.markCalendarToolbarIconsDecorative();
         this.loadCalendarEventsForRange(dateInfo.startStr, dateInfo.endStr);
       },
     };
@@ -1193,6 +1223,12 @@ export class PersonalAssistantComponent implements OnInit {
         },
         error: () => this.eventSaving.set(false),
       });
+  }
+
+  private markCalendarToolbarIconsDecorative(): void {
+    this.host.nativeElement
+      .querySelectorAll('.fc-toolbar .fc-icon[role="img"]')
+      .forEach((icon) => icon.setAttribute('aria-hidden', 'true'));
   }
 
   private loadCalendarEventsForRange(startStr: string, endStr: string): void {

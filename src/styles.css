@@ -40,6 +40,11 @@
   border-color: #374151;
 }
 
+.dark .fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 1;
+  color: #9ca3af;
+}
+
 .dark .p-datatable,
 .dark .p-datatable .p-datatable-header,
 .dark .p-datatable .p-datatable-thead > tr > th,
