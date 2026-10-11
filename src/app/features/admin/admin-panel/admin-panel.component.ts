@@ -106,9 +106,9 @@ type AdminTab =
                       <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
                         Roles
                       </th>
-                      <th
-                        class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300"
-                      ></th>
+                      <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
+                        <span class="sr-only">Actions</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -178,7 +178,7 @@ type AdminTab =
                         </p>
                       }
                       @if (dept.headOfDepartment) {
-                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                           Head: {{ dept.headOfDepartment.displayName }}
                         </p>
                       }
@@ -204,7 +204,7 @@ type AdminTab =
                   </div>
                 }
                 @if (departments().length === 0) {
-                  <p class="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+                  <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                     No departments yet. Create one to get started.
                   </p>
                 }
@@ -257,7 +257,7 @@ type AdminTab =
                       <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
                         Department
                       </th>
-                      <th class="px-4 py-3"></th>
+                      <th class="px-4 py-3"><span class="sr-only">Actions</span></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -288,7 +288,7 @@ type AdminTab =
                       <tr>
                         <td
                           colspan="4"
-                          class="py-8 text-center text-sm text-gray-400 dark:text-gray-500"
+                          class="py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                         >
                           No assignment permissions defined.
                         </td>

@@ -40,7 +40,7 @@ import { UserService } from '../../../services/user.service';
                 @for (user of category.assignees; track user.id) {
                   <p-chip [label]="user.displayName" />
                 } @empty {
-                  <span class="text-sm text-gray-400 dark:text-gray-500">
+                  <span class="text-sm text-gray-500 dark:text-gray-400">
                     No one assigned — tickets in this category start unassigned.
                   </span>
                 }
@@ -74,7 +74,7 @@ import { UserService } from '../../../services/user.service';
             </div>
           </div>
         } @empty {
-          <p class="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+          <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
             No categories yet. Create one to get started.
           </p>
         }
