@@ -135,24 +135,30 @@ import { labelChipColors } from '../label-chip-colors';
         <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
           @if (task().assignees?.length) {
             @for (ta of task().assignees; track ta.userId; let last = $last) {
-              <span
-                class="cursor-pointer hover:text-blue-600 hover:underline dark:hover:text-blue-400"
+              <button
+                type="button"
+                class="cursor-pointer text-left hover:text-blue-600 hover:underline dark:hover:text-blue-400"
+                aria-haspopup="dialog"
                 (click)="onAssigneeClick($event, ta.user)"
-                >{{ ta.user?.displayName }}
+              >
+                {{ ta.user?.displayName }}
                 @if (ta.role) {
                   <span class="text-gray-400"> ({{ ta.role }})</span>
                 }
-              </span>
+              </button>
               @if (!last) {
                 <span>, </span>
               }
             }
           } @else if (task().assignee) {
-            <span
-              class="cursor-pointer hover:text-blue-600 hover:underline dark:hover:text-blue-400"
+            <button
+              type="button"
+              class="cursor-pointer text-left hover:text-blue-600 hover:underline dark:hover:text-blue-400"
+              aria-haspopup="dialog"
               (click)="onAssigneeClick($event, task().assignee)"
-              >{{ task().assignee!.displayName }}</span
             >
+              {{ task().assignee!.displayName }}
+            </button>
           } @else {
             {{ task().owner || 'Unassigned' }}
           }

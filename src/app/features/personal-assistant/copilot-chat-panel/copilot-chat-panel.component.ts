@@ -100,30 +100,34 @@ import { CopilotChatService } from '../../../services/copilot-chat.service';
             <ul class="divide-y divide-gray-100 dark:divide-gray-800" role="list">
               @for (conv of conversations(); track conv.id) {
                 <li
-                  class="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                  class="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                   [class.bg-purple-50]="activeConversation()?.id === conv.id"
                   [class.dark:bg-purple-900/20]="activeConversation()?.id === conv.id"
-                  (click)="openConversation(conv)"
-                  (keydown.enter)="openConversation(conv)"
-                  tabindex="0"
                   role="listitem"
                 >
                   <i class="pi pi-comment text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
+                  <button
+                    type="button"
+                    class="min-w-0 flex-1 cursor-pointer text-left outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-blue-500"
+                    [attr.aria-current]="activeConversation()?.id === conv.id ? 'true' : null"
+                    (click)="openConversation(conv)"
+                  >
+                    <span
+                      class="block truncate text-sm font-medium text-gray-800 dark:text-gray-200"
+                    >
                       {{ conv.title || 'New conversation' }}
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                    </span>
+                    <span class="block text-xs text-gray-500 dark:text-gray-400">
                       {{ conv.updatedAt | date: 'MMM d, y h:mm a' }}
-                    </p>
-                  </div>
+                    </span>
+                  </button>
                   <p-button
                     icon="pi pi-trash"
                     [rounded]="true"
                     [text]="true"
                     severity="danger"
                     size="small"
-                    class="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+                    class="relative z-10 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
                     (onClick)="deleteConversation(conv, $event)"
                     ariaLabel="Delete conversation"
                   />

@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { DatePipe, SlicePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -23,7 +24,7 @@ interface CalendarDay {
 @Component({
   selector: 'app-task-calendar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, SlicePipe, Button, Tag],
+  imports: [CdkTrapFocus, DatePipe, SlicePipe, Button, Tag],
   template: `
     <div class="flex flex-col gap-4 p-4">
       <!-- Month navigation -->
@@ -99,6 +100,7 @@ interface CalendarDay {
               @if (day.tasks.length > 3) {
                 <button
                   class="w-full text-center text-xs text-blue-600 hover:underline dark:text-blue-400"
+                  aria-haspopup="dialog"
                   (click)="expandDay.set(day.date)"
                 >
                   +{{ day.tasks.length - 3 }} more
@@ -117,8 +119,12 @@ interface CalendarDay {
         >
           <div
             class="max-h-96 w-96 overflow-y-auto rounded-lg bg-white p-4 shadow-xl dark:bg-gray-800"
+            cdkTrapFocus
+            [cdkTrapFocusAutoCapture]="true"
             (click)="$event.stopPropagation()"
+            (keydown.escape)="expandDay.set(null)"
             role="dialog"
+            aria-modal="true"
             aria-label="Tasks for day"
           >
             <div class="mb-3 flex items-center justify-between">

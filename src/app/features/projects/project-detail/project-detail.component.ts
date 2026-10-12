@@ -216,14 +216,22 @@ import { CpmChartComponent } from '../cpm-chart/cpm-chart.component';
         @if (p.members?.length) {
           <div class="mt-2 flex flex-wrap gap-2">
             @for (m of p.members; track m.id) {
-              <span
-                class="cursor-pointer rounded-full bg-gray-100 px-2 py-1 text-xs hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-                [pTooltip]="'Click to call ' + (m.user?.displayName ?? m.userId)"
-                tooltipPosition="top"
-                (click)="onMemberClick($event, m)"
-              >
-                {{ m.user?.displayName ?? m.userId }} — {{ m.role }}
-              </span>
+              @if (m.user; as user) {
+                <button
+                  type="button"
+                  class="cursor-pointer rounded-full bg-gray-100 px-2 py-1 text-xs hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                  [pTooltip]="'Click to call ' + user.displayName"
+                  tooltipPosition="top"
+                  aria-haspopup="dialog"
+                  (click)="onMemberClick($event, m)"
+                >
+                  {{ user.displayName }} — {{ m.role }}
+                </button>
+              } @else {
+                <span class="rounded-full bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700">
+                  {{ m.userId }} — {{ m.role }}
+                </span>
+              }
             }
           </div>
         }

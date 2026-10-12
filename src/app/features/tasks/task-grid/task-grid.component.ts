@@ -49,11 +49,15 @@ import { TaskService } from '../../../services/task.service';
           <td>
             @if (task.assignees?.length) {
               @for (ta of task.assignees; track ta.userId; let last = $last) {
-                <span
+                <button
+                  type="button"
                   class="cursor-pointer text-blue-600 hover:underline dark:text-blue-400"
+                  aria-haspopup="dialog"
                   (click)="onAssigneeItemClick($event, ta.user)"
-                  >{{ ta.user?.displayName }}</span
+                  (keydown.enter)="$event.stopPropagation()"
                 >
+                  {{ ta.user?.displayName }}
+                </button>
                 @if (ta.role) {
                   <span class="text-xs text-gray-400"> ({{ ta.role }})</span>
                 }
@@ -62,11 +66,15 @@ import { TaskService } from '../../../services/task.service';
                 }
               }
             } @else if (task.assignee) {
-              <span
+              <button
+                type="button"
                 class="cursor-pointer text-blue-600 hover:underline dark:text-blue-400"
+                aria-haspopup="dialog"
                 (click)="onAssigneeClick($event, task)"
-                >{{ task.assignee.displayName }}</span
+                (keydown.enter)="$event.stopPropagation()"
               >
+                {{ task.assignee.displayName }}
+              </button>
             } @else {
               {{ task.owner || '—' }}
             }
