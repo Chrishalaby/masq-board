@@ -5,6 +5,7 @@ import { Dialog } from 'primeng/dialog';
 import { Tag } from 'primeng/tag';
 import { Task, TaskPriority } from '../../../models/task.model';
 import { ProgressMeterComponent } from '../../../shared/progress-meter/progress-meter.component';
+import { returnFocusOnClose } from '../../../shared/return-focus-on-close';
 import { labelChipColors } from '../label-chip-colors';
 
 @Component({
@@ -16,6 +17,7 @@ import { labelChipColors } from '../label-chip-colors';
       header="Task Details"
       [visible]="visible()"
       (visibleChange)="visibleChange.emit($event)"
+      (onHide)="restoreFocus()"
       closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '44rem' }"
@@ -266,6 +268,8 @@ export class TaskDetailViewComponent {
   readonly task = input<Task | null>(null);
   readonly visible = input(false);
   readonly visibleChange = output<boolean>();
+
+  protected readonly restoreFocus = returnFocusOnClose(this.visible);
 
   protected readonly prioritySeverity = computed(() => {
     const map: Record<TaskPriority, 'danger' | 'warn' | 'info' | 'success'> = {

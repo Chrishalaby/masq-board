@@ -6,6 +6,7 @@ import { InputText } from 'primeng/inputtext';
 import { take } from 'rxjs/operators';
 import { Task } from '../../../models/task.model';
 import { TaskService } from '../../../services/task.service';
+import { returnFocusOnClose } from '../../../shared/return-focus-on-close';
 
 @Component({
   selector: 'app-task-links-dialog',
@@ -16,6 +17,7 @@ import { TaskService } from '../../../services/task.service';
       header="Files"
       [visible]="visible()"
       (visibleChange)="visibleChange.emit($event)"
+      (onHide)="restoreFocus()"
       closeAriaLabel="Close"
       [modal]="true"
       [style]="{ width: '36rem' }"
@@ -138,6 +140,8 @@ export class TaskLinksDialogComponent {
   readonly visible = input(false);
   readonly visibleChange = output<boolean>();
   readonly linkAdded = output<void>();
+
+  protected readonly restoreFocus = returnFocusOnClose(this.visible);
 
   readonly newUrlControl = new FormControl('');
   readonly uploading = signal(false);
